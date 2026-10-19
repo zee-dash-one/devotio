@@ -23,6 +23,7 @@ import {
 } from "domain/core";
 import { useApp, useWriting } from "../context";
 import { useSelectionDrawerGestures } from "../selection-drawer-gestures";
+import { ShareToFriends } from "../social";
 
 export function SelectionMenu({
   quote,
@@ -47,6 +48,7 @@ export function SelectionMenu({
     [sharing, setSharing] = useState(false);
   const payload = quoteText(quote);
   const [collapsed, setCollapsed] = useState(false);
+  const [friendsOpen, setFriendsOpen] = useState(false);
   const panel = useRef<HTMLElement>(null);
   useSelectionDrawerGestures(panel, collapsed, setCollapsed, onSwipe);
   return (
@@ -56,7 +58,7 @@ export function SelectionMenu({
       data-state={collapsed ? "collapsed" : "expanded"}
       aria-label="Ações dos versículos selecionados"
       onMouseDown={(event) => {
-        if ((event.target as Element).closest("button")) event.preventDefault();
+        if (!(event.target as Element).closest("dialog") && (event.target as Element).closest("button")) event.preventDefault();
       }}
     >
       <div className="selection-menu-controls">
@@ -134,6 +136,8 @@ export function SelectionMenu({
           <span hidden={collapsed}>Enviar para comunidade</span>
         </Button>
       )}
+      {repo.social && <Button variant="ghost" className="selection-action" aria-label="Enviar para amigos" onClick={() => setFriendsOpen(true)}><Send size={20} /><span hidden={collapsed}>Enviar para amigos</span></Button>}
+      {friendsOpen && repo.social && <ShareToFriends key={`${quote.version}:${quote.book}:${quote.chapter}:${quote.first}:${quote.last}`} social={repo.social} quote={quote} onClose={() => setFriendsOpen(false)} />}
       {choosing && (
         <div className="selection-destinations" hidden={collapsed}>
           <fieldset>

@@ -8,6 +8,7 @@ import {
   RefreshCw,
   Settings,
   Shield,
+  UserRound,
 } from "lucide-react";
 import { canPublish, initials } from "domain/core";
 import { useApp } from "./context";
@@ -88,6 +89,7 @@ export function AccountMenu({ name = "Minha conta" }: { name?: string }) {
           }}
         >
           <p className="caption">{name}</p>
+          {app.repository?.social && <Link className={linkAppearance} to="/perfil"><UserRound size={16} />Meu perfil e amigos</Link>}
           {app.localProfile && (
             <p className="caption">{app.localProfile.label}</p>
           )}

@@ -1,0 +1,81 @@
+.social-profile section {
+  margin-block: 1.5rem;
+}
+.social-invite {
+  margin-block: 1rem;
+}
+.social-code,
+.social-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.social-code code {
+  font-size: 1.1rem;
+  letter-spacing: 0.08em;
+  user-select: all;
+}
+.social-list {
+  list-style: none;
+  padding: 0;
+}
+.social-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-block: 0.75rem;
+  border-bottom: 1px solid var(--line);
+}
+.friend-options {
+  display: grid;
+  gap: 0.6rem;
+  max-height: 15rem;
+  overflow: auto;
+  margin-block: 1rem;
+}
+.friend-options label {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.friend-options input {
+  width: auto;
+}
+.share-card {
+  border-bottom: 1px solid var(--line);
+  padding-block: 1rem;
+  overflow-wrap: anywhere;
+}
+.share-note {
+  white-space: pre-wrap;
+}
+.community-friend {
+  margin-inline-start: auto;
+}
+.bible-verse-row {
+  position: relative;
+}
+.bible-verse-row:has(.verse-marks) {
+  padding-inline-end: 4rem;
+}
+.verse-marks {
+  position: absolute;
+  inset-inline-end: 0;
+  top: 0.25rem;
+  display: flex;
+}
+.verse-mark {
+  width: 1.9rem;
+  min-width: 1.9rem;
+  padding: 0.25rem;
+}
+.verse-mark-received {
+  border: 1px solid currentColor;
+  border-radius: 50%;
+}
+.bible-page > .bible-controls {
+  margin-top: 1rem;
+}

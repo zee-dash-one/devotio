@@ -40,7 +40,8 @@ function ReaderShell() {
   useEffect(() => {
     const navigation = mobileNavigation.current;
     if (!navigation || typeof ResizeObserver === "undefined") return;
-    const measure = () => setNavigationHeight(navigation.getBoundingClientRect().height);
+    const measure = () =>
+      setNavigationHeight(navigation.getBoundingClientRect().height);
     const observer = new ResizeObserver(measure);
     measure();
     observer.observe(navigation);
@@ -60,7 +61,12 @@ function ReaderShell() {
       <ReaderContext.Provider
         value={{ data: home.data, error: home.error, date }}
       >
-        <div className="reader-shell" style={{ "--mobile-nav-height": `${navigationHeight}px` } as CSSProperties}>
+        <div
+          className="reader-shell"
+          style={
+            { "--mobile-nav-height": `${navigationHeight}px` } as CSSProperties
+          }
+        >
           <a className="skip-link" href="#main">
             Pular para o conteúdo
           </a>
@@ -164,13 +170,19 @@ function ReaderShell() {
               <AudioPlayer key={audio.id + audio.audioUrl} devotional={audio} />
             </div>
           )}
-          <footer className="site-footer">
-            <span>Um pouco de silêncio. Um encontro com a Palavra.</span>
-            <Link to="/ajuda">
-              Feito para estar presente <ArrowUpRight size={13} />
-            </Link>
-          </footer>
-          <nav ref={mobileNavigation} className="mobile-nav" aria-label="Navegação no celular">
+          {location.pathname !== "/biblia" && (
+            <footer className="site-footer">
+              <span>Um pouco de silêncio. Um encontro com a Palavra.</span>
+              <Link to="/ajuda">
+                Feito para estar presente <ArrowUpRight size={13} />
+              </Link>
+            </footer>
+          )}
+          <nav
+            ref={mobileNavigation}
+            className="mobile-nav"
+            aria-label="Navegação no celular"
+          >
             <Link to="/devocional" activeProps={{ className: "active" }}>
               <BookOpen size={21} />
               <span>Devocional</span>

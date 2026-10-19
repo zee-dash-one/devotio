@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import type { BibleQuote } from "domain/core";
-export function Quote({ quote }: { quote: BibleQuote }) {
+export function Quote({ quote, onOpen }: { quote: BibleQuote; onOpen?: () => void }) {
   return (
     <blockquote className="community-quote">
       <p>{quote.text}</p>
@@ -8,6 +8,7 @@ export function Quote({ quote }: { quote: BibleQuote }) {
         {quote.reference} · {quote.versionName}
       </footer>
       <Link
+        onClick={onOpen}
         to="/biblia"
         search={{
           book: quote.book,

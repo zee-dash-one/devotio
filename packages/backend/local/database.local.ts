@@ -1,5 +1,6 @@
 // Multiple-dot filename excludes this development module from Convex entry points.
 import { DatabaseSync, type SQLInputValue } from "node:sqlite";
+import { LocalSocial } from "./social.local";
 import { randomUUID, createHash } from "node:crypto";
 import { readFileSync, existsSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -28,6 +29,7 @@ export const profiles: LocalProfile[] = [
 type Row = Record<string, unknown>;
 type PublicationRow = { data: string; publishedAt: number; withdrawn: number };
 export class LocalDatabase {
+  readonly social: LocalSocial;
   readonly db: DatabaseSync;
   private listeners = new Map<string, Set<(summary: NotificationSummary) => void>>();
   private changedNotifications = new Set<string>();
@@ -61,6 +63,7 @@ export class LocalDatabase {
     if (!this.all<{ name: string }>("PRAGMA table_info(quoteDrafts)").some(column => column.name === "state")) this.db.exec("ALTER TABLE quoteDrafts ADD COLUMN state TEXT NOT NULL DEFAULT 'draft'");
     if (bibleDirectory && existsSync(join(bibleDirectory, "aa.json"))) this.importBible(bibleDirectory);
     this.seed();
+    this.social = new LocalSocial(this, id => this.notificationsChanged(id));
   }
   get<T = Row>(sql: string, ...args: SQLInputValue[]): T | undefined { return this.db.prepare(sql).get(...args) as T | undefined; }
   all<T = Row>(sql: string, ...args: SQLInputValue[]): T[] { return this.db.prepare(sql).all(...args) as T[]; }
@@ -204,6 +207,9 @@ export class LocalDatabase {
   }
   query(user: LocalProfile, input: LocalQuery): unknown {
     switch (input.query) {
+      case "socialFriends": return this.social.friends(user.id);
+      case "socialShares": return this.social.shares(user.id, input.input);
+      case "socialMarkers": return this.social.markers(user.id, input.chapter);
       case "session": return user;
       case "devotionals": return Object.fromEntries(input.dates.map(date => [date, this.query(user, { query: "home", date, timeZone: input.timeZone })]));
       case "home": return { user, devotional: this.published(input.date, input.timeZone), settings: { monthlyVerse: "Um coração atento ao que permanece.", monthlyReference: "Tema ilustrativo do mês", weeklyVerse: "Caminhar com presença e cuidado.", weeklyReference: "Tema ilustrativo da semana" } } satisfies HomeData;
@@ -245,6 +251,10 @@ export class LocalDatabase {
   command(user: LocalProfile, input: LocalCommand): unknown {
     return this.transaction(() => {
       switch (input.action) {
+        case "social": {
+          try { return this.social.command(user.id, input.input); }
+          catch (error) { throw new LocalError(error instanceof Error ? error.message : "Não foi possível concluir."); }
+        }
         case "login": case "logout": throw new LocalError("Operação de sessão inválida.");
         case "createCommunity": {
           const id = randomUUID(), code = Array.from({ length: 8 }, () => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[parseInt(randomUUID().slice(0, 8), 16) % 31]).join("");

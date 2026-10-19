@@ -4,6 +4,9 @@
 
 ## Revisão atual: configurações e leitura
 
+- [Amigos e partilha privada — spec 014](../specs/014-amigos-compartilhamento/spec.md): Perfil, convites consentidos, recados bíblicos e leitura simplificada. [Como usar](product/friends-and-sharing.md).
+- **Aprovar usuários:** rota direta `/gestao-acesso`, com login/senha/TOTP do proprietário; não aparece nas Configurações nem no Perfil. [Passo a passo](operations/user-administration.md#como-encontrar-e-entrar-no-painel).
+
 - [Editorial integrado à Bíblia — spec 013](../specs/013-editorial-biblia-publicada/spec.md): cadastro conectado, datas livres, seleção bíblica, limites, autoria, Brasília 00:00 e cópia SQL integral; código implementado, publicação/homologação pendentes.
 
 - [Escolha da versão bíblica e Almeida 1911 — spec 012](../specs/012-versoes-biblia/spec.md): aprovada em 09/10/2026 para a web local/conectada; implementação e verificação registradas no estado real.

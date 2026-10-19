@@ -1,4 +1,5 @@
 import { makeFunctionReference } from "convex/server";
+import { createSocialRepository } from "./social";
 export { createAdministration, createConnectedEditorial, usePilotAccess } from "./administration";
 import { ConvexError } from "convex/values";
 import type { ConvexReactClient, Watch as ConvexWatch } from "convex/react";
@@ -90,6 +91,7 @@ export function createConvexRepository(client: ConvexReactClient): Repository {
   }
   return {
     mode: "live",
+    social: createSocialRepository(client),
     watchHome: (date) => (next, error) =>
       subscribe(client.watchQuery(refs.home, { date }), next, error),
     watchCommunities: () => (next, error) =>

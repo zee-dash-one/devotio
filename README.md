@@ -2,9 +2,22 @@
 
 Um espaço calmo para ler a Palavra, meditar e orar. Um app devocional minimalista, com cuidado editorial e uma comunidade discreta sob supervisão pastoral.
 
-**Fase atual:** web de desenvolvimento com Devocional, Bíblia AA e Comunidades, login simulado por perfil e SQLite persistente. [Como usar o ambiente local](docs/engineering/local-development.md). Publicação será planejada depois; Google/Convex reais e apps de loja permanecem para etapas posteriores.
+**Estado do código:** web/PWA com Devocional, Bíblia por edição, Comunidades,
+gestão de acesso e editorial. A spec 014 acrescenta amigos e recados privados.
+Há adaptadores Google/Convex e um ambiente local com perfis fictícios e SQLite.
+[Como usar o ambiente local](docs/engineering/local-development.md) ·
+[Validações e pendências de publicação](docs/engineering/status.md).
+Código no checkout não comprova atualização de produção; Expo permanece adiado.
 
 ## Comece aqui
+
+**Aprovação e gestão de usuários:** acesse `/gestao-acesso` no domínio do app,
+com login do proprietário, senha e autenticador. O painel não fica nas
+Configurações nem no Perfil. [Guia de acesso e operação](docs/operations/user-administration.md).
+
+**Amigos e recados bíblicos:** menu da conta → Meu perfil e amigos.
+[Guia da funcionalidade](docs/product/friends-and-sharing.md) ·
+[Spec 014](specs/014-amigos-compartilhamento/spec.md). Código local não comprova deploy.
 
 | Quero entender… | Documento |
 |---|---|

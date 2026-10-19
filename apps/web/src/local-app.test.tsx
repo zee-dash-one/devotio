@@ -75,6 +75,8 @@ function server(loggedIn: boolean, actor = profile, conflict = false, manages = 
       return new Response(JSON.stringify({ profile: actor, expiresAt: Date.now() + 86400000 }));
     }
     const input = JSON.parse(new URL(path, "http://localhost").searchParams.get("input")!);
+    if (input.query === "socialMarkers") return new Response("[]");
+    if (input.query === "socialFriends") return new Response(JSON.stringify({ userId: actor.id, code: null, friends: [] }));
     if (input.query === "communities") return new Response(JSON.stringify(manages ? ["Esperança", "Caminho"].map((name, index) => ({ id: index ? "caminho" : "esperanca", name, description: "Teste", scripture: "", role: "admin" })) : []));
     if (input.query === "quoteDrafts") return new Response(JSON.stringify(drafts.filter(draft => draft.communityId === input.id)));
     if (input.query === "community") return new Response(JSON.stringify({ community: { id: input.id, name: "Esperança", description: "Teste", scripture: "", role: manages ? "admin" : "member", inviteCode: "ESPERANC" }, members: [], messages, lists: [], hasMore: false, nextCursor: null }));
@@ -102,6 +104,10 @@ async function chooseWord() {
   expect(screen.queryByLabelText("Ações dos versículos selecionados")).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "Usar trecho no devocional" }));
   await screen.findByLabelText("Palavra");
+}
+function isQuery(path: string, name: string) {
+  const input = new URL(path, "http://localhost").searchParams.get("input");
+  return input ? (JSON.parse(input) as { query?: string }).query === name : false;
 }
 describe("entrada local integrada", () => {
   it("compacta o cabeçalho desktop na rolagem, mantém ações e expande no topo sem consultas", async () => {
@@ -241,9 +247,9 @@ describe("entrada local integrada", () => {
     const fetcher = server(true);
     render(<StrictMode><LocalApp /></StrictMode>);
     const first = await screen.findByRole("checkbox", { name: /^Versículo 1:/ });
-    await waitFor(() => expect(fetcher.mock.calls.filter(([path]) => path.includes('%22chapter%22')).length).toBe(3));
+    await waitFor(() => expect(fetcher.mock.calls.filter(([path]) => isQuery(path, "chapter")).length).toBe(3));
     fireEvent.click(first);
-    const before = fetcher.mock.calls.length;
+    const before = fetcher.mock.calls.filter(([path]) => !isQuery(path, "socialMarkers")).length;
     fireEvent.click(screen.getByRole("button", { name: "Configurações" }));
     fireEvent.click(screen.getByRole("combobox", { name: "Tema" }));
     fireEvent.click(screen.getByRole("option", { name: "Noite" }));
@@ -256,7 +262,7 @@ describe("entrada local integrada", () => {
     expect(screen.queryByRole("navigation", { name: "Capítulos" })).toBeNull();
     expect(first.getAttribute("aria-checked")).toBe("true");
     fireEvent.click(screen.getByRole("button", { name: /^Fechar$/ }));
-    expect(fetcher.mock.calls).toHaveLength(before);
+    expect(fetcher.mock.calls.filter(([path]) => !isQuery(path, "socialMarkers"))).toHaveLength(before);
     expect(JSON.parse(localStorage.getItem("devotio:preferences:v1:" + profile.id)!)).toEqual({ theme: "night", fontSize: 32, mode: "continuous" });
   });
   it("restaura preferências do perfil na recarga e deixa de aplicá-las ao sair", async () => {
@@ -309,12 +315,12 @@ describe("entrada local integrada", () => {
       await waitFor(() => expect(document.querySelector(`[data-reading-chapter="${visibleChapter + 1}"]`)).not.toBeNull());
       expect(document.querySelectorAll('[data-reading-chapter]')).toHaveLength(3);
     }
-    expect(fetcher.mock.calls.filter(([path]) => path.includes('%22chapter%22'))).toHaveLength(8);
+    expect(fetcher.mock.calls.filter(([path]) => isQuery(path, "chapter"))).toHaveLength(8);
     visibleChapter = 7;
     fireEvent.scroll(window);
     await waitFor(() => expect(new URL(window.location.href).searchParams.get('chapter')).toBe('7'));
     await waitFor(() => expect(document.querySelector('[data-reading-chapter="6"]')).not.toBeNull());
-    expect(fetcher.mock.calls.filter(([path]) => path.includes('%22chapter%22'))).toHaveLength(8);
+    expect(fetcher.mock.calls.filter(([path]) => isQuery(path, "chapter"))).toHaveLength(8);
   });
   it("contrai/expande pela seta e preserva seleção, cópia e escolha de comunidades", async () => {
     window.history.replaceState(null, "", "/biblia"); server(true, manager, false, true);

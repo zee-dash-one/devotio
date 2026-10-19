@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { socialCommandSchema, shareFilterSchema } from "./social";
 import { bibleVersionSchema, bibleSearchSchema } from "./bible";
 import { bibleSelectionSchema } from "../sharing";
 import { editorialMonthSchema } from "../editorial";
@@ -25,6 +26,7 @@ export const bibleBooksSchema = z.array(z.object({
   chapters: z.number().int().positive(), testament: z.enum(["VT", "NT"]),
 })).length(66);
 export const localCommandSchema = z.discriminatedUnion("action", [
+  z.object({ action: z.literal("social"), input: socialCommandSchema }),
   z.object({ action: z.literal("login"), profileId: id }),
   z.object({ action: z.literal("logout") }),
   z.object({ action: z.literal("createCommunity"), input: communitySchema }),
@@ -46,6 +48,9 @@ export const localCommandSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("withdraw"), date: dateSchema, reason: z.string().trim().min(1).max(1000) }),
 ]);
 export const localQuerySchema = z.discriminatedUnion("query", [
+  z.object({ query: z.literal("socialFriends") }),
+  z.object({ query: z.literal("socialShares"), input: shareFilterSchema }),
+  z.object({ query: z.literal("socialMarkers"), chapter: shareFilterSchema.shape.chapter.unwrap() }),
   z.object({ query: z.literal("session") }),
   z.object({ query: z.literal("home"), date: dateSchema, timeZone: timeZoneSchema }),
   z.object({ query: z.literal("devotionals"), dates: z.array(dateSchema).min(1).max(8).refine(dates => new Set(dates).size === dates.length), timeZone: timeZoneSchema }),

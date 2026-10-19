@@ -29,6 +29,15 @@ packages/**
 !packages/backend/local/scripture-store.local.ts
 !packages/backend/local/scripture-store.test.ts
 !packages/domain/validators/bible.ts
+!packages/domain/social.ts
+!packages/domain/social.test.ts
+!packages/domain/validators/social.ts
+!packages/domain/react/social.ts
+!packages/backend/social.ts
+!packages/backend/social.test.ts
+!packages/backend/socialValidators.ts
+!packages/backend/local/social.local.ts
+!packages/backend/local/social.test.ts
 !packages/backend/local/alm1911.local.ts
 skills-lock.json
 CLAUDE.md

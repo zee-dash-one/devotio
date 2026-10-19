@@ -51,6 +51,22 @@ Uma contagem em grupo pequeno pode permitir inferências; não a descrever como 
 
 ## 4. Preparação obrigatória para o piloto
 
+### Recados entre amigos — spec 014
+
+Amizades exigem convite e aceite. A lista de vínculos é visível apenas ao próprio
+titular; códigos não substituem autenticação. Descoberta na comunidade revela
+apenas os nomes já acessíveis aos participantes, sem e-mail ou lista de amigos.
+O remetente vê seus destinatários; cada destinatário recebe somente nome do
+remetente, trecho e recado. Gestores não recebem acesso adicional a esses dados.
+Texto bíblico e nomes ficam registrados como estavam no envio. Remover amizade
+bloqueia novos envios, preservando recados anteriores; desativação não apaga cópias
+de outras pessoas. Não há edição/exclusão de recados enviados nesta entrega.
+Pedidos de exclusão continuam dependendo do processo operacional do piloto, sem
+promessa de remover conteúdo já copiado por participantes. Recados não são
+persistidos no cache do navegador. Restrições de comentários/orações não mudam.
+
+### Preparação operacional
+
 Definir operador/controlador e contato de atendimento, público e faixa etária, base legal, finalidade, provedores, região de hospedagem e tratamento internacional aplicável. Preparar aviso de privacidade legível antes do login, fluxo de pedidos de acesso/correção/exclusão e rotina de resposta a incidentes.
 
 Escolher prazos de retenção por categoria, incluindo logs e backups. A spec 002 preserva histórico ao remover membro: isso não equivale a decidir retenção eterna nem a resolver exclusão de conta. Fechar essa diferença antes de produção. Caso haja menores, definir o tratamento aplicável antes do recrutamento.

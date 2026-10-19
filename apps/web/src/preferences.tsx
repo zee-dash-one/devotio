@@ -3,6 +3,7 @@ import {
   useContext,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -18,8 +19,10 @@ import {
   bibleVersionNames,
   resolveBibleVersion,
   bibleVersionSchema,
+  type BibleCatalog,
+  type Watch,
 } from "domain/core";
-import { useRepository } from "domain/react";
+import { useRepository, useWatch } from "domain/react";
 import { Modal } from "./components";
 import { readingThemes } from "ui-kit";
 import { Dropdown } from "./dropdown";
@@ -145,6 +148,9 @@ export function SettingsModal({
   const { preferences, change } = usePreferences();
   const repository = useRepository();
   const versions = repository.bible?.versions ?? (repository.reading ? ["aa"] as const : []);
+  const version = resolveBibleVersion(preferences.bibleVersion, versions);
+  const reader = useMemo(() => repository.bible?.forVersion(version) ?? repository.reading, [repository, version]);
+  const source = useWatch(useMemo((): Watch<BibleCatalog> => reader?.watchBible() ?? (() => () => {}), [reader]));
   return (
     <Modal
       title="Configurações"
@@ -163,6 +169,7 @@ export function SettingsModal({
             onChange={value => change({ bibleVersion: bibleVersionSchema.parse(value) })}
           />
           {preferences.bibleVersion && !versions.includes(preferences.bibleVersion) && <p role="status" className="caption">A versão salva não está disponível neste ambiente. Escolha uma das versões acima.</p>}
+          {source.data && <p className="caption">{source.data.source}{version === "alm1911" ? " · Grafia original preservada." : ""}</p>}
         </div>}
         <div className="field">
           <span>Tema</span>

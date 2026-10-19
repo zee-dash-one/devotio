@@ -12,3 +12,4 @@ export * from "./validators/administration";
 export * from "./validators/bible";
 export * from "./bible";
 export * from "./editorial";
+export * from "./social";

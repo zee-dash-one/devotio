@@ -4,6 +4,12 @@ Ordem orientada a dependências e evidências, sem datas artificiais. [Estado at
 
 ## Posição em 03/10/2026
 
+Revisão de 19/10/2026: a [spec 014](../../specs/014-amigos-compartilhamento/spec.md)
+foi autorizada para documentar o acesso administrativo, simplificar a leitura,
+adicionar amizades consentidas e partilha privada de trechos. Implementação no
+checkout para revisão; PR e publicação com o usuário. Expo adiado. As etapas
+históricas abaixo não comprovam o estado do deployment atual.
+
 Reconstrução web autorizada pelo usuário conforme spec 004 §10. Base técnica das etapas 1–4 implementada localmente. Permanecem pendentes homologação OAuth, conteúdo/licenças, política, testes físicos e publicação. Decisões abaixo registram a revisão inicial; web/Google/editorial interno/convite por código/mural sem edição foram adotados na implementação.
 
 ## Etapas

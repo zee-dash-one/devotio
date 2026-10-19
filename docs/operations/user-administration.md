@@ -4,6 +4,37 @@ Implementação da [spec 011](../../specs/011-gestao-usuarios-aprovacao/spec.md)
 Página web: `/gestao-acesso`, sem link nos menus. Usuários comuns continuam entrando
 com Google. Administradores de comunidade não são superusuários.
 
+## Como encontrar e entrar no painel
+
+Abra **o endereço do aplicativo seguido de `/gestao-acesso`**, por exemplo
+`https://seu-dominio/gestao-acesso`. Salve esse endereço nos favoritos do navegador.
+Não existe atalho em **Configurações**, no **Perfil** ou nos menus públicos.
+Ocultar o link é uma escolha de navegação; a proteção real é verificada no servidor.
+
+Entre com o **login do proprietário**, sua **senha administrativa** e o **código
+atual de seis dígitos do autenticador (TOTP)** configurado na preparação abaixo.
+O login Google normal não substitui essa entrada. Após entrar, filtre a situação
+por pendentes, consulte o cadastro e libere o acesso desejado. Atualize a lista
+quando necessário. Recarregar a página exige nova entrada; a sessão dura 30 minutos.
+
+| Acesso | O que permite | Como encontrar |
+|---|---|---|
+| Proprietário (login + senha + TOTP) | Aprovar/desativar contas e conceder permissões | Rota direta `/gestao-acesso` |
+| Gestão editorial | Cadastrar, corrigir e retirar devocionais | Menu da conta → Gestão de devocionais, quando concedida |
+| Administração de comunidade | Administrar a comunidade atribuída | Dentro da própria comunidade |
+| Leitor aprovado | Ler e usar suas comunidades e amizades | Login normal; Perfil acessível pelo menu da conta |
+
+Aprovar uma conta não concede automaticamente editorial ou administração de
+comunidade. Cada permissão é independente. Novos cadastros Google aguardam
+aprovação enquanto o controle do piloto estiver ligado; desativar esse controle
+só afeta novos cadastros, sem aprovar pendentes nem reativar desativados.
+Desativação conserva dados e impede acesso; não equivale a exclusão definitiva.
+O painel não permite ler amizades ou recados privados dos participantes.
+
+Se faltar configuração administrativa, prepare o proprietário conforme a próxima
+seção. Se perdeu as credenciais, consulte **Sessões, tentativas e recuperação**
+neste documento. Nunca coloque credenciais reais nesta documentação.
+
 ## Preparar o proprietário
 
 1. Na raiz do repositório, execute em um terminal privado:

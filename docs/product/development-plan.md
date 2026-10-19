@@ -1,5 +1,11 @@
 # Plano de desenvolvimento do produto completo
 
+**Extensão autorizada em 19/10/2026:** [spec 014](../../specs/014-amigos-compartilhamento/spec.md)
+acrescenta documentação administrativa, leitura simplificada, amigos no Perfil e
+recados privados. Ordem: documentação/leitor → amizades → partilha. Regras
+aprovadas constam na spec; não é necessário repetir o aceite do briefing.
+Homologação, PR e deploy permanecem separados da implementação local.
+
 > Atualização de execução em 04/10/2026: o usuário autorizou implementar e delegou
 > decisões restantes conforme a documentação. A [spec 006](../../specs/006-desenvolvimento-local/spec.md)
 > registra três abas, SQLite, login mockado, limpeza de favoritos no logout,

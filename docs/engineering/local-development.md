@@ -1,5 +1,25 @@
 # Usar o produto local
 
+## Amigos e recados — revisão 014
+
+O menu da conta oferece **Meu perfil e amigos**. Gere um código com Marina,
+saia e entre como Daniel; envie um convite usando esse código. Entre novamente
+como Marina e aceite. Daniel também pode convidá-la em Comunidade → Membros.
+Com a amizade aceita, selecione um trecho em Bíblia → Enviar para amigos,
+marque Marina, escreva um recado e confirme. Daniel vê a seta de envio; Marina vê
+o envelope na mesma edição/capítulo. Ambos encontram seus recados no Perfil.
+Teste remoção, falha/reenvio, busca por nome e troca de edição: envio antigo
+continua disponível sem liberar novos envios após remover a amizade.
+
+SQLite conserva as cinco tabelas sociais entre reinícios. Eventos SSE invalidam
+amigos/histórico/marcações ativos após alterações. Trocar perfil encerra o stream
+e remove estado em memória; não há cache persistente de recados no navegador.
+Perfis fictícios são sempre ativos; aprovação/desativação real é verificada
+nos testes Convex e deve ser homologada no ambiente conectado.
+
+O painel `/gestao-acesso` é do ambiente conectado com senha/TOTP; login local
+simulado não o substitui. [Guia do proprietário](../operations/user-administration.md).
+
 **05/10/2026 — escopo da [spec 006](../../specs/006-desenvolvimento-local/spec.md).**
 Web com SQLite persistente, identidade simulada e Bíblia AA importada. Não exige
 Convex, Google, Docker ou conta externa para usar depois da preparação inicial.

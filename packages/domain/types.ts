@@ -73,6 +73,7 @@ export type Watch<T> = (
 ) => Unsubscribe;
 export interface Repository {
   mode: "preview" | "live" | "local";
+  social?: import("./social").SocialRepository;
   reading?: import("./reading").ReadingRepository;
   bible?: import("./reading").BibleRepository;
   notifications?: import("./sharing").NotificationsRepository;

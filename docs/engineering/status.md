@@ -1,5 +1,45 @@
 # Estado real do projeto
 
+## Amigos e partilha privada — spec 014, revisão local em 19/10/2026
+
+A [spec 014](../../specs/014-amigos-compartilhamento/spec.md) está implementada
+no checkout. O menu da conta abre o Perfil, com código de convite rotativo,
+pedidos recebidos/enviados, aceitação, recusa, remoção e filtro de amigos. Também
+é possível convidar pela lista de uma comunidade em comum. Não há nova aba na
+navegação principal nem exposição pública da lista de amizades.
+
+A seleção bíblica permite enviar um recado a até 20 amigos ativos, com limite
+de 1.000 caracteres. O servidor valida amizade/acesso, reconstrói a citação,
+registra destinatários e evita duplicação ao repetir o mesmo envio. O autor vê
+os destinatários; cada receptor recebe apenas autoria, recado e trecho. Ícones
+distintos de envio/recebimento abrem os detalhes junto ao primeiro versículo
+selecionado; o Perfil também oferece histórico paginado. Remover a amizade
+impede novos envios, mas preserva o histórico privado.
+
+O leitor removeu textos introdutórios, orientações e rodapé decorativo; mantém
+filtros, texto, navegação e ações contextuais. Os créditos da edição ficam nas
+Configurações. O acesso administrativo permanece em `/gestao-acesso`, com
+credenciais próprias e TOTP, sem link nas Configurações ou no Perfil; foi
+destacado no [guia de gestão](../operations/user-administration.md).
+
+Convex e SQLite implementam os mesmos contratos do domínio, com cinco tabelas
+aditivas. Testes cobrem consentimento, acesso negado, privacidade entre
+destinatários, paginação, idempotência, persistência local e atualização entre
+sessões. Passaram 205 testes distintos nesta rodada (94 domínio, 57 backend e
+54 web, incluindo a reexecução dos testes afetados pelos ajustes finais).
+Lint e typecheck passaram no monorepo inteiro; 154 links relativos foram
+verificados em 18 documentos alterados, sem destinos ausentes.
+`npm run verify:web` passou: build com 2.357 módulos, PWA com 22 recursos,
+manifest/ícones/licenças válidos, ausência de fixtures e cache de API. ARC1911
+permanece no artefato público com 66 livros, 1.189 capítulos e 31.101 versículos,
+fora do bundle JavaScript e do precache.
+
+**Limites:** nenhum deployment foi alterado e não foi executado codegen remoto
+nesta rodada. O navegador de revisão não conseguiu abrir o servidor local
+(timeout); homologação visual, Google real e aparelhos permanecem pendentes.
+Expo continua adiado. O usuário fará revisão, PR e publicação; não executar
+commit, push, PR nem deploy. Código local não comprova disponibilidade em produção.
+
 ## Editorial e corpus padronizado — spec 013, revisão local em 16/10/2026
 
 O código da [spec 013](../../specs/013-editorial-biblia-publicada/spec.md) está

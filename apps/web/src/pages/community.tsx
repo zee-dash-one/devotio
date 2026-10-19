@@ -52,6 +52,7 @@ import {
 } from "../components";
 import { useWriting } from "../context";
 import { Quote } from "../quote";
+import { useFriends, CommunityFriendButton } from "../social";
 type DialogKind = "create" | "join" | null;
 export function CommunitiesPage() {
   const { data, error } = useCommunities();
@@ -306,6 +307,7 @@ export function CommunityPage({
 }) {
   const repo = useRepository();
   const writing = useWriting();
+  const friends = useFriends(tab === "membros" ? repo.social : undefined);
   const [cursor, setCursor] = useState<string | null>(null);
   const { data, error } = useCommunity(id, cursor);
   const [modal, setModal] = useState<
@@ -556,6 +558,7 @@ export function CommunityPage({
                     <Trash2 size={17} />
                   </IconButton>
                 )}
+                {repo.social && friends.data && <CommunityFriendButton social={repo.social} data={friends.data} communityId={id} userId={member.userId} name={member.name} />}
               </li>
             ))}
           </ul>

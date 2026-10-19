@@ -4,6 +4,11 @@
 **Finalidade:** referência para escrever e revisar as próximas specs, planos e tarefas.  
 **Estado:** briefing de requisitos; não representa funcionalidade implementada nem autorização para publicar.
 
+**Encaminhamento:** implementação autorizada pelo usuário em 19/10/2026 e
+formalizada na [spec 014](../specs/014-amigos-compartilhamento/spec.md).
+O texto abaixo conserva o briefing aprovado; acompanhe execução e validações nas
+[tarefas](../specs/014-amigos-compartilhamento/tasks.md) e no estado do projeto.
+
 ## Prompt refinado
 
 Quero evoluir o Devotio de forma discreta, preservando as funcionalidades existentes e a privacidade dos leitores. Organize o trabalho abaixo em especificações e tarefas verificáveis antes de implementar novas funcionalidades.

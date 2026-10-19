@@ -4,6 +4,7 @@ import { localCommandSchema, localQuerySchema, type LocalCommand, type LocalQuer
 import { localCacheSchema, type LocalCache, type LocalCacheStorage } from "./local-cache";
 import { notificationSummarySchema, type NotificationSummary, type NotificationPage, type CommunityQuoteDraft } from "./sharing";
 import { chapterWindow } from "./preferences";
+import type { FriendsData, SharePage, ShareMarker } from "./social";
 export type { LocalCacheStorage, LocalCache } from "./local-cache";
 
 export async function localRequest<T>(path: string, body?: unknown, profileId?: string): Promise<T> {
@@ -165,6 +166,7 @@ export function createLocalRepository(storage: LocalCacheStorage, onExpired: () 
   }
   async function afterCommand(input: LocalCommand, result: unknown) {
     switch (input.action) {
+      case "social": await invalidate(key => key.startsWith("social:")); break;
       case "publish": case "schedule": case "withdraw": {
         const date = input.action === "withdraw" ? input.date : input.input.date;
         revision++; delete cache.homes[date]; dirtyDates.add(date); persist();
@@ -193,6 +195,7 @@ export function createLocalRepository(storage: LocalCacheStorage, onExpired: () 
     const entry = entries.get("notifications:summary");
     if (entry) { entry.revision++; entry.value = notificationSummary; entry.ready = true; entry.observers.forEach(observer => observer.next(notificationSummary)); }
     await invalidate(key => key.startsWith("notifications:page:"));
+    await invalidate(key => key.startsWith("social:"));
   }
   async function command<T>(input: LocalCommand): Promise<T> {
     try {
@@ -237,6 +240,15 @@ export function createLocalRepository(storage: LocalCacheStorage, onExpired: () 
   }
   const repository: Repository = {
     mode: "local",
+    social: {
+      watchMarkers: chapter => watch("social:markers:" + JSON.stringify(chapter), () => query<ShareMarker[]>({ query: "socialMarkers", chapter })),
+      watchFriends: () => watch("social:friends", () => query<FriendsData>({ query: "socialFriends" })),
+      rotateCode: () => command<string>({ action: "social", input: { kind: "rotateCode" } }),
+      request: async input => { await command({ action: "social", input: { kind: "request", input } }); },
+      change: async input => { await command({ action: "social", input: { kind: "change", input } }); },
+      send: input => command<string>({ action: "social", input: { kind: "send", input } }),
+      watchShares: input => watch("social:shares:" + JSON.stringify(input), () => query<SharePage>({ query: "socialShares", input })),
+    },
     notifications: {
       watchSummary: () => watch("notifications:summary", async () => {
         if (notificationSummary) return notificationSummary;

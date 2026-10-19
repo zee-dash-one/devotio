@@ -24,10 +24,12 @@ import { RouteRedirect } from "./redirect";
 import { ReaderLayout } from "./reader-shell";
 import { AdministrationPage } from "./pages/administration";
 import { AccessWaitPage } from "./pages/access-wait";
+import { ProfilePage } from "./social";
 
 const pageTitles: Record<string, string> = {
   "/devocional": "Devocional",
   "/biblia": "Bíblia",
+  "/perfil": "Meu perfil",
   "/editorial": "Gestão de devocionais",
   "/editorial/cadastro": "Cadastro de devocional",
   "/entrar": "Bem-vindo",
@@ -116,6 +118,7 @@ const editorialRoute = createRoute({
   path: "/editorial",
   component: EditorialPage,
 });
+const profileRoute = createRoute({ getParentRoute: () => readerRoute, path: "/perfil", component: ProfilePage });
 const editorFormRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/editorial/cadastro",
@@ -184,6 +187,7 @@ const routeTree = rootRoute.addChildren([
   indexRoute,
   editorFormRoute,
   readerRoute.addChildren([
+    profileRoute,
     devotionalRoute,
     bibleRoute,
     editorialRoute,

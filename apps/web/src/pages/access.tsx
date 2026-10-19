@@ -276,6 +276,16 @@ export function InfoPage({ kind }: { kind: "help" | "privacy" }) {
               pessoais reais para avaliar esta prévia.
             </p>
           </section>
+          <section>
+            <h2>Amigos e recados bíblicos</h2>
+            <p>
+              Amizades dependem de convite e aceite. Sua lista de amigos é privada.
+              Só os amigos escolhidos recebem seu nome e recado. Cada destinatário
+              não vê as outras pessoas que receberam o envio. Remover uma amizade
+              impede novos envios, mas conserva os recados entregues. Os recados
+              ficam no servidor e não no cache deste navegador.
+            </p>
+          </section>
         </>
       )}
     </article>

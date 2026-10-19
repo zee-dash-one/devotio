@@ -17,10 +17,13 @@ Requisitos aprovados orientam código; planos orientam implementação; tasks re
 | [011](011-gestao-usuarios-aprovacao/spec.md) | Gestão de usuários e aprovação do piloto | Aprovada e implementada na branch em 09/10; configuração/rollout pendentes | Painel não listado, senha/TOTP, aprovação Google, desativação e permissões |
 | [012](012-versoes-biblia/spec.md) | Escolha da versão bíblica e Almeida 1911 | Aprovada em 09/10; corpus publicado e verificado por HTTP, correção do menu em validação | Configurações, leitura e busca por edição na web local/conectada |
 | [013](013-editorial-biblia-publicada/spec.md) | Editorial integrado à Bíblia publicada | Autorizada em 09/10; código implementado, publicação/homologação pendentes | Datas livres, seleção bíblica, limites, autoria, horário de Brasília e corpus padronizado |
+| [014](014-amigos-compartilhamento/spec.md) | Amigos e partilha privada da Palavra | Implementada no checkout em 19/10; homologação/publicação pendentes | Perfil, convites, recados privados, marcações e leitor simplificado |
 
 [Roadmap](../docs/product/roadmap.md) determina a ordem proposta. A [ADR 001](../docs/adr/001-web-first-free-launch.md) registra distribuição web primeiro; tasks nativas permanecem abertas e adiadas.
 
 ## Navegação
+
+- 014: [spec](014-amigos-compartilhamento/spec.md), [plano](014-amigos-compartilhamento/plan.md), [tasks](014-amigos-compartilhamento/tasks.md).
 
 - 009: [spec](009-configuracoes-leitura/spec.md), [plano](009-configuracoes-leitura/plan.md), [tasks](009-configuracoes-leitura/tasks.md); [diretrizes do corpus e desempenho](../docs/engineering/bible-corpus-plan.md).
 

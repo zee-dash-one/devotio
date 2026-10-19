@@ -41,6 +41,34 @@ Membros não recebem emails ou autores dos ticks. Contagens pequenas podem permi
 
 ## Modelo de Dados
 
+### Amigos e partilhas privadas (spec 014 — 19/10/2026)
+
+`Repository.social` mantém um contrato comum para Convex e SQLite. Domain contém
+Zod, regras de transição, limites e projeção privada. Web só apresenta Perfil,
+convites, seleção de destinatários e marcações; não decide autorização.
+
+| Tabela | Dados e acesso |
+|---|---|
+| friendCodes | Dono e código rotacionável de 12 caracteres; índices por dono/código; não é credencial |
+| friendships | Par ordenado low/high, solicitante e estado pending/accepted; índice do par e de cada lado; até 200 vínculos por conta |
+| scriptureShares | Remetente/nomes no instante do envio, snapshot bíblico, recado, até 20 destinatários, requestId/fingerprint; índice por remetente/requestId |
+| shareViews | Uma linha por remetente/destinatário; índices por dono, direção, edição/livro/capítulo e início/direção; paginação de 30 |
+| shareMarkers | Uma linha por dono/edição/livro/capítulo/início/direção; até 352 por capítulo (176 versos × 2), sem recados nem listas de destinatários |
+
+Envio grava snapshot, índices de visibilidade e marcações na mesma transação.
+Repetir requestId idêntico retorna o envio original; conteúdo diferente é recusado.
+Texto canônico vem do corpus no servidor (ARC1911 conectado; AA/ARC1911 local).
+Todos os endpoints derivam identidade da sessão e exigem aprovação. Descoberta
+por comunidade confere a associação dos dois usuários; código só cria convite.
+Leitura de recebimentos projeta dados sem `recipients`; nenhuma consulta pública
+aceita dono como argumento. Remoção de amizade não remove snapshots entregues.
+
+SQLite cria as mesmas cinco tabelas de forma aditiva, com índices e unicidade.
+As mudanças emitem revisão SSE aos participantes após commit, invalidando somente
+observadores sociais ativos; não há polling nem conteúdo pessoal no evento.
+O cache de amigos/recados existe somente em memória da sessão. Convex usa subscriptions.
+Isso não muda `bibleMarkings.visibility` nem concede leitura privada ao proprietário.
+
 ### Gestão de acesso ao piloto (spec 011 — 09/10/2026)
 
 O backend conectado acrescenta aprovação global antes de qualquer leitura/escrita

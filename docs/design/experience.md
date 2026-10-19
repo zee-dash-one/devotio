@@ -13,6 +13,15 @@
 
 ## 2. Arquitetura da informação
 
+**Revisão 014 (19/10/2026):** Bíblia exibe filtros e versículos, com título de
+capítulo na rolagem contínua. Introdução, ornamento, instruções permanentes e
+rodapé textual saem do leitor; fonte/edição ficam nas Configurações. Menu da conta
+ganha Meu perfil e amigos, sem quarta aba principal. Convites e amigos são privados.
+Envios usam seta e recebimentos envelope com contorno, agrupados pelo início do
+trecho. Botões têm rótulos acessíveis, detalhes em modal e histórico paginado no
+Perfil. O modal de envio conserva recado/destinatários em falha. O painel de
+aprovação permanece fora da navegação pública e está documentado em operação.
+
 ```text
 Acesso
 └─ App

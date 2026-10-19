@@ -1,7 +1,22 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { scriptureSelectionValidator } from "./scriptureValidators";
+import { quoteValidator, recipientValidator, directionValidator } from "./socialValidators";
 export default defineSchema({
+  friendCodes: defineTable({ userId: v.id("users"), code: v.string() })
+    .index("by_userId", ["userId"]).index("by_code", ["code"]),
+  friendships: defineTable({ low: v.id("users"), high: v.id("users"), requesterId: v.id("users"), state: v.union(v.literal("pending"), v.literal("accepted")) })
+    .index("by_low_and_high", ["low", "high"]).index("by_high", ["high"]),
+  scriptureShares: defineTable({ senderId: v.id("users"), senderName: v.string(), requestId: v.string(), fingerprint: v.string(), recipients: v.array(recipientValidator), quote: quoteValidator, message: v.string(), sentAt: v.number() })
+    .index("by_senderId_and_requestId", ["senderId", "requestId"]),
+  shareMarkers: defineTable({ ownerId: v.id("users"), direction: directionValidator, version: scriptureSelectionValidator.fields.version, book: v.string(), chapter: v.number(), first: v.number() })
+    .index("by_ownerId_version_book_chapter_first_direction", ["ownerId", "version", "book", "chapter", "first", "direction"]),
+  shareViews: defineTable({ ownerId: v.id("users"), shareId: v.id("scriptureShares"), direction: directionValidator, version: scriptureSelectionValidator.fields.version, book: v.string(), chapter: v.number(), first: v.number() })
+    .index("by_ownerId_version_book_chapter_first_direction", ["ownerId", "version", "book", "chapter", "first", "direction"])
+    .index("by_ownerId", ["ownerId"])
+    .index("by_ownerId_and_direction", ["ownerId", "direction"])
+    .index("by_ownerId_and_version_and_book_and_chapter", ["ownerId", "version", "book", "chapter"])
+    .index("by_ownerId_and_version_and_book_and_chapter_and_direction", ["ownerId", "version", "book", "chapter", "direction"]),
   users: defineTable({
     authId: v.optional(v.string()),
     tokenIdentifier: v.optional(v.string()),

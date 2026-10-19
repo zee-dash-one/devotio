@@ -1,5 +1,21 @@
 # Publicação e operação do piloto
 
+## Preparação da spec 014 (19/10/2026)
+
+Não houve publicação nesta implementação. Após revisão do usuário, publicar
+backend compatível antes da web: `social` introduz funções públicas autenticadas
+e cinco tabelas aditivas (`friendCodes`, `friendships`, `scriptureShares`,
+`shareViews`, `shareMarkers`). Não há backfill: relações começam vazias.
+Não executar deploy automaticamente. Ao voltar à web anterior, conservar as
+tabelas e dados sociais; não removê-los em rollback de schema.
+
+Homologar com três contas aprovadas e uma pendente/desativada: convite/aceite,
+comunidade em comum, envio para dois destinatários, recebimento sem lista alheia,
+remoção, retry, paginação e marcações na edição correta. Verificar telas pequenas,
+zoom, teclado, foco do modal e atualização PWA. Conferir que web e Convex apontam
+para o mesmo deployment e que fixtures não entraram no build.
+[Guia de uso](../product/friends-and-sharing.md) e [acesso administrativo](user-administration.md).
+
 **Situação:** roteiro de preparação; nenhum deploy foi feito nesta revisão. Dependências de produto novas estão na spec 004, ainda em rascunho.
 
 ## 1. Portões de lançamento

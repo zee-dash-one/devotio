@@ -1,5 +1,9 @@
 # Spec: Seleção bíblica, compartilhamento e notificações
 
+> Extensão aprovada em 19/10/2026: a [spec 014](../014-amigos-compartilhamento/spec.md)
+> adiciona envio privado entre amigos e marcações distintas no leitor. Não altera
+> escopos de anotações/orações existentes nem o compartilhamento comunitário.
+
 **ID:** 008-selecao-compartilhamento-notificacoes
 **Status:** aprovada pelo usuário em 07/10/2026; em implementação local.
 **Versão alvo:** web local; publicação e aplicativo nativo adiados.

@@ -3,7 +3,6 @@ import { Button } from "../ui/button";
 import { useEffect, useLayoutEffect, useMemo, useState, useRef } from "react";
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import {
-  BookOpen,
   Search,
   ChevronLeft,
   ChevronRight,
@@ -23,7 +22,6 @@ import {
   type BibleReaderRepository,
   type BibleVersion,
   resolveBibleVersion,
-  bibleVersionNames,
   type Watch,
 } from "domain/core";
 import { usePreferences } from "../preferences";
@@ -31,7 +29,8 @@ import { useBiblePageGestures } from "../bible-page-gestures";
 import { Dropdown } from "../dropdown";
 import { useWriting } from "../context";
 import { SelectionMenu } from "./selection-menu";
-import { Empty, ErrorMessage, Loading, Ornament } from "../components";
+import { Empty, ErrorMessage, Loading } from "../components";
+import { ChapterMarks, VerseMarks } from "../social";
 
 export function BiblePage() {
   const repository = useRepository();
@@ -501,20 +500,7 @@ function BibleReader({ reading, version }: { reading: BibleReaderRepository; ver
   }
   return (
     <div className="page bible-page">
-      <header className="page-heading bible-heading">
-        <div>
-          <p className="eyebrow">
-            <BookOpen size={16} /> A PALAVRA, POR INTEIRO
-          </p>
-          <h1>
-            Leia com calma.
-            <br />
-            <em>Encontre sentido.</em>
-          </h1>
-          <p className="intro-copy">{bibleVersionNames[version]} · Uma leitura de cada vez.</p>
-        </div>
-        <Ornament />
-      </header>
+      <h1 className="sr-only">Leitura bíblica</h1>
       {catalog.error ? (
         <ErrorMessage message={catalog.error} />
       ) : !catalog.data ? (
@@ -626,24 +612,15 @@ function BibleReader({ reading, version }: { reading: BibleReaderRepository; ver
                   ? visibleChapters
                   : [current]
                 ).map((data) => (
+                  <ChapterMarks key={`${version}:${data.book.abbrev}:${data.chapter}`} social={params.pick ? undefined : repository.social} chapter={{ version, book: data.book.abbrev, chapter: data.chapter }}>
                   <section
-                    key={`${data.book.abbrev}:${data.chapter}`}
                     data-reading-chapter={data.chapter}
                   >
-                    <div className="bible-chapter-heading">
-                      <p className="eyebrow">
-                        {data.book.testament === "VT" ? "ANTIGO" : "NOVO"}{" "}
-                        TESTAMENTO
-                      </p>
+                    <div className={preferences.mode === "continuous" ? "bible-chapter-heading" : "sr-only"}>
                       <h2>
                         {data.book.name} <em>{data.chapter}</em>
                       </h2>
-                      <span className="caption">Versão AA</span>
                     </div>
-                    <p className="caption">
-                      Toque para selecionar. Mantenha pressionado e arraste para
-                      selecionar um intervalo.
-                    </p>
                     <article
                       className="bible-verses"
                       aria-label={`${data.book.name}, capítulo ${data.chapter}`}
@@ -697,8 +674,8 @@ function BibleReader({ reading, version }: { reading: BibleReaderRepository; ver
                       onPointerCancel={() => cancelGesture()}
                     >
                       {data.verses.map((verse) => (
+                        <div className="bible-verse-row" key={verse.number}>
                         <p
-                          key={verse.number}
                           data-verse={verse.number}
                           data-chapter={data.chapter}
                           data-reading-verse
@@ -820,9 +797,12 @@ function BibleReader({ reading, version }: { reading: BibleReaderRepository; ver
                           </Link>
                           {verse.text}
                         </p>
+                        <VerseMarks number={verse.number} />
+                        </div>
                       ))}
                     </article>
                   </section>
+                  </ChapterMarks>
                 ))}
               </div>
               {quote && !params.pick && (
@@ -872,9 +852,6 @@ function BibleReader({ reading, version }: { reading: BibleReaderRepository; ver
               )}
             </>
           )}
-          <p className="bible-source caption">
-            {catalog.data.source}. {version === "alm1911" ? "Grafia original preservada." : "Leitura a partir da cópia local."}
-          </p>
         </>
       )}
       {params.pick && !picker && (
