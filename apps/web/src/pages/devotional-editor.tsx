@@ -1,14 +1,18 @@
 import { BiblePickerButton } from "../ui/bible-picker-button";
 import { Button } from "../ui/button";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BookOpen, Search } from "lucide-react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useWatch } from "domain/react";
 import {
   canPublish,
+  bibleVersionNames,
+  bibleVersionSchema,
   dateInZone,
   editorialDraft,
   scheduleSchema,
+  scriptureLicenseForVersion,
+  shiftEditorialMonth,
   validationMessage,
   type EditorialDraft,
   type Devotional,
@@ -17,6 +21,7 @@ import {
 import { useApp, useWriting } from "../context";
 import { RouteRedirect } from "../redirect";
 import { ConnectedDevotionalEditor } from "./connected-devotional-editor";
+import { Dropdown } from "../dropdown";
 
 export function DevotionalEditorPage() {
   const app = useApp();
@@ -90,6 +95,20 @@ function EditorForm({
   const [auxiliary, setAuxiliary] = useState(false);
   const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
+  const today = dateInZone("America/Sao_Paulo");
+  const versions = app.repository?.bible?.versions ?? ["aa"];
+  const [month, setMonth] = useState((draft.date || today).slice(0, 7));
+  const [freeDates, setFreeDates] = useState<string[]>();
+  const [calendarError, setCalendarError] = useState("");
+  useEffect(() => {
+    if (existing) return;
+    let active = true;
+    setFreeDates(undefined);
+    setCalendarError("");
+    reading.editorialCalendar(month, today).then(dates => { if (active) setFreeDates(dates); })
+      .catch(cause => { if (active) setCalendarError(validationMessage(cause)); });
+    return () => { active = false; };
+  }, [existing, reading, month, today]);
   async function chooseWord() {
     writing.setEditor(key, draft);
     const previous =
@@ -112,7 +131,7 @@ function EditorForm({
     });
     await navigate({
       to: "/biblia",
-      search: { book, chapter, pick: "devotional", q: draft.query },
+      search: { book, chapter, pick: "devotional", q: draft.query, version: draft.version ?? versions[0] },
     });
   }
   async function leave() {
@@ -148,6 +167,8 @@ function EditorForm({
           setBusy(true);
           setError("");
           try {
+            if (!existing && (!freeDates || !freeDates.includes(draft.date)))
+              throw new Error("Escolha uma data livre no calendário.");
             await reading.schedule(
               scheduleSchema.parse({
                 ...draft,
@@ -166,6 +187,14 @@ function EditorForm({
         }}
       >
         <h1>{existing ? "Editar devocional" : "Cadastrar devocional"}</h1>
+        <div className="field"><span>Referência</span>
+          <Button type="button" variant="secondary" onClick={() => void chooseWord()}>
+            <BookOpen size={18} />{draft.reference || "Escolher referência na Bíblia"}
+          </Button>
+        </div>
+        <Dropdown label="Tradução" value={draft.version ?? draft.selection?.version ?? "aa"}
+          options={versions.map(version => ({ value: version, label: bibleVersionNames[version] }))}
+          onChange={value => { const version = bibleVersionSchema.parse(value); change({ version, selection: undefined, scripture: "", reference: "", translation: "", licenseEvidence: scriptureLicenseForVersion(version) }); writing.setPicker(null); }} />
         <label>
           Palavra
           <textarea
@@ -204,7 +233,7 @@ function EditorForm({
           </Button>
         </div>
         <label>
-          Meditação
+          Reflexão
           <textarea
             name="reflection"
             required
@@ -215,7 +244,7 @@ function EditorForm({
           />
         </label>
         <label>
-          Oração
+          Sugestão de oração
           <textarea
             name="prayerSuggestion"
             required
@@ -230,44 +259,39 @@ function EditorForm({
         <label>Créditos<input readOnly value={existing?.credit ?? app.localProfile?.name ?? ""} /></label>
         {draft.programming && (
           <div className="devotional-scheduling">
-            <label>
-              Data
-              <input
-                type="date"
-                name="date"
-                required
-                readOnly={!!existing}
-                min={existing ? undefined : dateInZone("America/Sao_Paulo")}
-                value={draft.date}
-                onChange={(event) => change({ date: event.target.value })}
-              />
-            </label>
+            {existing ? <label>Data da leitura<input readOnly value={existing.date} /></label> : <div className="field">
+              <span>Data da leitura</span>
+              <div className="admin-actions">
+                <Button type="button" variant="ghost" disabled={busy || month <= today.slice(0, 7)} onClick={() => { setMonth(shiftEditorialMonth(month, -1)); change({ date: "" }); }}>Mês anterior</Button>
+                <span>{month}</span>
+                <Button type="button" variant="ghost" disabled={busy} onClick={() => { setMonth(shiftEditorialMonth(month, 1)); change({ date: "" }); }}>Próximo mês</Button>
+              </div>
+              <Dropdown label="Data da leitura" value={draft.date} disabled={!freeDates} options={(freeDates ?? []).map(date => ({ value: date, label: date.split("-").reverse().join("/") }))} onChange={date => change({ date })} />
+              {!freeDates && !calendarError && <p role="status">Consultando datas livres…</p>}
+              {freeDates?.length === 0 && <p role="status">Nenhuma data livre neste mês. Escolha o próximo mês.</p>}
+              {calendarError && <p role="alert">{calendarError}</p>}
+            </div>}
             <p>
               Disponível à meia-noite no horário de Brasília.{" "}
               {existing
                 ? "A data original será mantida."
-                : "A data precisa estar livre."}
+                : "Selecione uma data livre."}
             </p>
+            <label>Disponível a partir de (horário de Brasília)<input readOnly value={draft.date ? `${draft.date.split("-").reverse().join("/")} às 00:00` : "Escolha a data da leitura"} /></label>
             <label>
               Referência bíblica
               <input name="reference" readOnly value={draft.reference} />
             </label>
             <label>
-              Versão da Bíblia
-              <input readOnly value={draft.translation} />
-            </label>
-            <label>
               Fonte e condições de uso
               <input
                 name="licenseEvidence"
-                required
-                maxLength={2000}
+                readOnly
                 value={draft.licenseEvidence}
-                onChange={(event) =>
-                  change({ licenseEvidence: event.target.value })
-                }
               />
             </label>
+            {existing && <label>Motivo da correção<input required maxLength={1000} value={draft.reason ?? ""} onChange={event => change({ reason: event.target.value })} /></label>}
+            {existing && <p className="caption">O motivo fica no histórico administrativo e não aparece no devocional.</p>}
             <p>
               Ao programar, você confirma a revisão humana do texto neste
               ambiente local.

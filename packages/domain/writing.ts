@@ -1,6 +1,7 @@
 import type { BibleQuote, BibleSelection } from "./sharing";
 import type { Devotional } from "./types";
 import { dateInZone } from "./reading";
+import { localAaLicense, scriptureLicenseForVersion } from "./editorial";
 
 export interface EditorialDraft {
   scripture: string; reference: string; translation: string; selection?: BibleSelection;
@@ -15,13 +16,13 @@ export function editorialDraft(existing?: Devotional, quote?: BibleQuote): Edito
     translation: quote?.versionName ?? existing?.translation ?? "", selection: quote ?? existing?.selection,
     reflection: existing?.reflection ?? "", prayerSuggestion: existing?.prayerSuggestion ?? "",
     date: existing?.date ?? dateInZone("America/Sao_Paulo"),
-    licenseEvidence: existing?.licenseEvidence ?? "AA · ABíbliaDigital; uso no ambiente local. Distribuição pública depende de validação de licença.",
+    licenseEvidence: quote ? scriptureLicenseForVersion(quote.version) : existing?.licenseEvidence ?? localAaLicense,
     programming: false, query: "",
     version: quote?.version ?? existing?.selection?.version,
   };
 }
 export function applyEditorialQuote(draft: EditorialDraft, quote: BibleQuote): EditorialDraft {
-  return { ...draft, scripture: quote.text, reference: quote.reference, translation: quote.versionName, selection: quote, version: quote.version };
+  return { ...draft, scripture: quote.text, reference: quote.reference, translation: quote.versionName, selection: quote, version: quote.version, licenseEvidence: scriptureLicenseForVersion(quote.version) };
 }
 export interface CommunityWritingDraft {
   communityId: string; draftId: string | null; quote: BibleQuote | null; comment: string;

@@ -14,7 +14,8 @@ describe("leitura e acesso local", () => {
   it("valida os campos do cadastro e rejeita conteúdo vazio ou excessivo", () => {
     const input = { mode: "create", date: "2026-10-08", reference: "João 1:1", scripture: "Palavra", reflection: "Meditação", prayerSuggestion: "Oração", licenseEvidence: "Fonte local", selection: { book: "jo", chapter: 1, first: 1, last: 1, version: "aa" } };
     expect(scheduleSchema.safeParse({ ...input, selection: undefined }).success).toBe(false);
-    expect(scheduleSchema.safeParse({ ...input, mode: "update", selection: undefined }).success).toBe(true);
+    expect(scheduleSchema.safeParse({ ...input, mode: "update", selection: undefined }).success).toBe(false);
+    expect(scheduleSchema.safeParse({ ...input, mode: "update", selection: undefined, reason: "Correção editorial" }).success).toBe(true);
     expect(scheduleSchema.safeParse(input).success).toBe(true);
     expect(scheduleSchema.safeParse({ ...input, scripture: "  " }).success).toBe(false);
     expect(scheduleSchema.safeParse({ ...input, prayerSuggestion: "a".repeat(2001) }).success).toBe(false);

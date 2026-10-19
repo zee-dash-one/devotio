@@ -21,6 +21,7 @@ export interface ReadingRepository {
   watchChapter(abbrev: string, chapter: number, preload?: boolean): Watch<BibleChapter | null>;
   watchSearch(query: string, page: number): Watch<BibleResults>;
   watchEditorial(): Watch<EditorialEntry[]>;
+  editorialCalendar(month: string, today: string): Promise<string[]>;
   publish(input: PublicationInput): Promise<void>;
   schedule(input: ScheduleInput): Promise<void>;
   withdraw(date: string, reason: string): Promise<void>;

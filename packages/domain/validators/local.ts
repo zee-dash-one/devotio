@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { bibleVersionSchema, bibleSearchSchema } from "./bible";
 import { bibleSelectionSchema } from "../sharing";
+import { editorialMonthSchema } from "../editorial";
 import { dateSchema, communitySchema, inviteSchema, messageSchema, scriptureSchema, checklistSchema, publicationSchema, scheduleSchema } from "./index";
 
 export const timeZoneSchema = z.string().max(100).refine(value => {
@@ -60,6 +61,7 @@ export const localQuerySchema = z.discriminatedUnion("query", [
   z.object({ query: z.literal("chapter"), abbrev: z.string().regex(/^[a-z0-9]{1,6}$/), chapter: z.number().int().min(1).max(150) }),
   z.object({ query: z.literal("search"), ...bibleSearchSchema.shape }),
   z.object({ query: z.literal("editorial") }),
+  z.object({ query: z.literal("editorialCalendar"), month: editorialMonthSchema, today: dateSchema }),
 ]);
 export type LocalCommand = z.infer<typeof localCommandSchema>;
 export type LocalQuery = z.infer<typeof localQuerySchema>;

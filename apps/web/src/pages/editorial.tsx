@@ -22,6 +22,7 @@ function Editorial({ reading }: { reading: ReadingRepository }) {
   const state = useWatch(useMemo(() => reading.watchEditorial(), [reading]));
   const { setEditor, setPicker } = useWriting();
   const [removing, setRemoving] = useState<string | null>(null);
+  const [withdrawReason, setWithdrawReason] = useState("");
   const [busy, setBusy] = useState(false),
     [message, setMessage] = useState("");
   return (
@@ -75,7 +76,7 @@ function Editorial({ reading }: { reading: ReadingRepository }) {
                 <Button
                   variant="ghost"
                   disabled={entry.withdrawn || busy}
-                  onClick={() => setRemoving(entry.devotional.date)}
+                  onClick={() => { setRemoving(entry.devotional.date); setWithdrawReason(""); }}
                 >
                   Excluir / retirar
                 </Button>
@@ -86,17 +87,19 @@ function Editorial({ reading }: { reading: ReadingRepository }) {
                     Retirar o devocional de {removing}? Favoritos salvos e
                     histórico serão preservados; a data continuará reservada.
                   </p>
+                  <label>Motivo da retirada<input required maxLength={1000} value={withdrawReason} onChange={event => setWithdrawReason(event.target.value)} /></label>
+                  <p className="caption">O motivo fica no histórico administrativo e não aparece no devocional.</p>
                   <Button
                     variant="secondary"
                     size="compact"
-                    disabled={busy}
+                    disabled={busy || !withdrawReason.trim()}
                     onClick={async () => {
                       setBusy(true);
                       setMessage("");
                       try {
                         await reading.withdraw(
                           entry.devotional.date,
-                          "Retirada confirmada pelo Gestor do sistema",
+                          withdrawReason,
                         );
                         setRemoving(null);
                         setMessage("Devocional retirado.");

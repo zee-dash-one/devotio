@@ -1,8 +1,10 @@
 # Documentação do Devotio
 
-**Revisão:** 08/10/2026. A leitura é organizada por decisão, separando intenção de produto de capacidades implementadas.
+**Revisão:** 09/10/2026. A leitura é organizada por decisão, separando intenção de produto de capacidades implementadas.
 
 ## Revisão atual: configurações e leitura
+
+- [Editorial integrado à Bíblia — spec 013](../specs/013-editorial-biblia-publicada/spec.md): cadastro conectado, datas livres, seleção bíblica, limites, autoria, Brasília 00:00 e cópia SQL integral; código implementado, publicação/homologação pendentes.
 
 - [Escolha da versão bíblica e Almeida 1911 — spec 012](../specs/012-versoes-biblia/spec.md): aprovada em 09/10/2026 para a web local/conectada; implementação e verificação registradas no estado real.
 
@@ -10,7 +12,7 @@
 - [Plano do corpus bíblico](engineering/bible-corpus-plan.md): proposta de armazenamento separado e pacotes offline; inclui diretrizes de cache e desempenho. A migração não é requisito para começar as configurações com AA local.
 - [Fonte e importação da AA](engineering/bible-provider.md): procedência, hash e verificação histórica da cópia existente; pendências para publicação e distinção entre importação e leitura.
 
-No modo local, AA usa o SQLite da aplicação. A entrega 012 acrescenta ALM1911 por arquivos estáticos no build local/conectado e escolha da versão nas Configurações. Até seis capítulos ficam no cache por perfil, incluindo a janela atual/anterior/próximo. Tema, fonte e modo são aplicados imediatamente e persistem por perfil/aparelho. Leitura e busca não consultam a API bíblica externa. Isolamento geral da AA e pacote integral offline continuam propostas separadas. Consulte o [estado real](engineering/status.md) para implementação e publicação verificadas.
+No modo local, AA usa o SQLite da aplicação. A entrega 012 acrescenta ARC1911 (identificador `alm1911`) e escolha da versão nas Configurações. A 013 mantém sua cópia integral em `.data/bibles/corpus.sqlite`, por edição/livro/capítulo/versículo, e gera dela os arquivos estáticos publicados. Até seis capítulos ficam no cache por perfil, incluindo a janela atual/anterior/próximo. Tema, fonte e modo são aplicados imediatamente e persistem por perfil/aparelho. Leitura e busca não consultam a API bíblica externa. Isolamento geral da AA e pacote integral offline continuam propostas separadas. Consulte o [estado real](engineering/status.md) para implementação e publicação verificadas.
 
 ## Produto
 

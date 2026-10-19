@@ -85,7 +85,7 @@ O schema abaixo descreve a base anterior; esta extensão não migra o SQLite loc
 | Tabela | Responsabilidade | Índices |
 |---|---|---|
 | users | authId, name, email | by_authId |
-| devotionals | date, reference, translation, scripture, reflection, prayerSuggestion, credit, licenseEvidence, reviewedBy, publishedAt, audioUrl opcional, withdrawn, updatedAt | by_date |
+| devotionals | date, reference, translation, scripture, reflection, prayerSuggestion, credit, licenseEvidence, reviewedBy, publishedAt, selection opcional, audioUrl opcional, withdrawn, updatedAt | by_date |
 | editorialEvents | devotionalId, actor, reason, action, at | by_devotional |
 | globalSettings | Singleton main com temas e referências | by_key |
 | communities | Nome, descrição, escritura, convite, criação | by_invite |
@@ -96,6 +96,14 @@ O schema abaixo descreve a base anterior; esta extensão não migra o SQLite loc
 | checklistTicks | Item e usuário | by_item, by_pair |
 
 Índice não impõe unicidade sozinho: as operações consultam e alteram na mesma transação. Auth mantém tabelas no componente Better Auth. editorialEvents foi introduzida pela spec 004 para rastreabilidade, sem telemetria de leitores.
+
+Revisão 013 (09/10/2026): `devotionals.selection` conserva versão, livro,
+capítulo e intervalo de versículos. É opcional para ler publicações anteriores.
+`editorialAccess` autoriza consulta por data, calendário e gravação; datas retiradas
+continuam ocupadas. A mutation reconstrói referência/tradução/texto da fonte
+ARC1911 confiável, atribui crédito ao usuário e define Brasília 00:00. Correções
+mantêm o crédito original e registram revisor/motivo em `editorialEvents`.
+Reflexão e oração novas/corrigidas têm limite de 512; leitura legada não trunca.
 
 Bíblia completa, clubes, orações privadas e marcações futuras não integram o schema reconstruído. A mudança foi local; não migrar deployment existente sem plano próprio.
 
@@ -190,6 +198,24 @@ em outra aba. Banco e arquivos de origem não são servidos pelo Vite nem inclu�
 no Git/build. FTS5 retorna até 40 resultados por página; mural até 50.
 Módulos locais usam o sufixo `.local.ts`, excluído dos entry points pelo CLI Convex
 instalado (arquivos com múltiplos pontos); nenhum módulo Convex os importa.
+
+### Corpus SQLite por edição (spec 013)
+
+`ScriptureStore` mantém `.data/bibles/corpus.sqlite`, separado das contas e fora
+do Git. Importa integralmente `docs/bibles/ALM1911.json` com hash aprovado e
+transação idempotente: 66 livros, 1.189 capítulos e 31.101 versículos.
+
+| Tabela | Chave e conteúdo |
+|---|---|
+| editions | version; revisão SHA-256, origem e contagem |
+| books | version/abbrev; nome, testamento, ordem e capítulos |
+| verses | version/abbrev/chapter/number; texto canônico |
+
+O adaptador local consulta esse banco; o build gera capítulos, catálogo e busca
+estáticos por ele para o adaptador web publicado. Convex usa o JSON original
+validado pelo mesmo contrato para reconstruir citações, sem fetch externo nem
+SQLite na mutation. Não há nova tabela bíblica no Convex. A AA existente permanece
+no banco local anterior; migrá-la ao corpus por edição é trabalho separado.
 
 ## Cache e plataformas
 

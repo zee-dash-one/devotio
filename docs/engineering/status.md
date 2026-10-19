@@ -1,5 +1,40 @@
 # Estado real do projeto
 
+## Editorial e corpus padronizado — spec 013, revisão local em 16/10/2026
+
+O código da [spec 013](../../specs/013-editorial-biblia-publicada/spec.md) está
+implementado no checkout. A listagem conectada abre `/editorial/cadastro` para
+criar/corrigir, com datas livres atuais/futuras, seleção pela Bíblia e rascunho
+preservado na ida/volta. Tradução usa Dropdown (ARC1911 no ambiente conectado),
+texto/créditos são somente leitura, reflexão/oração têm 512 caracteres e a
+disponibilidade é Brasília 00:00. Motivo é automático na criação e explicado nas
+correções/retiradas; fica apenas no histórico administrativo.
+
+O servidor verifica acesso e duplicidade, inclusive datas retiradas, reconstrói
+a citação e autoria, preserva o crédito original em correções e mantém legados
+longos legíveis. ARC1911 tem cópia SQLite integral por edição, importação
+idempotente e geração dos arquivos públicos a partir dessa cópia. Convex usa o
+JSON original validado para a mesma citação; não hospeda um banco SQL.
+
+**Evidências automatizadas:** 189 testes passaram (90 domínio, 48 backend e
+51 web). Incluem ida/volta do formulário, campos derivados, textos legados,
+recusa de acesso, datas ocupadas/passadas, autoria no servidor, calendário
+mensal local e reimportação SQL.
+Typecheck e lint do monorepo passaram. Build de produção da web passou (2.352
+módulos; PWA com 22 recursos) e `verify-web-build` confirmou catálogo, ícones,
+licenças, ausência de fixtures e corpus fora do JS/precache. Codegen do Convex
+concluiu em `--dry-run --typecheck enable` no deployment dev; nenhum deploy foi
+executado. A primeira tentativa dentro do sandbox falhou na rede/telemetria do CLI.
+
+**Diferenças e pendências:** o modo local mantém a etapa de programação e oferece
+AA e ARC1911. Sua consulta mensal de datas livres usa o SQLite local; o cadastro
+conectado consulta o Convex e oferece inicialmente ARC1911. Ambos mostram tradução
+em seletor, fonte/crédito somente leitura, motivo de correção e validação
+compartilhada de limites/datas. Expo permanece adiado.
+Homologação autenticada/visual/física e publicação desta versão estão pendentes.
+Nesta rodada, o usuário fará a revisão e abrirá o PR; não executar commit, push,
+PR nem deploy. A presença do código no checkout não comprova atualização de produção.
+
 ## Menu bíblico publicado — correção de 09/10/2026
 
 O usuário confirmou leitura pela rota `/biblia`, mas ausência da entrada nos menus.
@@ -13,10 +48,9 @@ confirmou catálogo JSON, João 1 com 51 versículos e assets atuais. Isso compr
 o corpus e o leitor, mas não o menu autenticado; a hipótese de cache não explicou
 essa regressão. Homologação autenticada no aparelho permanece separada dos testes.
 
-O editorial conectado usa um formulário distinto do local, ainda sem a seleção
-integrada. A [spec 013](../../specs/013-editorial-biblia-publicada/spec.md) consolida
-o novo pedido (datas, fonte padronizada, seleção, limites, autoria e fuso) e propostas
-para auditoria/compatibilidade; aguarda aprovação antes de plano e implementação.
+Na ocasião desta correção de menu, o editorial conectado ainda não tinha seleção
+integrada. Esse registro histórico foi superado pela implementação da spec 013,
+descrita acima; não representa o estado atual do checkout.
 
 ## Bíblia e gestão integradas — correção do build de 09/10/2026
 

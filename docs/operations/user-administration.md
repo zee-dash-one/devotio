@@ -101,6 +101,28 @@ administrativo. Dados já copiados por um participante não podem ser recolhidos
 
 ## Fontes técnicas consultadas em 09/10/2026
 
+### Editorial conectado — revisão 013
+
+A permissão editorial abre a listagem e o cadastro integrado à leitura bíblica.
+Novos devocionais exigem uma data livre atual/futura e seleção ARC1911. Texto,
+referência, tradução, autoria e Brasília 00:00 são derivados. Reflexão e oração
+têm 512 caracteres. Publicações antigas continuam legíveis; para salvar uma
+correção com texto maior, o editor deve reduzi-lo explicitamente. O motivo da
+criação é automático; correções/retiradas exigem justificativa administrativa,
+sem exibi-la ao leitor. Retirada conserva o registro e reserva sua data.
+
+O rollout da 013 exige backend e web compatíveis: `editorialAccess:get/calendar`
+são novos, `save` passa a receber seleção e conteúdo editorial, e o schema recebe
+`devotionals.selection` opcional. Planejar a atualização do backend antes da web,
+com intervalo controlado, pois o formulário anterior envia argumentos removidos.
+Verificar login editorial, calendário, seleção, publicação/correção/retirada em
+homologação e conservar os artefatos anteriores para recuperação. Nenhum deploy
+foi autorizado nesta rodada: revisar as mudanças antes de publicar.
+
+O build importa o JSON aprovado em `.data/bibles/corpus.sqlite` e gera os assets
+bíblicos públicos a partir dele; não enviar esse SQLite ao Convex. O backend
+empacota o JSON original como fonte confiável para reconstruir a citação.
+
 - [Better Auth 2FA](https://better-auth.com/docs/plugins/2fa): TOTP e tratamento
   da chave como segredo. Implementação usa `@better-auth/utils` 0.4.2 instalado,
   sem habilitar cadastro público por senha nem reutilizar login Google como 2FA.

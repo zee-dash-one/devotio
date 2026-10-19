@@ -296,6 +296,7 @@ export function createLocalRepository(storage: LocalCacheStorage, onExpired: () 
         return value;
       }),
       watchEditorial: () => watch("editorial", () => query<EditorialEntry[]>({ query: "editorial" })),
+      editorialCalendar: (month, today) => query<string[]>({ query: "editorialCalendar", month, today }),
       publish: input => command<void>({ action: "publish", input }),
       schedule: input => command<void>({ action: "schedule", input }),
       withdraw: (date, reason) => command<void>({ action: "withdraw", date, reason }),

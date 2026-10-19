@@ -363,7 +363,7 @@ describe("aprovação no backend conectado", () => {
       editorial: true,
     });
     const input = {
-      date: "2026-10-09",
+      date: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
       selection: { book: "jo", chapter: 1, first: 1, last: 1, version: "alm1911" },
       reflection: "Reflexão",
       prayerSuggestion: "Oração",

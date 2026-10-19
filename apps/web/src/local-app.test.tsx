@@ -2,7 +2,7 @@ import { StrictMode } from "react";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LocalApp } from "./local-app";
-import { bibleQuote, dateInZone, recentDates, type LocalProfile, type EditorialEntry, type Message, type AppNotification, type BibleSelection, type CommunityQuoteDraft, type Favorite } from "domain/core";
+import { availableEditorialDates, bibleQuote, dateInZone, recentDates, shiftEditorialMonth, type LocalProfile, type EditorialEntry, type Message, type AppNotification, type BibleSelection, type CommunityQuoteDraft, type Favorite } from "domain/core";
 
 const profile: LocalProfile = { id: "marina", name: "Marina Oliveira", label: "Membro", description: "Perfil de teste", editorial: false };
 beforeEach(() => {
@@ -82,6 +82,7 @@ function server(loggedIn: boolean, actor = profile, conflict = false, manages = 
     if (input.query === "notificationSummary") return new Response(JSON.stringify({ unread: notices.filter(item => item.readAt === null).length, revision }));
     if (input.query === "notifications") return new Response(JSON.stringify({ items: notices, nextCursor: null }));
     if (input.query === "editorial") return new Response(JSON.stringify(entries));
+    if (input.query === "editorialCalendar") return new Response(JSON.stringify(availableEditorialDates(input.month, entries.map(entry => entry.devotional.date), input.today)));
     if (input.query === "bible") return new Response(JSON.stringify({ books: [book], version: "aa", verses: 1, importedAt: 1, source: "Fixture" }));
     if (input.query === "chapter") return new Response(JSON.stringify({ book, chapter: input.chapter, verses: ["Versículo bíblico de teste", "Segundo verso de teste"].map((text, index) => ({ abbrev: "jo", bookName: "João", chapter: input.chapter, number: index + 1, text })) }));
     if (input.query === "search") return new Response(JSON.stringify({ verses: [{ abbrev: "jo", bookName: "João", chapter: 1, number: 1, text: "Trecho encontrado na busca" }], total: 1, page: input.page }));
@@ -477,13 +478,13 @@ describe("entrada local integrada", () => {
   it("preenche a busca bíblica vinda do cadastro e preserva campos quando não escolhe outro trecho", async () => {
     window.history.replaceState(null, "", "/editorial/cadastro"); server(true, manager);
     render(<StrictMode><LocalApp /></StrictMode>);
-    fireEvent.change(await screen.findByLabelText("Meditação"), { target: { value: "Reflexão pendente" } });
+    fireEvent.change(await screen.findByLabelText("Reflexão"), { target: { value: "Reflexão pendente" } });
     fireEvent.change(screen.getByLabelText("Pesquisar na Bíblia"), { target: { value: "amor" } });
     fireEvent.click(screen.getByRole("button", { name: "Escolher Palavra na Bíblia" }));
     expect((await screen.findByLabelText("Buscar palavras na Bíblia") as HTMLInputElement).value).toBe("amor");
     await screen.findByText("Trecho encontrado na busca");
     fireEvent.click(screen.getByRole("button", { name: "Voltar sem alterar o trecho" }));
-    expect((await screen.findByLabelText("Meditação") as HTMLTextAreaElement).value).toBe("Reflexão pendente");
+    expect((await screen.findByLabelText("Reflexão") as HTMLTextAreaElement).value).toBe("Reflexão pendente");
     expect((screen.getByLabelText("Pesquisar na Bíblia") as HTMLInputElement).value).toBe("amor");
   });
   it("sino abre avisos sem marcar lida e ação Lida atualiza o badge", async () => {
@@ -528,17 +529,23 @@ describe("entrada local integrada", () => {
     fireEvent.click(screen.getByRole("button", { name: "Auxílio" }));
     expect(screen.getByRole("status").textContent).toContain("Peregrino");
     expect(fetcher.mock.calls).toHaveLength(before);
-    fireEvent.change(screen.getByLabelText("Meditação"), { target: { value: "Reflexão preparada" } });
-    fireEvent.change(screen.getByLabelText("Oração"), { target: { value: "Oração preparada" } });
+    fireEvent.change(screen.getByLabelText("Reflexão"), { target: { value: "Reflexão preparada" } });
+    fireEvent.change(screen.getByLabelText("Sugestão de oração"), { target: { value: "Oração preparada" } });
     await chooseWord();
-    expect((screen.getByLabelText("Meditação") as HTMLTextAreaElement).value).toBe("Reflexão preparada");
-    expect((screen.getByLabelText("Oração") as HTMLTextAreaElement).value).toBe("Oração preparada");
+    expect((screen.getByLabelText("Reflexão") as HTMLTextAreaElement).value).toBe("Reflexão preparada");
+    expect((screen.getByLabelText("Sugestão de oração") as HTMLTextAreaElement).value).toBe("Oração preparada");
     fireEvent.click(screen.getByRole("button", { name: "Rever seleção na Bíblia" }));
     expect((await screen.findByRole("checkbox", { name: /^Versículo 1:/ })).getAttribute("aria-checked")).toBe("true");
     fireEvent.click(screen.getByRole("button", { name: "Usar trecho no devocional" }));
     await screen.findByLabelText("Palavra");
     fireEvent.click(screen.getByRole("button", { name: "Programar" }));
-    fireEvent.change(screen.getByLabelText("Data"), { target: { value: "2026-12-31" } });
+    const nextMonth = shiftEditorialMonth(dateInZone("America/Sao_Paulo").slice(0, 7), 1);
+    const chosenDate = `${nextMonth}-01`;
+    fireEvent.click(screen.getByRole("button", { name: "Próximo mês" }));
+    fireEvent.click(await screen.findByRole("combobox", { name: "Data da leitura" }));
+    fireEvent.click(screen.getByRole("option", { name: `01/${nextMonth.slice(5)}/${nextMonth.slice(0, 4)}` }));
+    expect((screen.getByLabelText("Fonte e condições de uso") as HTMLInputElement).readOnly).toBe(true);
+    expect((screen.getByLabelText("Créditos") as HTMLInputElement).readOnly).toBe(true);
     expect((screen.getByLabelText("Referência bíblica") as HTMLInputElement).value).toBe("João 1:1");
     expect((screen.getByLabelText("Referência bíblica") as HTMLInputElement).readOnly).toBe(true);
     fireEvent.click(screen.getByRole("button", { name: "Programar" }));
@@ -547,24 +554,25 @@ describe("entrada local integrada", () => {
     fireEvent.click(screen.getByRole("link", { name: "Editar existente" }));
     expect((await screen.findByLabelText("Palavra") as HTMLTextAreaElement).value).toBe("1 - Versículo bíblico de teste");
     fireEvent.click(screen.getByRole("button", { name: "Programar" }));
-    expect((screen.getByLabelText("Data") as HTMLInputElement).readOnly).toBe(true);
+    expect((screen.getByLabelText("Data da leitura") as HTMLInputElement).readOnly).toBe(true);
     fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
     fireEvent.click(await screen.findByRole("button", { name: "Excluir / retirar" }));
+    fireEvent.change(screen.getByLabelText("Motivo da retirada"), { target: { value: "Revisar publicação" } });
     fireEvent.click(screen.getByRole("button", { name: "Confirmar retirada" }));
     await screen.findByText("Devocional retirado.");
-    expect(screen.getByText(/2026-12-31 · Retirado/)).toBeDefined();
+    expect(screen.getByText(new RegExp(`${chosenDate} · Retirado`))).toBeDefined();
   });
   it("preserva o formulário quando a data está ocupada", async () => {
     window.history.replaceState(null, "", "/editorial/cadastro");
     server(true, manager, true);
     render(<StrictMode><LocalApp /></StrictMode>);
     await screen.findByLabelText("Palavra");
-    for (const label of ["Meditação", "Oração"]) fireEvent.change(screen.getByLabelText(label), { target: { value: "Texto preservado" } });
+    for (const label of ["Reflexão", "Sugestão de oração"]) fireEvent.change(screen.getByLabelText(label), { target: { value: "Texto preservado" } });
     await chooseWord();
     fireEvent.click(screen.getByRole("button", { name: "Programar" }));
     fireEvent.click(screen.getByRole("button", { name: "Programar" }));
     expect((await screen.findByRole("alert")).textContent).toContain("Editar existente");
-    expect((screen.getByLabelText("Meditação") as HTMLTextAreaElement).value).toBe("Texto preservado");
+    expect((screen.getByLabelText("Reflexão") as HTMLTextAreaElement).value).toBe("Texto preservado");
   });
   it("envia seleção bíblica para Palavra e cancelar retorna sem gravar", async () => {
     window.history.replaceState(null, "", "/biblia");

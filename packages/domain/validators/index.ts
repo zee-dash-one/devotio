@@ -64,8 +64,10 @@ export const scheduleSchema = publicationSchema.pick({ date: true, reference: tr
   prayerSuggestion: editorialTextSchema,
   mode: z.enum(["create", "update"]),
   selection: bibleSelectionSchema.optional(),
+  reason: z.string().trim().min(1, "Informe o motivo da correção.").max(1000).optional(),
 }).superRefine((input, context) => {
   if (input.mode === "create" && !input.selection) context.addIssue({ code: z.ZodIssueCode.custom, path: ["selection"], message: "Escolha a Palavra na leitura bíblica." });
+  if (input.mode === "update" && !input.reason) context.addIssue({ code: z.ZodIssueCode.custom, path: ["reason"], message: "Informe o motivo da correção." });
 });
 export const devotionalSelectionSchema = z.object({
   scripture: publicationSchema.shape.scripture,

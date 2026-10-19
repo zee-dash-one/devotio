@@ -30,13 +30,28 @@ describe("SQLite local: autorização, snapshots e persistência", () => {
     const input = { ...publication, mode: "create" as const, date: "2026-10-05", selection };
     db.command(editor, { action: "schedule", input });
     expect(() => db.command(editor, { action: "schedule", input: { ...input, scripture: "Substituição" } })).toThrow("Editar existente");
-    expect(() => db.command(editor, { action: "schedule", input: { ...input, mode: "update", date: "2026-10-06" } })).toThrow("não foi encontrado");
+    expect(() => db.command(editor, { action: "schedule", input: { ...input, mode: "update", date: "2026-10-06", reason: "Corrigir" } })).toThrow("não foi encontrado");
     expect(() => db.command(editor, { action: "schedule", input: { ...input, date: "2026-09-01" } })).toThrow("futura");
     db.command(editor, { action: "withdraw", date: input.date, reason: "Teste" });
     expect(() => db.command(editor, { action: "schedule", input })).toThrow("data já possui");
-    db.command(editor, { action: "schedule", input: { ...input, mode: "update", scripture: "Edição" } });
+    db.command(editor, { action: "schedule", input: { ...input, mode: "update", scripture: "Edição", reason: "Revisão da publicação" } });
     expect(db.get<{ data: string; withdrawn: number }>("SELECT data,withdrawn FROM devotionals WHERE date=?", input.date)).toMatchObject({ withdrawn: 0 });
     expect(db.all("SELECT * FROM audit")).toHaveLength(3);
+  });
+  it("calendário local exclui datas ocupadas/retiradas e preserva autoria na correção", () => {
+    const { db, editor } = setup();
+    const input = { ...publication, mode: "create" as const, date: "2026-10-05", selection };
+    db.command(editor, { action: "schedule", input });
+    db.command(editor, { action: "withdraw", date: input.date, reason: "Revisar" });
+    const calendar = db.query(editor, { query: "editorialCalendar", month: "2026-10", today: "2026-10-04" }) as string[];
+    expect(calendar).not.toContain(input.date);
+    expect(calendar[0]).toBe("2026-10-06");
+    expect(() => db.query(db.profile("marina"), { query: "editorialCalendar", month: "2026-10", today: "2026-10-04" })).toThrow("Gestor do sistema");
+    db.run("UPDATE devotionals SET data=json_set(data,'$.credit','Autor original') WHERE date=?", input.date);
+    db.command(editor, { action: "schedule", input: { ...input, mode: "update", reason: "Texto revisado", licenseEvidence: "Fonte forjada" } });
+    const saved = JSON.parse(db.get<{ data: string }>("SELECT data FROM devotionals WHERE date=?", input.date)!.data) as Devotional;
+    expect(saved).toMatchObject({ credit: "Autor original", licenseEvidence: "AA · ABíbliaDigital; uso no ambiente local. Distribuição pública depende de validação de licença." });
+    expect(db.get<{ reason: string }>("SELECT reason FROM audit WHERE action='edit' AND date=?", input.date)?.reason).toBe("Texto revisado");
   });
   it("nega CRUD a gestores comunitários e confere papel no banco, não no client", () => {
     const { db, leader, member, outsider } = setup();

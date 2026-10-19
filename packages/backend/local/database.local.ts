@@ -6,6 +6,7 @@ import { dirname, join } from "node:path";
 import { LOCAL_SESSION_SECONDS } from "../../domain/local-cache";
 import { alm1911Chapter } from "./alm1911.local";
 import { bibleVersionNames, type BibleVersion } from "../../domain/validators/bible";
+import { scriptureLicenseForVersion, editorialMonthDates, availableEditorialDates } from "../../domain/editorial";
 import {
   bibleDatasetSchema, bibleBooksSchema, canManage, canRemoveMember, canPublish,
   isPublished, dateInZone, recentDates, isRecent, searchWords, publicationMidnight, canScheduleDate, scheduleSchema,
@@ -233,6 +234,12 @@ export class LocalDatabase {
         this.editor(user);
         return this.all<PublicationRow>("SELECT data,publishedAt,withdrawn FROM devotionals ORDER BY date DESC LIMIT 100").map(r => ({ devotional: JSON.parse(r.data) as Devotional, withdrawn: !!r.withdrawn, publishedAt: r.publishedAt } satisfies EditorialEntry));
       }
+      case "editorialCalendar": {
+        this.editor(user);
+        const dates = editorialMonthDates(input.month);
+        const rows = this.all<{ date: string }>("SELECT date FROM devotionals WHERE date>=? AND date<=? ORDER BY date", dates[0], dates.at(-1)!);
+        return availableEditorialDates(input.month, rows.map(row => row.date), input.today);
+      }
     }
   }
   command(user: LocalProfile, input: LocalCommand): unknown {
@@ -365,29 +372,29 @@ export class LocalDatabase {
         }
         case "schedule": {
           this.editor(user);
-          const { mode, date, ...content } = scheduleSchema.parse(input.input);
+          const { mode, date, reason, ...content } = scheduleSchema.parse(input.input);
           const existing = this.get<PublicationRow>("SELECT data,publishedAt,withdrawn FROM devotionals WHERE date=?", date);
           if (mode === "create" && existing) throw new LocalError("Esta data já possui um devocional. Use Editar existente ou escolha uma data livre.", 409);
           if (mode === "update" && !existing) throw new LocalError("O devocional para editar não foi encontrado.", 404);
           if (mode === "create" && !canScheduleDate(date, this.now())) throw new LocalError("Escolha hoje ou uma data futura.");
           const name = this.profile(user.id).name;
-          const previous = existing ? JSON.parse(existing.data) as Devotional : null;
+          const previous = existing ? JSON.parse(existing.data) as Devotional & { publishedBy?: string } : null;
           content.selection ??= previous?.selection;
           if (content.selection) {
             const chapter = this.chapter(content.selection.book, content.selection.chapter, content.selection.version);
             if (!chapter) throw new LocalError("Capítulo não encontrado.", 404);
             const quote = bibleQuote(chapter, content.selection);
             content.scripture = quote.text; content.reference = quote.reference;
-            scheduleSchema.parse({ ...content, mode, date });
+            scheduleSchema.parse({ ...content, mode, date, reason });
           } else if (previous) {
             // Legacy entries keep their original Word until a new Bible selection replaces it.
             content.scripture = previous.scripture; content.reference = previous.reference;
           }
-          const data = JSON.stringify({ ...previous, ...content, date, id: date, translation: content.selection ? bibleVersionNames[content.selection.version] : previous?.translation ?? "AA · ABíbliaDigital", credit: name, reviewedBy: name, publishedBy: user.id });
+          const data = JSON.stringify({ ...previous, ...content, date, id: date, translation: content.selection ? bibleVersionNames[content.selection.version] : previous?.translation ?? "AA · ABíbliaDigital", licenseEvidence: content.selection ? scriptureLicenseForVersion(content.selection.version) : previous?.licenseEvidence ?? content.licenseEvidence, credit: previous?.credit ?? name, reviewedBy: name, publishedBy: previous?.publishedBy ?? user.id });
           const publishedAt = publicationMidnight(date);
           if (mode === "create") this.run("INSERT INTO devotionals VALUES (?,?,?,0)", date, data, publishedAt);
           else this.run("UPDATE devotionals SET data=?,publishedAt=?,withdrawn=0 WHERE date=?", data, publishedAt, date);
-          this.audit(user.id, mode === "create" ? "schedule" : "edit", date, mode === "create" ? "Programação pelo gestor" : "Edição de devocional existente");
+          this.audit(user.id, mode === "create" ? "schedule" : "edit", date, mode === "create" ? "Publicação inicial" : reason!);
           return null;
         }
         case "publish": {

@@ -259,7 +259,7 @@ describe("cache local: orçamento de rede e persistência", () => {
     await once(app.repository.reading!.watchEditorial());
     await vi.waitFor(() => expect(next).toHaveBeenCalled());
     app.fetcher.mockClear();
-    await app.repository.reading!.schedule({ mode: "update", date, reference: "João 1:1", scripture: "Palavra", reflection: "Meditação", prayerSuggestion: "Oração", licenseEvidence: "Fonte de teste" });
+    await app.repository.reading!.schedule({ mode: "update", date, reference: "João 1:1", scripture: "Palavra", reflection: "Meditação", prayerSuggestion: "Oração", licenseEvidence: "Fonte de teste", reason: "Correção do texto" });
     await once(app.repository.reading!.watchChapter("jo", 1));
     expect(app.calls()).toEqual([{ query: "devotionals", dates: [date], timeZone: "UTC" }]);
     stop();

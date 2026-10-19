@@ -33,3 +33,7 @@ export function shiftEditorialMonth(month: string, offset: number) {
   return new Date(Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5)) - 1 + offset, 1)).toISOString().slice(0, 7);
 }
 export const scriptureLicense = "ARC1911 · arquivo fornecido pelo mantenedor; inclusão pública autorizada em 09/10/2026.";
+export const localAaLicense = "AA · ABíbliaDigital; uso no ambiente local. Distribuição pública depende de validação de licença.";
+export function scriptureLicenseForVersion(version: "aa" | "alm1911") {
+  return version === "alm1911" ? scriptureLicense : localAaLicense;
+}
