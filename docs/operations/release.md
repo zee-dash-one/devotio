@@ -1,5 +1,25 @@
 # Publicação e operação do piloto
 
+## Validar o build automático pelo merge de um PR (21/10/2026)
+
+Para testar a integração de publicação, mantenha a alteração em uma branch e
+abra um PR com destino à `main`. O envio da branch prepara a revisão; o merge
+será feito pelo responsável pelo projeto no GitHub.
+
+1. Confirme que o PR apresenta diferenças em relação à `main` e revise os arquivos.
+2. Antes do merge, confirme no provedor de build que a branch de produção é `main`
+   e confira se há filtros que ignoram alterações somente de documentação.
+3. Faça o merge pelo GitHub e registre o SHA resultante na `main`.
+4. No histórico do provedor, confirme que um novo build iniciou para esse SHA;
+   acompanhe instalação, build e resultado da publicação.
+5. Confira a versão servida e uma rota direta após o sucesso. Se não houver build,
+   verifique a conexão com o repositório, a branch configurada e os filtros de build.
+
+Uma branch idêntica à `main` não permite testar esse fluxo por PR. Este roteiro
+não comprova que a automação está configurada: a confirmação exige o registro do
+build após o merge. Publicar a web também não comprova atualização do Convex;
+verifique o backend separadamente quando a entrega alterar suas funções ou schema.
+
 ## Preparação da spec 014 (19/10/2026)
 
 Não houve publicação nesta implementação. Após revisão do usuário, publicar
