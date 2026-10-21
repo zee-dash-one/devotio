@@ -1,7 +1,7 @@
 # 02 - Permissão de criar comunidade e papéis (owner/admin/membro)
 
 **Status:** pendente — **aguardando respostas do Hil** (seção "Dúvidas abertas")
-antes de qualquer código. Depende de [01](./01-estrutura-agentes.md).
+antes de qualquer código. Depende de [01](./.done/01-estrutura-agentes.md), concluída.
 **Branch sugerida:** `feat/community-roles`.
 
 ## Objetivo

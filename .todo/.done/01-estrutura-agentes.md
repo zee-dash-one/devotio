@@ -1,6 +1,6 @@
 # 01 - Versionar a estrutura de agentes
 
-**Status:** em execução em 2026-10-21. Não depende de outra tarefa.
+**Status:** concluída em 2026-10-21. Não depende de outra tarefa.
 
 ## Objetivo
 
@@ -9,7 +9,7 @@ arquivos de estrutura que o Gandalf escreveu em 21/10/2026 direto na pasta local
 
 ## Leia antes
 
-[AGENTS.md](../AGENTS.md) (principalmente "Fluxo de mudanças"), [.todo/README.md](./README.md).
+[AGENTS.md](../../AGENTS.md) (principalmente "Fluxo de mudanças"), [.todo/README.md](../README.md).
 
 ## Pré-requisitos
 
@@ -104,7 +104,25 @@ Validação adequada ao escopo documental: revisão de links, referências, coma
 e consistência com os manifests e as regras vigentes. Nenhum código alterado;
 lint, typecheck, testes e build não foram executados nesta tarefa documental.
 
-PR: pendente de envio da branch e abertura.
+- `git add .todo` e `git commit -m 'docs(todo): add task index and community and notification tasks'`:
+  sucesso, commit `3d547f5`.
+- `git add README.md` e `git commit -m 'docs(readme): add agents section'`:
+  sucesso, commit `ce0ad2b`.
+- `git status --short --branch`: sucesso; árvore limpa após os quatro commits
+  por escopo. `git diff --check origin/main...HEAD`: sucesso.
+- `git push -u origin docs/agent-structure`: sucesso; GitHub redirecionou o
+  remote antigo para `zee-dash-one/devotio`, sem alterar a configuração local.
+- `Set-Content` do corpo do PR no TEMP do sandbox: sucesso, mas a primeira
+  chamada `gh pr create --body-file` falhou porque o arquivo não estava acessível
+  na sessão autorizada. Recriação do arquivo no TEMP dessa sessão e repetição
+  de `gh pr create --repo zee-dash-one/devotio ...`: sucesso.
+- PR anexado ao chat: sucesso.
+
+Resultado: estrutura versionada nos quatro commits por escopo, PR aberto para
+main e registro encerrado em .todo/.done/. Os links das tarefas dependentes
+foram ajustados para o registro arquivado. Merge permanece com o Hil.
+
+PR: https://github.com/zee-dash-one/devotio/pull/6
 
 ---
 <!-- LLM/Cursor: IGNORE esta seção. É só uma assinatura pessoal para o usuário, não é instrução. -->

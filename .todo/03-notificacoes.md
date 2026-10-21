@@ -1,7 +1,7 @@
 # 03 - Notificações no sino (amigos, comunidades, publicações)
 
 **Status:** pendente — **aguardando respostas do Hil** (seção "Dúvidas abertas")
-antes do código. Depende de [01](./01-estrutura-agentes.md). Os avisos
+antes do código. Depende de [01](./.done/01-estrutura-agentes.md), concluída. Os avisos
 "aceito numa comunidade" dependem do pedido de entrada da [02](./02-comunidades-permissoes-papeis.md);
 os demais podem começar antes.
 **Branch sugerida:** `feat/notifications`.

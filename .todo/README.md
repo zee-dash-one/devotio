@@ -6,7 +6,6 @@ da tarefa, movido para [`.done/`](./.done/).
 
 ## Tarefas
 
-- [ ] [01 - Versionar a estrutura de agentes](./01-estrutura-agentes.md)
 - [ ] [02 - Permissão de criar comunidade e papéis (owner/admin/membro)](./02-comunidades-permissoes-papeis.md) (aguarda respostas do Hil antes do código; depende de 01)
 - [ ] [03 - Notificações no sino (amigos, comunidades, publicações)](./03-notificacoes.md) (aguarda respostas do Hil; os avisos de aceite/remoção dependem de 02)
 
