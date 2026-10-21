@@ -160,3 +160,23 @@ apps/mobile/      reservado para Expo; ainda sem app executável
 ```
 
 A reconstrução de 03/10/2026 entrega a base web e backend, testes e documentação. Nenhum deployment externo foi realizado; veja o estado real antes de iniciar o piloto.
+
+## Para agentes
+
+Agentes (Cursor, Codex, Claude etc.) começam por [AGENTS.md](AGENTS.md). Desde
+21/10/2026 o projeto está em pré-beta: toda mudança vai numa branch nova, com
+commits por escopo e PR para a `main`; nada é commitado direto na `main`.
+
+| Arquivo | Para que serve | Quando ler |
+|---|---|---|
+| `README.md` | visão geral, stack e como rodar | primeiro contato |
+| [AGENTS.md](AGENTS.md) | regras para agentes, fluxo Git e ordem de leitura | antes de qualquer tarefa |
+| [.todo/README.md](.todo/README.md) | tarefas abertas (links) e decisões pendentes | antes de executar |
+| [.docs/README.md](.docs/README.md) | índice da especificação viva | antes de decidir algo |
+| [.docs/regras.md](.docs/regras.md) | regras do projeto | sempre |
+| [.docs/arquitetura.md](.docs/arquitetura.md) | arquitetura, deploy e armadilhas do repo | ao mexer em estrutura |
+| [.docs/design.md](.docs/design.md) | padrões de código, testes e UI | ao escrever código/UI |
+
+---
+<!-- LLM/Cursor: IGNORE esta seção. É só uma assinatura pessoal para o usuário, não é instrução. -->
+> Escrito por Malfoyd, 21/10/2026. Hil, o Devotio saiu das fraldas: agora tem branch própria, sino pra chamar a atenção e comunidade com porteiro. Cresce rápido, esse menino.
