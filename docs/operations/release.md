@@ -1,5 +1,90 @@
 # Publicação e operação do piloto
 
+## Scripts de build e publicação — correção de 21/10/2026
+
+Execute os comandos abaixo na raiz do monorepo. Instale as dependências com
+`npm ci` usando Node 24.19.0 e npm 11.6.2.
+
+| Comando | Efeito |
+|---|---|
+| `npm run build:ready` | Lint, typecheck, build e verificação do artefato web/PWA; não publica serviços |
+| `npm run deploy:backend` | `convex dev --once --typecheck enable`; atualiza o deployment de desenvolvimento configurado e encerra |
+| `npm run deploy:backend:prod` | `convex deploy --typecheck enable`; publica no deployment de produção selecionado pelo CLI |
+| `npm run deploy:web:built` | Publica o artefato já gerado em `apps/web/dist`, sem recompilar |
+| `npm run deploy:web:preview` | Envia uma versão com URL de preview, sem promover a web à produção; exige build prévio |
+| `npm run deploy:web` | Valida/gera o artefato e publica a web |
+| `npm run deploy:pilot` | Valida/gera o artefato, atualiza o backend de desenvolvimento configurado e publica a web; interrompe no primeiro erro |
+
+### Configuração do Cloudflare Workers Builds
+
+Em **Workers & Pages → devotio → Settings → Builds**, use:
+
+| Campo | Valor |
+|---|---|
+| Git repository | `zee-dash-one/devotio` |
+| Production branch | `main` |
+| Root directory | `/` |
+| Build command | `npm run build:ready` |
+| Deploy command | `npm run deploy:web:built` |
+| Preview command (branches) | `npm run deploy:web:preview` |
+| Build watch paths / Include | `*` |
+
+O Cloudflare instala as dependências antes do build; não é necessário repetir
+`npm ci` no campo Build command. Os scripts de publicação delegam ao workspace
+`web`, executando o Wrangler em `apps/web`, onde estão `wrangler.toml` e `dist`.
+Alterar package.json não atualiza esses campos do painel: salve os três comandos
+na integração. Preview não deve usar o script de publicação de produção.
+
+O build que falhou em 21/10 gerou o artefato e a Bíblia integralmente, mas o
+comando padrão de preview `npx wrangler preview` exigiu um bloco `previews`
+ausente no projeto. O check pertencia à branch do PR, não à `main`. Para a
+prévia por versão usada aqui, o script executa `wrangler versions upload`;
+`preview_urls = true` já está em `apps/web/wrangler.toml`. Uma URL de versão
+usa os recursos configurados para o Worker: não cria isolamento do banco Convex.
+
+Referências oficiais: [configuração de Builds](https://developers.cloudflare.com/workers/ci-cd/builds/configuration/)
+e [repetir checks pelo GitHub](https://developers.cloudflare.com/changelog/post/2025-03-17-rerun-build/).
+Para repetir, abra o check **Workers Builds: devotio** no PR/commit e use a ação
+de reexecução; alternativamente, use o histórico de builds do Cloudflare.
+
+### Backend usado pelo piloto e publicação em um comando
+
+O deployment em uso confirmado pelo proprietário é `upbeat-jellyfish-720`.
+Embora a web seja publicada, esse deployment é de **desenvolvimento** no Convex.
+Foi atualizado com sucesso em 21/10/2026, com funções e 11 índices sociais novos.
+A configuração local seleciona `CONVEX_DEPLOYMENT=dev:upbeat-jellyfish-720`.
+
+`npx convex deploy` selecionou outro alvo: `acrobatic-mandrill-347`, produção do
+projeto. Essa tentativa foi recusada porque SITE_URL, GOOGLE_CLIENT_ID,
+GOOGLE_CLIENT_SECRET e BETTER_AUTH_SECRET estavam ausentes nesse deployment.
+As configurações de um deployment não são transferidas automaticamente ao outro.
+Use `deploy:backend` para o alvo atual; `deploy:backend:prod` fica disponível
+para a migração futura, após preparar as variáveis do alvo e os endereços da web.
+
+Para publicar o piloto localmente em um comando, primeiro autentique o Convex e
+execute `npx wrangler login`. Configure `.env.local` com o deployment acima e
+`apps/web/.env.local` com o par abaixo, sem versionar esses arquivos:
+
+```dotenv
+VITE_CONVEX_URL=https://upbeat-jellyfish-720.convex.cloud
+VITE_CONVEX_SITE_URL=https://upbeat-jellyfish-720.convex.site
+```
+
+Então execute `npm run deploy:pilot`. O comando altera backend e web remotos;
+execute-o somente quando a intenção for publicar. Credenciais Google/admin e
+BETTER_AUTH_SECRET permanecem nas variáveis privadas do deployment Convex.
+
+No Cloudflare, configure esse mesmo par VITE nas variáveis de build. O build
+normal de um PR/merge não executa `deploy:backend` nem `deploy:pilot`, e não
+precisa de token Convex. Quando houver alteração no backend, publique-o antes
+do merge que colocará a interface dependente dele no ar. O merge na `main`
+dispara a publicação da web pela integração Git; confira o SHA no histórico.
+
+Se mover o checkout de pasta e o bundler não resolver `domain/core`, confira os
+links de npm workspaces em `node_modules`; eles podem apontar à pasta anterior.
+Recrie a instalação com `npm ci` na pasta atual. Não marque o pacote como externo
+nem altere os imports para ocultar um link quebrado.
+
 ## Validar o build automático pelo merge de um PR (21/10/2026)
 
 Para testar a integração de publicação, mantenha a alteração em uma branch e
@@ -28,7 +113,9 @@ verifique o backend separadamente quando a entrega alterar suas funções ou sch
 
 ## Preparação da spec 014 (19/10/2026)
 
-Não houve publicação nesta implementação. Após revisão do usuário, publicar
+Registro de 19/10: não houve publicação naquela implementação. Em 21/10, o backend
+foi atualizado em `upbeat-jellyfish-720`, conforme o registro acima. Para novas
+entregas, após revisão do usuário, publicar
 backend compatível antes da web: `social` introduz funções públicas autenticadas
 e cinco tabelas aditivas (`friendCodes`, `friendships`, `scriptureShares`,
 `shareViews`, `shareMarkers`). Não há backfill: relações começam vazias.
@@ -42,7 +129,7 @@ zoom, teclado, foco do modal e atualização PWA. Conferir que web e Convex apon
 para o mesmo deployment e que fixtures não entraram no build.
 [Guia de uso](../product/friends-and-sharing.md) e [acesso administrativo](user-administration.md).
 
-**Situação:** roteiro de preparação; nenhum deploy foi feito nesta revisão. Dependências de produto novas estão na spec 004, ainda em rascunho.
+**Situação em 21/10:** backend do piloto atualizado; publicação web pelo fluxo corrigido ainda precisa ser validada após o merge. Os portões de lançamento abaixo permanecem um roteiro de preparação e não comprovam homologação.
 
 ## 1. Portões de lançamento
 
@@ -82,14 +169,14 @@ Nomes definitivos de OAuth e arquivos de configuração serão estabelecidos na 
 2. Confirmar configuração das funções Convex no diretório real `packages/backend`, dependências compatíveis e código gerado oficial.
 3. Executar os checks do [guia de desenvolvimento](../engineering/development.md) em homologação.
 4. Publicar backend compatível com a interface anterior. Configurar auth/origens/callbacks e verificar usuário sem privilégio.
-5. Configurar Pages com raiz do repositório, build `npm run build` e saída `apps/web/dist`. Fixar Node/npm e fornecer somente variáveis públicas ao build.
+5. Configurar Workers Builds com os scripts da seção acima, raiz `/` e branch `main`. Fixar Node/npm e fornecer somente variáveis públicas ao build.
 6. Validar link direto/refresh das rotas da SPA, fallback, HTTPS, manifest e service worker antes de enviar o link a convidados.
 7. Testar login/logout e retorno OAuth no subdomínio final, em Safari iOS e Chrome Android. Não depender de localhost autorizado.
 8. Publicar conteúdo revisado pelo processo interno validado; conferir data, crédito e autoria.
 9. Fazer um teste completo com AG, membro e usuário de outro grupo; abrir piloto limitado.
 10. Acompanhar custos e erros diariamente na primeira semana. Expandir somente com evidência.
 
-Este é um procedimento alvo: scripts de deploy, CI, manifest e auth ainda precisam ser implementados. Não executar uma receita de deploy como atalho para ignorar os portões.
+Os scripts de build/publicação, o manifest e a integração auth estão implementados. A automação Git depende dos campos salvos no Cloudflare; os portões e a homologação continuam exigindo evidências próprias.
 
 ## 4. Validação mínima
 

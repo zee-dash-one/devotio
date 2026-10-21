@@ -1,8 +1,10 @@
 # Documentação do Devotio
 
-**Revisão:** 09/10/2026. A leitura é organizada por decisão, separando intenção de produto de capacidades implementadas.
+**Revisão:** 21/10/2026. A leitura é organizada por decisão, separando intenção de produto de capacidades implementadas.
 
 ## Revisão atual: configurações e leitura
+
+- [Build e publicação em scripts](operations/release.md): `build:ready`, atualização do backend do piloto, comandos distintos de produção/preview e publicação local em um comando (`deploy:pilot`). Correção de 21/10/2026.
 
 - [Amigos e partilha privada — spec 014](../specs/014-amigos-compartilhamento/spec.md): Perfil, convites consentidos, recados bíblicos e leitura simplificada. [Como usar](product/friends-and-sharing.md).
 - **Aprovar usuários:** rota direta `/gestao-acesso`, com login/senha/TOTP do proprietário; não aparece nas Configurações nem no Perfil. [Passo a passo](operations/user-administration.md#como-encontrar-e-entrar-no-painel).

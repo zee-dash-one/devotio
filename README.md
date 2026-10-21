@@ -9,6 +9,14 @@ Há adaptadores Google/Convex e um ambiente local com perfis fictícios e SQLite
 [Validações e pendências de publicação](docs/engineering/status.md).
 Código no checkout não comprova atualização de produção; Expo permanece adiado.
 
+## Build e publicação
+
+Na raiz, `npm run build:ready` verifica e gera o artefato para publicação.
+`npm run deploy:backend` atualiza o Convex de desenvolvimento configurado
+(atualmente `upbeat-jellyfish-720`). Com credenciais e ambiente preparados,
+`npm run deploy:pilot` valida, atualiza esse backend e publica a web em sequência.
+[Comandos, configuração do Cloudflare e correção do deploy](docs/operations/release.md).
+
 ## Comece aqui
 
 **Aprovação e gestão de usuários:** acesse `/gestao-acesso` no domínio do app,
@@ -62,7 +70,7 @@ Inventário conferido em **03/10/2026** nos manifests, configurações e [packag
 
 | Tecnologia | Versão | Uso / estado |
 |---|---|---|
-| Convex | 1.46.0 | Banco, schema, índices, queries, mutations, subscriptions e agendamento editorial; deployment real pendente |
+| Convex | 1.46.0 | Banco, funções e auth; backend do piloto atualizado em `upbeat-jellyfish-720` em 21/10/2026; produção Convex separada |
 | `convex/react` | Incluído no Convex | Client React e subscriptions consumidos pelos adaptadores de domínio |
 | Better Auth | 1.6.33 | Sessões e autenticação; faixa do manifest `~1.6.15` |
 | `@convex-dev/better-auth` | 0.12.5 | Componente de auth no Convex, adapter, provider React e integração entre domínios |
@@ -82,8 +90,8 @@ Os pacotes internos são `backend`, `domain` e `ui-kit`. O backend concentra ide
 | `vite-plugin-pwa` | 1.3.0 | Geração de manifest, registro do service worker e atualização opcional |
 | Workbox (`workbox-build` / `workbox-window`) | 7.4.1 | Infraestrutura utilizada pelo plugin para precache do shell e comunicação com o service worker |
 | Web App Manifest + Service Worker | APIs web | Instalação opcional e shell offline; conteúdo autenticado exige internet |
-| Cloudflare Pages Free | Hospedagem planejada | Destino do build estático; arquivos `_redirects` e `_headers` preparados, sem deploy realizado |
-| Convex Free | Backend planejado | Plano previsto para o piloto; configuração de contas e acompanhamento de cotas pendentes |
+| Cloudflare Workers | Web/PWA e Workers Builds | Integração Git para `main` e previews de branches; scripts corrigidos em 21/10/2026, publicação após merge a validar |
+| Convex | Backend do piloto | Deployment de desenvolvimento configurado e atualizado; acompanhamento de cotas e migração para produção são operações separadas |
 
 O service worker não registra cache de APIs autenticadas, comunidade, sessão ou áudio. A operação gratuita depende dos [limites e condições do piloto](docs/operations/free-launch.md).
 
