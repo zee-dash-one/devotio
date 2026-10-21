@@ -27,12 +27,23 @@ locais não são montados. Sem configuração, o acesso fica indisponível.
 | npm run verify:local | Verificar servidor local aberto em outro terminal |
 | npm run dev --workspace=backend | Convex dev; requer conta e projeto |
 | npm run build | Domain/ui-kit e web/PWA; não implanta Convex |
+| npm run build:ready | Lint, typecheck, build e verificação do artefato; sem deploy |
+| npm run deploy:backend | Atualiza uma vez o Convex de desenvolvimento configurado, com typecheck |
+| npm run deploy:backend:prod | Publica no Convex de produção; requer configuração própria do alvo |
+| npm run deploy:web:built | Publica a web já compilada, sem repetir build |
+| npm run deploy:web:preview | Envia a web já compilada para URL de versão, sem promover a produção |
+| npm run deploy:web | Valida, compila e publica a web |
+| npm run deploy:pilot | Valida/compila, publica backend de desenvolvimento configurado e web; requer credenciais |
 | node scripts/prepare-bible.mjs | Validar ALM1911 fornecida e gerar corpus estático público; também executado por dev/build da web |
 | npm run verify:web | Build e inspeção de PWA, licenças, ícones e exclusão de fixtures |
 | npm run lint | ESLint real nos quatro workspaces |
 | npm run typecheck | TypeScript estrito nos quatro workspaces |
 | npm run test | Testes domain e backend |
 | npm run preview --workspace=web | Build de produção na porta 4173 |
+
+A configuração dos comandos de produção/preview do Cloudflare, os pré-requisitos
+do comando único e a distinção entre `convex dev --once` e `convex deploy`
+estão no [guia operacional](../operations/release.md).
 
 Nesta máquina, npm foi disponibilizado em .tools/bin usando o runtime Node do ambiente. Essa pasta é ignorada e não é requisito em outras máquinas.
 

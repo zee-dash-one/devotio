@@ -1,5 +1,33 @@
 # Estado real do projeto
 
+## Configuração de deploy — correção de 21/10/2026
+
+A integração Git foi reconectada pelo proprietário após a transferência para
+`zee-dash-one/devotio`. O build de branch registrado às 04:31 UTC compilou a web,
+a PWA e os 31.101 versículos da ARC1911; falhou depois, ao executar o comando de
+preview padrão `wrangler preview` sem o bloco `previews`. Os scripts agora
+separam build verificado, publicação da web e prévia via `versions upload`.
+O [roteiro operacional](../operations/release.md) contém os campos que devem ser
+salvos no Cloudflare, além do comando único local `npm run deploy:pilot`.
+
+Backend: a tentativa de `convex deploy` selecionou produção
+`acrobatic-mandrill-347` e foi recusada por falta de quatro variáveis de auth.
+Após o proprietário confirmar o alvo atual, `convex dev --once --typecheck enable`
+publicou com sucesso em `upbeat-jellyfish-720`, criando 11 índices sociais.
+Foi preciso reparar os links npm dos workspaces, quebrados pela mudança da pasta
+do checkout. Nenhuma configuração secreta foi copiada entre deployments.
+
+A publicação web após o merge desta correção deve ser confirmada no histórico do
+Cloudflare. Validação local: `npm run build:ready` passou (lint/typecheck do monorepo,
+build web/PWA e verificação de corpus, manifest, ícones, licenças e ausência de
+fixtures/cache de API). Os dois scripts web passaram com `--dry-run`, encontrando
+os assets de `apps/web/dist` sem enviar versões ou ativar produção. Os scripts
+Convex foram conferidos com `--help`; não foi repetido deploy remoto para testar
+os aliases. O comando composto `deploy:pilot` não foi executado nesta revisão.
+O backend do piloto está atualizado; isso não comprova homologação de todos os
+fluxos da spec 014 nem publicação no deployment de produção do Convex.
+
+
 ## Amigos e partilha privada — spec 014, revisão local em 19/10/2026
 
 A [spec 014](../../specs/014-amigos-compartilhamento/spec.md) está implementada

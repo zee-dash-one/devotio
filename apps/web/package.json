@@ -10,7 +10,8 @@
     "deploy": "wrangler deploy",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src vite.config.ts vitest.config.ts tailwind.config.ts",
-    "test": "vitest run --config vitest.config.ts"
+    "test": "vitest run --config vitest.config.ts",
+    "deploy:preview": "wrangler versions upload"
   },
   "dependencies": {
     "@tanstack/react-router": "^1.170.35",

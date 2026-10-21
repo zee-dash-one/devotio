@@ -15,7 +15,13 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "verify:web": "npm run build && node scripts/verify-web-build.mjs",
-    "deploy:web": "npm run build --workspace=web && npm run deploy --workspace=web"
+    "deploy:web": "npm run build:ready && npm run deploy:web:built",
+    "build:ready": "npm run lint && npm run typecheck && npm run verify:web",
+    "deploy:backend": "convex dev --once --typecheck enable",
+    "deploy:backend:prod": "convex deploy --typecheck enable",
+    "deploy:web:built": "npm run deploy --workspace=web --",
+    "deploy:web:preview": "npm run deploy:preview --workspace=web --",
+    "deploy:pilot": "npm run build:ready && npm run deploy:backend && npm run deploy:web:built"
   },
   "devDependencies": {
     "convex": "^1.46.0",
