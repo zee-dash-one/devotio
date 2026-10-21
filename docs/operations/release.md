@@ -15,6 +15,12 @@ será feito pelo responsável pelo projeto no GitHub.
 5. Confira a versão servida e uma rota direta após o sucesso. Se não houver build,
    verifique a conexão com o repositório, a branch configurada e os filtros de build.
 
+Após transferir o repositório entre contas ou organizações, confira em
+**Settings → Builds → Git repository** se a conexão aponta para o proprietário
+atual (`zee-dash-one/devotio`). Se necessário, reconecte e autorize o aplicativo
+Cloudflare nessa organização. Valide a reconexão com um novo PR e confira o SHA
+do merge no histórico de builds; executar um build manual não testa esse gatilho.
+
 Uma branch idêntica à `main` não permite testar esse fluxo por PR. Este roteiro
 não comprova que a automação está configurada: a confirmação exige o registro do
 build após o merge. Publicar a web também não comprova atualização do Convex;
