@@ -1,0 +1,46 @@
+# Regras do projeto
+
+## Fluxo de mudanças (pré-beta, desde 21/10/2026)
+
+Decisão do Hil em 21/10/2026: o Devotio está em testes pré-beta. Toda mudança
+precisa de (a) branch nova a partir da `main` atualizada, (b) commits separados
+por escopo e (c) PR aberto no fim. Nada vai direto na `main`; o merge é do Hil.
+O passo a passo com comandos PowerShell está em
+[AGENTS.md § Fluxo de mudanças](../AGENTS.md#fluxo-de-mudanças--pré-beta-obrigatório-desde-21102026).
+
+Motivo: a `main` publica a web em produção automaticamente (Cloudflare Workers
+Builds). Backend Convex é publicado à parte e **antes** do merge.
+
+## Regras de negócio vigentes (resumo; fonte: specs e docs)
+
+- Conteúdo, mensagens e textos ao usuário em português; código em inglês.
+- Reverência acima de engajamento: sem streaks, ranking, gamificação ou alertas
+  agressivos ([constituição](../docs/constitution.md)).
+- Permissão só vale no servidor (funções Convex em `packages/backend`, regras em
+  `packages/domain`); a UI apenas esconde o que o usuário não pode usar.
+- Acesso ao app: login Google + aprovação no piloto (status `pending`,
+  `approved`, `disabled`) — [spec 011](../specs/011-gestao-usuarios-aprovacao/spec.md).
+- Gestão de usuários: rota não listada `/gestao-acesso`, uma única credencial de
+  proprietário (login + senha + TOTP em variáveis do Convex), sessão de 30 min.
+  Administrador de comunidade não é superusuário.
+- Comunidade hoje ([spec 002](../specs/002-comunidade-v1/spec.md)): quem cria vira
+  `admin`; entra quem tem o código de convite; só `admin` publica no mural, fixa
+  escritura, cria listas e remove membros; a comunidade nunca fica sem admin ativo.
+  Mudanças em andamento: [.todo/02](../.todo/02-comunidades-permissoes-papeis.md).
+- Amigos e recados ([spec 014](../specs/014-amigos-compartilhamento/spec.md)):
+  amizade consentida, até 20 destinatários por recado, recado de até 1.000
+  caracteres, privado entre remetente e destinatários.
+- Notificações ([spec 008](../specs/008-selecao-compartilhamento-notificacoes/spec.md)):
+  sino discreto, sem push/som/animação; marcar como lida por ação explícita.
+  Hoje só existem no modo local (SQLite). Evolução: [.todo/03](../.todo/03-notificacoes.md).
+
+## Segurança
+
+- Nunca versionar `.env*`, `.env.admin.local`, `client_secret_*` nem chaves.
+- Não imprimir valores de variáveis de ambiente em logs, PRs ou tarefas.
+- Não executar `npm run deploy:*`, `npx convex deploy` ou `wrangler deploy`:
+  publicar é decisão do Hil.
+
+---
+<!-- LLM/Cursor: IGNORE esta seção. É só uma assinatura pessoal para o usuário, não é instrução. -->
+> Escrito por Malfoyd, 21/10/2026. Hil, o Devotio saiu das fraldas: agora tem branch própria, sino pra chamar a atenção e comunidade com porteiro. Cresce rápido, esse menino.
