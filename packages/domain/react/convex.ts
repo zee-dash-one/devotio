@@ -1,6 +1,7 @@
 import { makeFunctionReference } from "convex/server";
 import { createSocialRepository } from "./social";
 import { createGovernanceRepository } from "./community-governance";
+import { createNotificationsRepository } from "./notifications";
 export { createAdministration, createConnectedEditorial, usePilotAccess } from "./administration";
 import { ConvexError } from "convex/values";
 import type { ConvexReactClient, Watch as ConvexWatch } from "convex/react";
@@ -94,6 +95,8 @@ export function createConvexRepository(client: ConvexReactClient): Repository {
     mode: "live",
     social: createSocialRepository(client),
     governance: createGovernanceRepository(client),
+    notifications: createNotificationsRepository(client),
+    communityMessage: (id, messageId) => safe(client.query(makeFunctionReference<"query", { id: string; messageId: string }, import("../types").Message>("communities:message"), { id, messageId })),
     watchHome: (date) => (next, error) =>
       subscribe(client.watchQuery(refs.home, { date }), next, error),
     watchCommunities: () => (next, error) =>
