@@ -7,6 +7,8 @@
     "apps/*"
   ],
   "scripts": {
+    "graphify": "node scripts/graphify.mjs",
+    "graphify:code": "node scripts/graphify.mjs extract . --code-only --no-gitignore --no-cluster",
     "dev": "npm run dev --workspace=web",
     "setup:local": "node scripts/prepare-local.mjs",
     "verify:local": "node scripts/verify-local.mjs",

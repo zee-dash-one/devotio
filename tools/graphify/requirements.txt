@@ -1,0 +1,2 @@
+# Official Graphify CLI; isolated developer tooling, outside npm workspaces.
+graphifyy==0.9.94

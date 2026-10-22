@@ -10,6 +10,7 @@ dist
 *.log
 .DS_Store
 .tools
+graphify-out/
 .legacy
 artifacts
 coverage
