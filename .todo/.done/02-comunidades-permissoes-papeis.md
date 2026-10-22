@@ -1,7 +1,7 @@
 # 02 - Permissão de criar comunidade e papéis (owner/admin/membro)
 
-**Status:** em execução — decisões aprovadas pelo Hil em 2026-10-21.
-Depende de [01](./.done/01-estrutura-agentes.md), concluída (PR #6).
+**Status:** concluída em 2026-10-21 — implementação verificada e PR aberto; rollout pendente do Hil.
+Depende de [01](./01-estrutura-agentes.md), concluída (PR #6).
 **Branch sugerida:** `feat/community-roles`.
 
 ## Objetivo
@@ -13,10 +13,10 @@ ou recusam quem pede para entrar.
 
 ## Leia antes
 
-[AGENTS.md](../AGENTS.md), [.todo/README.md](./README.md),
-[.docs/regras.md](../.docs/regras.md), [.docs/arquitetura.md](../.docs/arquitetura.md),
-[specs/002](../specs/002-comunidade-v1/spec.md), [specs/011](../specs/011-gestao-usuarios-aprovacao/spec.md),
-[docs/operations/user-administration.md](../docs/operations/user-administration.md),
+[AGENTS.md](../../AGENTS.md), [.todo/README.md](../README.md),
+[.docs/regras.md](../../.docs/regras.md), [.docs/arquitetura.md](../../.docs/arquitetura.md),
+[specs/002](../../specs/002-comunidade-v1/spec.md), [specs/011](../../specs/011-gestao-usuarios-aprovacao/spec.md),
+[docs/operations/user-administration.md](../../docs/operations/user-administration.md),
 `packages/backend/_generated/ai/guidelines.md`.
 
 ## O que existe hoje (levantado no código em 21/10/2026)
@@ -173,7 +173,7 @@ Daniel com permissão (limite 1), Ester com limite 2, Marina e Lucas sem.
 1. Registrar as respostas na seção "Decisões do Hil" abaixo e criar
    `specs/015-comunidade-papeis-permissoes/spec.md` só com requisitos e decisões
    (a tarefa continua sendo o plano). Adicionar a linha 015 em `specs/README.md`.
-2. Seguir o fluxo do [AGENTS.md](../AGENTS.md#fluxo-de-mudanças--pré-beta-obrigatório-desde-21102026):
+2. Seguir o fluxo do [AGENTS.md](../../AGENTS.md#fluxo-de-mudanças--pré-beta-obrigatório-desde-21102026):
 
    ```powershell
    git switch main
@@ -279,7 +279,7 @@ Em 2026-10-21, Hil respondeu "Adotar essas decisões na tarefa 02" no chat:
 - [x] SQLite e adaptadores com regras equivalentes.
 - [x] Web: criação, pedidos, papéis e saída.
 - [x] Lint, typecheck, testes e build:ready.
-- [ ] Documentação, PR e encerramento. Mobile permanece adiado.
+- [x] Documentação, PR e encerramento. Mobile permanece adiado.
 
 ## Resultado
 
@@ -325,6 +325,19 @@ Homologação visual em aparelhos e Google real permanece com o Hil; mobile adia
 Commits por escopo (`git commit --only -m ... -- <escopo>`, todos com sucesso):
 `69226c4` domínio; `1e364a6` backend/painel; `bfdd5cc` SQLite; `c5e6475` web.
 Arquivos web novos foram incluídos com `git add` antes do commit.
+
+- Verificação PowerShell de links relativos: sucesso, 177 links em 16 documentos.
+- `git add` da documentação e `git commit -m 'docs: document community governance and rollout'`:
+  sucesso, `422cd9c`.
+- `git status --short --branch`, `git diff --check docs/agent-structure..HEAD` e
+  `git ls-files` dos nove arquivos novos de packages/: sucesso; árvore limpa,
+  sem espaços inválidos e todos os arquivos novos presentes no Git.
+- `git push -u origin feat/community-roles`: sucesso.
+- `Set-Content` do corpo no TEMP e `gh pr create --repo zee-dash-one/devotio --base main --head feat/community-roles ...`:
+  sucesso; PR aberto e anexado ao chat. Registro movido para .todo/.done/ e links
+  dependentes atualizados, sem alterar dados reais.
+
+PR: https://github.com/zee-dash-one/devotio/pull/7
 
 ---
 <!-- LLM/Cursor: IGNORE esta seção. É só uma assinatura pessoal para o usuário, não é instrução. -->

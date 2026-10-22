@@ -2,7 +2,7 @@
 
 **Status:** pendente — decisões aprovadas pelo Hil em 2026-10-21.
 Depende de [01](./.done/01-estrutura-agentes.md), concluída. Os avisos
-"aceito numa comunidade" dependem do pedido de entrada da [02](./02-comunidades-permissoes-papeis.md);
+"aceito numa comunidade" dependem do pedido de entrada da [02](./.done/02-comunidades-permissoes-papeis.md), implementada no PR #7;
 os demais podem começar antes.
 **Branch sugerida:** `feat/notifications`.
 
@@ -229,7 +229,7 @@ Não decidir sem resposta. Sugestões entre parênteses só para facilitar.
 3. **D3 — Remoção:** quem sai por conta própria também recebe aviso, ou só quem é
    removido por owner/admin/painel? O aviso diz quem removeu?
 4. **D4 — Outros eventos:** notificar também pedido de amizade recebido/aceito,
-   pedido de entrada pendente para owner/admin (tarefa 02), recusa do pedido,
+    pedido de entrada pendente para owner/admin (tarefa 02), recusa do pedido,
    virar admin/owner, permissão de criar comunidade concedida? O aviso de
    sistema "Você tem direito a criar uma comunidade" continua (só para quem tem
    a permissão)?

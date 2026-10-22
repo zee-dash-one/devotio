@@ -28,7 +28,7 @@ Builds). Backend Convex é publicado à parte e **antes** do merge.
   para owner/admin aprovarem. Só owner/admin publicam, fixam escritura e criam
   listas. Admin promove membro; só owner remove/rebaixa admin. Owner transfere
   antes de sair/desativar. Nenhuma comunidade pode perder o último gestor ativo.
-  Implementação e rollout: [.todo/02](../.todo/02-comunidades-permissoes-papeis.md).
+  Implementação e rollout: [.todo/02](../.todo/.done/02-comunidades-permissoes-papeis.md).
 - Amigos e recados ([spec 014](../specs/014-amigos-compartilhamento/spec.md)):
   amizade consentida, até 20 destinatários por recado, recado de até 1.000
   caracteres, privado entre remetente e destinatários.

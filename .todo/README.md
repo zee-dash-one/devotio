@@ -6,8 +6,7 @@ da tarefa, movido para [`.done/`](./.done/).
 
 ## Tarefas
 
-- [ ] [02 - Permissão de criar comunidade e papéis (owner/admin/membro)](./02-comunidades-permissoes-papeis.md) (decisões aprovadas em 21/10; em execução)
-- [ ] [03 - Notificações no sino (amigos, comunidades, publicações)](./03-notificacoes.md) (decisões aprovadas em 21/10; aceite/remoção dependem de 02)
+- [ ] [03 - Notificações no sino (amigos, comunidades, publicações)](./03-notificacoes.md) (decisões aprovadas em 21/10; implementação de 02 no PR #7)
 
 ## Decisões pendentes do Hil
 
