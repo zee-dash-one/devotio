@@ -1,7 +1,7 @@
 # 02 - Permissão de criar comunidade e papéis (owner/admin/membro)
 
-**Status:** pendente — **aguardando respostas do Hil** (seção "Dúvidas abertas")
-antes de qualquer código. Depende de [01](./.done/01-estrutura-agentes.md), concluída.
+**Status:** em execução — decisões aprovadas pelo Hil em 2026-10-21.
+Depende de [01](./.done/01-estrutura-agentes.md), concluída (PR #6).
 **Branch sugerida:** `feat/community-roles`.
 
 ## Objetivo
@@ -254,11 +254,44 @@ Não decidir sem resposta. Sugestões entre parênteses só para facilitar.
 
 ## Decisões do Hil
 
-(preencher com data)
+Em 2026-10-21, Hil respondeu "Adotar essas decisões na tarefa 02" no chat:
+
+- D1: gestão exclusiva da credencial do proprietário.
+- D2: owner e painel transferem posse; owner deve transferir antes de sair.
+- D3: admin promove membro; só owner remove ou rebaixa outro admin.
+- D4: convite por código e aprovação obrigatórios; sem busca pública.
+- D5: admin ativo mais antigo vira owner; membros preservados; sem concessão
+  automática da permissão de criar.
+- D6: revogação só bloqueia novas criações; owner transfere antes de desativar.
+- D7: contar comunidades atualmente possuídas; máximo 20; redução só bloqueia novas.
+- D8: ocultar botão sem permissão, com explicação discreta; sem solicitação no app.
+- D9: sem expiração; recusa visível; novo pedido permitido após recusa.
+- D10: código obrigatório; sem renovação nesta etapa.
+- D11/D12: owner/admin publicam, fixam escritura e criam listas; posse e
+  remoção/rebaixamento de admins são exclusivos do owner (ou painel proprietário).
+
+## Checklist de execução
+
+- [ ] Spec 015 e decisões registradas.
+- [ ] Regras, contratos e testes do domínio.
+- [ ] Convex: permissão, owner, pedidos, papéis, transferência e backfill.
+- [ ] Painel: permissão, limite e transferência de posse.
+- [ ] SQLite e adaptadores com regras equivalentes.
+- [ ] Web: criação, pedidos, papéis e saída.
+- [ ] Lint, typecheck, testes e build:ready.
+- [ ] Documentação, PR e encerramento. Mobile permanece adiado.
 
 ## Resultado
 
-(preencher: comandos, testes, URL do PR)
+- `git switch main`, `git pull --ff-only origin main`,
+  `git switch -c feat/community-roles`: sucesso; main já atualizada.
+- `git cherry-pick origin/main..docs/agent-structure`: sucesso; trouxe a
+  estrutura documental do PR #6 como dependência, sem modificar main.
+- Leituras de specs 002/011, regras Convex geradas, skill convex/convex-expert,
+  contratos e implementação vigente: concluídas. A instrução de deploy da skill
+  não se aplica porque o Hil reservou publicação para si.
+- `Get-Content packages/domain/repository.ts`: falhou; o contrato está em types.ts,
+  lido em seguida. Nenhuma alteração decorrente dessa tentativa.
 
 ---
 <!-- LLM/Cursor: IGNORE esta seção. É só uma assinatura pessoal para o usuário, não é instrução. -->

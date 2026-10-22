@@ -6,13 +6,11 @@ da tarefa, movido para [`.done/`](./.done/).
 
 ## Tarefas
 
-- [ ] [02 - Permissão de criar comunidade e papéis (owner/admin/membro)](./02-comunidades-permissoes-papeis.md) (aguarda respostas do Hil antes do código; depende de 01)
-- [ ] [03 - Notificações no sino (amigos, comunidades, publicações)](./03-notificacoes.md) (aguarda respostas do Hil; os avisos de aceite/remoção dependem de 02)
+- [ ] [02 - Permissão de criar comunidade e papéis (owner/admin/membro)](./02-comunidades-permissoes-papeis.md) (decisões aprovadas em 21/10; em execução)
+- [ ] [03 - Notificações no sino (amigos, comunidades, publicações)](./03-notificacoes.md) (decisões aprovadas em 21/10; aceite/remoção dependem de 02)
 
 ## Decisões pendentes do Hil
 
-- [ ] Dúvidas da [tarefa 02](./02-comunidades-permissoes-papeis.md#dúvidas-abertas-para-o-hil)
-- [ ] Dúvidas da [tarefa 03](./03-notificacoes.md#dúvidas-abertas-para-o-hil)
 - [ ] `specs/` x `.todo/`: nas features novas, a tarefa do `.todo/` substitui `plan.md`/`tasks.md` e a spec fica só com requisitos? (ver [AGENTS.md §2](../AGENTS.md#2-fluxo-de-trabalho-spec--plan--tasks--code))
 
 ## Regras de execução

@@ -1,7 +1,7 @@
 # 03 - Notificações no sino (amigos, comunidades, publicações)
 
-**Status:** pendente — **aguardando respostas do Hil** (seção "Dúvidas abertas")
-antes do código. Depende de [01](./.done/01-estrutura-agentes.md), concluída. Os avisos
+**Status:** pendente — decisões aprovadas pelo Hil em 2026-10-21.
+Depende de [01](./.done/01-estrutura-agentes.md), concluída. Os avisos
 "aceito numa comunidade" dependem do pedido de entrada da [02](./02-comunidades-permissoes-papeis.md);
 os demais podem começar antes.
 **Branch sugerida:** `feat/notifications`.
@@ -248,7 +248,18 @@ Não decidir sem resposta. Sugestões entre parênteses só para facilitar.
 
 ## Decisões do Hil
 
-(preencher com data)
+Em 2026-10-21, Hil respondeu "Adotar essas decisões na tarefa 03" no chat:
+
+- D1: leitura exclusivamente pelo botão Lida de cada aviso.
+- D2: avisar membros atuais, exceto autor; sem histórico para novos membros.
+- D3: apenas remoção forçada gera aviso; não identificar quem removeu.
+- D4: apenas os quatro eventos definidos; retirar aviso fixo de criação.
+- D5: mostrar remetente/referência; manter histórico após desfazer amizade.
+- D6: sem push, som ou animação.
+- D7: sem exclusão automática ou manual nesta etapa.
+- D8: ocultar publicações sem acesso; outros avisos sem destino ficam sem link.
+- D9: subscriptions Convex; botão Atualizar avisos exclusivo do modo local.
+- D10: uma notificação por publicação.
 
 ## Resultado
 
