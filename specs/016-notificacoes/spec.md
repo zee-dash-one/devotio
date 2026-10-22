@@ -1,7 +1,7 @@
 # Spec: Notificações de amigos e comunidades
 
 **ID:** 016-notificacoes
-**Status:** aprovada; em desenvolvimento
+**Status:** aprovada; implementada na branch, publicação/homologação pendentes
 **Versão alvo:** v1 web/PWA
 
 ## 1. Contexto e problema

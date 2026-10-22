@@ -1,5 +1,35 @@
 # Estado real do projeto
 
+## Notificações conectadas e locais — spec 016, 21/10/2026
+
+Implementados na branch da tarefa 03: sino conectado por subscription, contador
+99+, lista paginada, destinos bíblicos/mensagens antigas e leitura exclusivamente
+pelo botão Lida. Recados de amigos, aceite, remoção forçada e publicações geram
+avisos idempotentes; autor não recebe a própria publicação e entradas posteriores
+não recebem histórico. Agregados transacionais tornam o contador independente
+do tamanho do histórico. Revogação oculta avisos da participação anterior sem
+apagar dados nem alterar readAt; reingresso não os revive.
+
+SQLite preserva avisos/readAt legados e migra referências/tipos uma vez; remove
+o aviso fixo obsoleto de permissão. SSE continua após commit e Atualizar avisos
+fica no local. O servidor confere destinatário do recado e acesso comunitário;
+painel não recebe avisos privados nem identifica o responsável na remoção.
+
+Verificação final sem cache: 234 testes passaram (98 domínio, 76 backend, 60 web),
+sem skips ou erros não tratados. Incluem lote de 250 membros, entrada posterior
+com relógio fixo, isolamento, contador/leitura, remoção pelo painel, migração com
+reabertura e navegação real do roteador em jsdom. Os testes existentes com jobs
+agendados agora aguardam sua conclusão entre casos. HTTP/SSE passou na execução
+autorizada fora do sandbox. Lint, typecheck e build:ready passaram; PWA com 22
+recursos, manifest/ícones/licenças válidos, corpus ARC1911 fora do JS/precache e
+ausência de fixtures/cache de API. Permanecem avisos de dependências e SQLite
+experimental, sem falhas no build.
+
+Publicação depende dos PRs #6/#7 e da revisão da tarefa 03. Hil publica backend
+antes da web; o backfill de owners da spec 015 continua obrigatório. Não houve
+deploy, backfill em dados reais ou merge nesta execução. Google real, aparelhos
+físicos e mobile não foram homologados nesta rodada; mobile permanece adiado.
+
 ## Criação, posse e pedidos comunitários — spec 015, 21/10/2026
 
 Implementados na branch da tarefa 02: permissão de criação com limite 0–20,

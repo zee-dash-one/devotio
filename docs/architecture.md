@@ -41,6 +41,46 @@ Membros não recebem emails ou autores dos ticks. Contagens pequenas podem permi
 
 ## Modelo de Dados
 
+### Notificações pessoais (spec 016 — 21/10/2026)
+
+`Repository.notifications` existe nos dois ambientes; Convex usa subscriptions
+e SQLite usa SSE. Sino/lista não marcam leitura; somente Lida grava readAt. O
+domínio resolve os destinos e converte type=community legado em communityPost.
+Sem push, sons, agrupamento, exclusão manual ou limpeza por prazo.
+
+| Alteração | Responsabilidade e índices |
+|---|---|
+| notifications | userId, kind, sourceKey, snapshots de nomes, referências ao recado/mensagem, alvo bíblico, participação destinatária, readAt e hidden; índices by_userId, by_userId_and_hidden, by_sourceKey, by_recipientMembershipId |
+| users.notificationUnread | Total pessoal de não lidas; opcional, padrão zero; atualizado na mesma transação do evento/leitura/revogação |
+| communityMembers.notificationUnread | Parcela não lida daquela participação, subtraída ao sair/remover; opcional, padrão zero |
+| communityMembers.joinSequence / communities.membershipVersion | Sequência monotônica de entrada; ambos opcionais, legado zero; alteração de papel não muda a participação |
+| communityMessages.notificationAudienceVersion | Captura a audiência no envio; exclui entradas posteriores mesmo com timestamps iguais |
+
+O agregado torna summary independente do tamanho do histórico. Devolver cem com
+capped=true apresenta 99+. Não há backfill de avisos antigos: a tabela Convex é
+nova. Índices mais verificação de origem transacional tornam produção idempotente.
+Fan-out executa até 100 participações por mutation e agenda o próximo cursor;
+confere sequência de entrada, conta aprovada e exclui o autor.
+
+Remoção/saída subtraem a parcela não lida e revogam acesso imediatamente; a
+ocultação persistente de posts antigos usa lotes pelo ID da participação. As
+linhas são preservadas com hidden=true e readAt inalterado. Reingresso recebe
+outro vínculo e não revive avisos antigos. Só remoção forçada produz aviso.
+
+Recados notificam destinatários na transação do envio, guardando referência e
+shareId sem copiar mensagem ou trecho privados. A leitura confere destinatário
+em scriptureShares; desfazer amizade preserva histórico. Aprovação/remoção guardam
+nome comunitário, sem identificar quem removeu. Destino de aceite sem acesso
+fica sem link; publicação sem acesso some. `communities:message` lê mensagem
+antiga por ID após conferir participação e grupo, sem percorrer o mural.
+
+SQLite migra uma vez com metadata notifications-v2: mantém seq/readAt e avisos
+existentes, converte tipos legados, acrescenta referências e oculta participações
+revogadas. Remove apenas o aviso fixo obsoleto de permissão de criar. Novos envios
+e leituras emitem SSE somente após commit; o contador limita a consulta a cem.
+Ambos os caminhos negam contas pendentes/desativadas. Atualizar avisos manualmente
+fica no local; Convex mantém watchQuery e libera observadores ao fechar/sair.
+
 ### Papéis e criação de comunidades (spec 015 — 21/10/2026)
 
 `Repository.governance` compartilha entre Convex e SQLite a consulta de permissão,

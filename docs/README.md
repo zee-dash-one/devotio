@@ -4,6 +4,12 @@
 
 ## Revisão atual: configurações e leitura
 
+- [Notificações pessoais — spec 016](../specs/016-notificacoes/spec.md): sino
+  conectado e local, quatro eventos, leitura explícita e destinos autorizados.
+- [Papéis comunitários — spec 015](../specs/015-comunidade-papeis-permissoes/spec.md):
+  permissão/limite de criação, owner, pedidos, saída e transferência. Rollout
+  depende dos PRs e da operação do proprietário; ver [estado real](engineering/status.md).
+
 - [Build e publicação em scripts](operations/release.md): `build:ready`, atualização do backend do piloto, comandos distintos de produção/preview e publicação local em um comando (`deploy:pilot`). Correção de 21/10/2026.
 
 - [Amigos e partilha privada — spec 014](../specs/014-amigos-compartilhamento/spec.md): Perfil, convites consentidos, recados bíblicos e leitura simplificada. [Como usar](product/friends-and-sharing.md).

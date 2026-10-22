@@ -4,6 +4,9 @@ Um espaço calmo para ler a Palavra, meditar e orar. Um app devocional minimalis
 
 **Estado do código:** web/PWA com Devocional, Bíblia por edição, Comunidades,
 gestão de acesso e editorial. A spec 014 acrescenta amigos e recados privados.
+As specs [015](specs/015-comunidade-papeis-permissoes/spec.md) e
+[016](specs/016-notificacoes/spec.md) acrescentam papéis/pedidos comunitários e
+sino conectado; publicação depende da revisão dos PRs e operação do proprietário.
 Há adaptadores Google/Convex e um ambiente local com perfis fictícios e SQLite.
 [Como usar o ambiente local](docs/engineering/local-development.md) ·
 [Validações e pendências de publicação](docs/engineering/status.md).
