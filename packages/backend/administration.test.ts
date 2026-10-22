@@ -19,6 +19,7 @@ const modules = {
   "./adminSession.ts": () => import("./adminSession"),
   "./adminLogin.ts": () => import("./adminLogin"),
   "./communities.ts": () => import("./communities"),
+  "./communityGovernance.ts": () => import("./communityGovernance"),
   "./home.ts": () => import("./home"),
   "./editorial.ts": () => import("./editorial"),
   "./editorialAccess.ts": () => import("./editorialAccess"),
@@ -107,6 +108,17 @@ afterEach(() => {
 });
 
 describe("aprovação no backend conectado", () => {
+  it("reserva permissão de criação ao proprietário, valida limite e audita", async () => {
+    const t = setup();
+    const id = await t.run(ctx => ctx.db.insert("users", { name: "Ana", email: "ana@example.test", status: "approved" }));
+    const input = { token, userId: id, allowed: true };
+    await expect(t.mutation(m("administration:setCommunityCreation"), input)).rejects.toThrow();
+    await admin(t);
+    await expect(t.mutation(m("administration:setCommunityCreation"), { ...input, limit: 21 })).rejects.toThrow();
+    await t.mutation(m("administration:setCommunityCreation"), input);
+    expect(await t.run(ctx => ctx.db.get(id))).toMatchObject({ communityCreationAllowed: true, communityCreationLimit: 1 });
+    expect(await t.run(ctx => ctx.db.query("userAdminEvents").collect())).toEqual([expect.objectContaining({ target: id, action: "community-creation:true:1" })]);
+  });
   it("persiste pendência, não duplica e bloqueia consultas/mutações diretas", async () => {
     const t = setup(),
       user = await google(t, "new@example.com");
@@ -300,11 +312,12 @@ describe("aprovação no backend conectado", () => {
     await admin(t);
     const user = await google(t, "leader@example.com", 1);
     await user.mutation(accessRefs.bootstrap, {});
+    const leader = (await t.run((ctx) => ctx.db.query("users").collect()))[0];
+    await t.mutation(m("administration:setCommunityCreation"), { token, userId: leader._id, allowed: true });
     const communityId = await user.mutation(refs.create, {
       name: "Grupo",
       description: "",
     });
-    const leader = (await t.run((ctx) => ctx.db.query("users").collect()))[0];
     await expect(
       t.mutation(m("administration:update"), {
         token,
@@ -313,7 +326,7 @@ describe("aprovação no backend conectado", () => {
         status: "disabled",
         editorial: false,
       }),
-    ).rejects.toThrow("outra pessoa");
+    ).rejects.toThrow("Transfira");
     const successor = await t.mutation(m("administration:create"), {
       token,
       name: "Sucessor",
@@ -327,6 +340,8 @@ describe("aprovação no backend conectado", () => {
       communityId,
       role: "admin",
     });
+    await expect(t.mutation(m("administration:update"), { token, id: leader._id, name: leader.name, status: "disabled", editorial: false })).rejects.toThrow("Transfira");
+    await t.mutation(m("administration:setCommunity"), { token, userId: successor, communityId, role: "owner" });
     await t.mutation(m("administration:update"), {
       token,
       id: leader._id,
@@ -344,7 +359,7 @@ describe("aprovação no backend conectado", () => {
         communityId,
         role: "member",
       }),
-    ).rejects.toThrow("outra pessoa");
+    ).rejects.toThrow("Transfira");
   });
   it("exige gestão editorial no servidor e deriva autoria da identidade", async () => {
     const t = setup();

@@ -6,6 +6,7 @@ import {
   scriptureSchema,
   checklistSchema,
   canRemoveMember,
+  canManage,
   copy,
   tickChange,
   hasApprovedAccess,
@@ -14,9 +15,13 @@ import {
 } from "domain/core";
 import { query, mutation } from "./server";
 import { ensureUser, findUser, membership } from "./access";
+import { creationPermission, requestJoin as requestCommunityJoin, activeManagerCount } from "./communityGovernance";
+import { communityValidator, communityDetailValidator } from "./communityValidators";
+export { backfillOwners } from "./communityGovernance";
 export const list = query({
-  args: {},
-  handler: async (ctx): Promise<Community[]> => {
+  args: { governance: v.optional(v.boolean()) },
+  returns: v.array(communityValidator),
+  handler: async (ctx, args): Promise<Community[]> => {
     const user = await findUser(ctx);
     if (!user) return [];
     const memberships = await ctx.db
@@ -32,8 +37,9 @@ export const list = query({
           name: c.name,
           description: c.description,
           scripture: c.scripture,
-          role: member.role,
-          ...(member.role === "admin" ? { inviteCode: c.inviteCode } : {}),
+          role: member.role === "owner" && !args.governance ? "admin" : member.role,
+          memberId: member._id,
+          ...(canManage(member.role) ? { inviteCode: c.inviteCode } : {}),
         });
     }
     return result;
@@ -41,9 +47,13 @@ export const list = query({
 });
 export const create = mutation({
   args: { name: v.string(), description: v.string() },
+  returns: v.id("communities"),
   handler: async (ctx, args) => {
     const user = await ensureUser(ctx);
     const input = communitySchema.parse(args);
+    const permission = await creationPermission(ctx, user);
+    if (!permission.allowed) throw new ConvexError("Você não tem permissão para criar comunidades. Fale com a administração.");
+    if (!permission.canCreate) throw new ConvexError("Você atingiu o limite de comunidades que pode criar.");
     // An invitation is not an authentication secret; access still requires a verified session.
     const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     let inviteCode = "";
@@ -67,17 +77,19 @@ export const create = mutation({
       scripture: "",
       inviteCode,
       createdAt: Date.now(),
+      ownerId: user._id,
     });
     await ctx.db.insert("communityMembers", {
       communityId: id,
       userId: user._id,
-      role: "admin",
+      role: "owner",
     });
     return id;
   },
 });
 export const previewInvite = query({
   args: { code: v.string() },
+  returns: v.union(v.object({ id: v.id("communities"), name: v.string() }), v.null()),
   handler: async (ctx, args) => {
     await findUser(ctx);
     const code = inviteSchema.parse(args.code);
@@ -90,32 +102,15 @@ export const previewInvite = query({
 });
 export const join = mutation({
   args: { code: v.string() },
+  returns: v.id("communities"),
   handler: async (ctx, args) => {
-    const user = await ensureUser(ctx);
-    const code = inviteSchema.parse(args.code);
-    const c = await ctx.db
-      .query("communities")
-      .withIndex("by_invite", (q) => q.eq("inviteCode", code))
-      .unique();
-    if (!c)
-      throw new ConvexError("Não encontramos uma comunidade com esse código.");
-    const existing = await ctx.db
-      .query("communityMembers")
-      .withIndex("by_pair", (q) =>
-        q.eq("communityId", c._id).eq("userId", user._id),
-      )
-      .unique();
-    if (!existing)
-      await ctx.db.insert("communityMembers", {
-        communityId: c._id,
-        userId: user._id,
-        role: "member",
-      });
-    return c._id;
+    return requestCommunityJoin(ctx, args.code);
   },
 });
+export const requestJoin = mutation({ args: { code: v.string() }, returns: v.id("communities"), handler: (ctx, args) => requestCommunityJoin(ctx, args.code) });
 export const detail = query({
-  args: { id: v.id("communities"), cursor: v.union(v.string(), v.null()) },
+  args: { id: v.id("communities"), cursor: v.union(v.string(), v.null()), governance: v.optional(v.boolean()) },
+  returns: v.union(communityDetailValidator, v.null()),
   handler: async (ctx, args): Promise<CommunityDetail | null> => {
     const user = await findUser(ctx);
     if (!user) return null;
@@ -157,15 +152,16 @@ export const detail = query({
         name: c.name,
         description: c.description,
         scripture: c.scripture,
-        role: member.role,
-        ...(member.role === "admin" ? { inviteCode: c.inviteCode } : {}),
+        role: member.role === "owner" && !args.governance ? "admin" : member.role,
+        memberId: member._id,
+        ...(canManage(member.role) ? { inviteCode: c.inviteCode } : {}),
       },
       members: await Promise.all(
         members.map(async (m) => ({
           id: m._id,
           userId: m.userId,
           name: (await ctx.db.get(m.userId))?.name ?? "Membro",
-          role: m.role,
+          role: m.role === "owner" && !args.governance ? "admin" : m.role,
         })),
       ),
       messages: await Promise.all(
@@ -210,6 +206,7 @@ export const detail = query({
 });
 export const send = mutation({
   args: { id: v.id("communities"), content: v.string() },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const { user } = await membership(ctx, args.id, true);
     await ctx.db.insert("communityMessages", {
@@ -218,15 +215,18 @@ export const send = mutation({
       content: messageSchema.parse(args.content),
       sentAt: Date.now(),
     });
+    return null;
   },
 });
 export const updateScripture = mutation({
   args: { id: v.id("communities"), scripture: v.string() },
+  returns: v.null(),
   handler: async (ctx, args) => {
     await membership(ctx, args.id, true);
     await ctx.db.patch(args.id, {
       scripture: scriptureSchema.parse(args.scripture),
     });
+    return null;
   },
 });
 export const createChecklist = mutation({
@@ -235,6 +235,7 @@ export const createChecklist = mutation({
     name: v.string(),
     items: v.array(v.string()),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     await membership(ctx, args.id, true);
     const input = checklistSchema.parse(args);
@@ -244,10 +245,12 @@ export const createChecklist = mutation({
     });
     for (const [order, text] of input.items.entries())
       await ctx.db.insert("checklistItems", { checklistId, text, order });
+    return null;
   },
 });
 export const setTick = mutation({
   args: { itemId: v.id("checklistItems"), checked: v.boolean() },
+  returns: v.null(),
   handler: async (ctx, args) => {
     await findUser(ctx);
     const item = await ctx.db.get(args.itemId);
@@ -267,32 +270,25 @@ export const setTick = mutation({
         userId: user._id,
       });
     if (change === "delete" && tick) await ctx.db.delete(tick._id);
+    return null;
   },
 });
 export const removeMember = mutation({
   args: { id: v.id("communities"), memberId: v.id("communityMembers") },
+  returns: v.null(),
   handler: async (ctx, args) => {
-    await membership(ctx, args.id, true);
+    const { member: actor } = await membership(ctx, args.id, true);
     const target = await ctx.db.get(args.memberId);
     if (!target || target.communityId !== args.id)
       throw new ConvexError("Membro não encontrado.");
-    const members = await ctx.db
-      .query("communityMembers")
-      .withIndex("by_community", (q) => q.eq("communityId", args.id))
-      .collect();
-    let activeAdmins = 0;
-    for (const member of members) {
-      if (member.role !== "admin") continue;
-      const account = await ctx.db.get(member.userId);
-      if (account && hasApprovedAccess(account.status)) activeAdmins++;
-    }
+    if (target._id === actor._id) throw new ConvexError("Use Sair da comunidade para encerrar sua participação.");
+    const activeAdmins = await activeManagerCount(ctx, args.id);
     const targetAccount = await ctx.db.get(target.userId);
     if (
-      targetAccount &&
-      hasApprovedAccess(targetAccount.status) &&
-      !canRemoveMember(target.role, activeAdmins)
+      !canRemoveMember(target.role, targetAccount && hasApprovedAccess(targetAccount.status) ? activeAdmins : activeAdmins + 1, actor.role)
     )
       throw new ConvexError(copy.lastAdmin);
     await ctx.db.delete(target._id);
+    return null;
   },
 });

@@ -9,6 +9,7 @@ import type { Id } from "./server";
 const modules = {
   "./_generated/server.ts": () => import("./server"),
   "./communities.ts": () => import("./communities"),
+  "./communityGovernance.ts": () => import("./communityGovernance"),
   "./home.ts": () => import("./home"),
   "./editorial.ts": () => import("./editorial"),
 };
@@ -16,7 +17,7 @@ const setup = () => convexTest(schema, modules);
 async function community() {
   const t = setup();
   await t.run(async ctx => {
-    for (const authId of ["leader", "member", "outsider"]) await ctx.db.insert("users", { authId, name: authId, email: `${authId}@example.com` });
+    for (const authId of ["leader", "member", "outsider"]) await ctx.db.insert("users", { authId, name: authId, email: `${authId}@example.com`, communityCreationAllowed: authId !== "member" });
   });
   const admin = t.withIdentity({ subject: "leader", name: "Líder" });
   const member = t.withIdentity({ subject: "member", name: "Membro" });
@@ -30,6 +31,8 @@ async function community() {
   });
   const code = (await admin.query(refs.communities, {}))[0].inviteCode!;
   await member.mutation(refs.join, { code });
+  const request = await t.run(ctx => ctx.db.query("communityJoinRequests").first());
+  await admin.mutation(makeFunctionReference<"mutation">("communityGovernance:decideJoinRequest"), { requestId: request!._id, decision: "approve" });
   return { t, admin, member, outsider, id, code };
 }
 afterEach(() => vi.useRealTimers());
