@@ -380,6 +380,19 @@ conflitos de histórico, embora a implementação já estivesse na main.
   ausência de fixtures/cache de API e corpus fora do JS/precache verificados.
   Apenas avisos existentes de SQLite experimental e anotações de dependências.
 
+- `git add -- .todo/.done/02-comunidades-permissoes-papeis.md` e
+  `git commit -m 'chore: reconcile community roles with main'`: sucesso,
+  f2d82d3, com pais d647a37 e 1df02f3; `git push origin feat/community-roles`:
+  sucesso, sem reescrever histórico.
+- `gh pr edit 7 --repo zee-dash-one/devotio --body-file <arquivo no TEMP>`:
+  sucesso; descrição registra a implementação já integrada pelo PR #8 e as
+  validações desta revisão, preservando o checklist operacional do Hil.
+- `gh pr view 7 --repo zee-dash-one/devotio --json ...`: sucesso após o envio;
+  PR aberto, MERGEABLE/CLEAN, base 1df02f3 e resolução f2d82d3.
+- `git status --short --branch`, `git merge-base --is-ancestor origin/main HEAD`
+  e `git diff origin/main --stat`: sucesso; árvore limpa, main incorporada e
+  diferença restrita ao registro desta revisão.
+
 A revisão preserva o histórico publicado e o código atual da main. Apenas este
 registro de revisão acrescenta conteúdo em relação à main; merge do PR e operação
 do ambiente continuam com o Hil.
