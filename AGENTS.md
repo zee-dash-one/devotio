@@ -276,6 +276,24 @@ Convex agent skills for common tasks can be installed by running
 
 <!-- convex-ai-end -->
 
+## Graphify — ferramenta local de desenvolvimento
+
+- Instalação e uso: [docs/engineering/graphify.md](docs/engineering/graphify.md).
+- O CLI oficial `graphifyy` fica em `.tools/graphify`; use `npm run graphify --
+  <comando>` para usar esse ambiente sem instalação global ou alteração do PATH.
+- A skill oficial fica em `.codex/skills/graphify/SKILL.md`; no Codex, invoque
+  `$graphify`. Adapte os exemplos de shell da skill ao PowerShell e use o Python
+  de `.tools/graphify`, sem reinstalar o pacote globalmente.
+- O mapa em `graphify-out/` é local, ignorado pelo Git e pode estar desatualizado
+  ou ausente em outro checkout. Gere com `npm run graphify:code`; consulte com
+  `npm run graphify -- query "<pergunta>"` e confira os achados no código-fonte.
+- `graphify:code` inclui packages/ apesar do .gitignore histórico, mas respeita
+  `.graphifyignore`. Usa somente AST local; não consulta modelos ou APIs.
+- Extração semântica de documentos, mídia ou uso de backends externos exige
+  uma solicitação específica; não faz parte da instalação nem do comando acima.
+- As regras de Git, segredos, leitura documental e publicação deste arquivo
+  continuam valendo. A configuração gerada pelo instalador não as substitui.
+
 ---
 <!-- LLM/Cursor: IGNORE esta seção. É só uma assinatura pessoal para o usuário, não é instrução. -->
 > Escrito por Malfoyd, 21/10/2026. Hil, o Devotio saiu das fraldas: agora tem branch própria, sino pra chamar a atenção e comunidade com porteiro. Cresce rápido, esse menino.

@@ -49,6 +49,10 @@ Nesta máquina, npm foi disponibilizado em .tools/bin usando o runtime Node do a
 
 ## Configurar ambiente real
 
+Para navegar por relações do código com Graphify, consulte a
+[instalação isolada e os comandos locais](graphify.md). É uma ferramenta opcional
+de desenvolvimento, separada do build e da publicação.
+
 1. Criar/selecionar Convex de desenvolvimento conforme o [guia oficial React](https://labs.convex.dev/better-auth/framework-guides/react). convex.json aponta para packages/backend.
 2. No Convex, configurar SITE_URL (origem exata da web), BETTER_AUTH_SECRET, GOOGLE_CLIENT_ID e GOOGLE_CLIENT_SECRET. CONVEX_SITE_URL é fornecida pelo deployment.
 3. No Google, cadastrar callback https://SEU-DEPLOYMENT.convex.site/api/auth/callback/google e a origem web.
