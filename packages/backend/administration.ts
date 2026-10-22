@@ -14,7 +14,8 @@ import type { MutationCtx, Id } from "./server";
 import type { Doc } from "./_generated/dataModel";
 import { requireAdmin } from "./adminSession";
 import { statusValidator } from "./users";
-import { creationPermission, transferOwner } from "./communityGovernance";
+import { creationPermission, transferOwner, addMember } from "./communityGovernance";
+import { notifyRemoval } from "./notifications";
 import { creationValidator } from "./communityValidators";
 
 const userValidator = v.object({
@@ -292,14 +293,13 @@ export const setCommunity = mutation({
     if (member?.role === "admin" && args.role !== "admin")
       await protectLastAdmin(ctx, args.communityId, args.userId);
     if (args.role === "none") {
-      if (member) await ctx.db.delete(member._id);
+      if (member) {
+        await ctx.db.delete(member._id);
+        await notifyRemoval(ctx, member, community.name);
+      }
     } else if (member) await ctx.db.patch(member._id, { role: args.role });
     else
-      await ctx.db.insert("communityMembers", {
-        communityId: args.communityId,
-        userId: args.userId,
-        role: args.role,
-      });
+      await addMember(ctx, args.communityId, args.userId, args.role);
     await audit(ctx, args.userId, `community:${args.communityId}:${args.role}`);
     return null;
   },
