@@ -22,6 +22,11 @@ graphify-out/
 _generated/
 apps/web/public/bibles/
 package-lock.json
+package.json
+tsconfig*.json
+turbo.json
+postcss.config.js
+scripts/
 *.log
 *.sqlite*
 *.db

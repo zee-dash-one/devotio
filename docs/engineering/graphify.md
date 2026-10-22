@@ -86,6 +86,13 @@ podem ser ambíguos; use os IDs retornados pelas consultas quando necessário.
 Depois de trocar branch ou alterar código, gere novamente com `graphify:code`.
 O grafo auxilia navegação e não comprova comportamento ou permissão do produto.
 
+Em 22/10/2026, Hil refinou `.graphifyignore` para excluir também `package.json`,
+`tsconfig*.json`, `turbo.json`, `postcss.config.js` e `scripts/`. O grafo local
+consultado no diagnóstico de Comunidade tinha 1.038 nós. Essa redução concentra
+o mapa no código de produto; configuração e scripts devem ser consultados
+diretamente no repositório quando forem relevantes. O número de nós depende do
+checkout e da geração local; não é uma meta nem uma medição de desempenho do app.
+
 O comando local não inclui análise semântica de documentos, PDF, imagens ou
 áudio. Esses recursos podem enviar conteúdo ao assistente/backend escolhido;
 seu uso exige solicitação específica e revisão do escopo. Não foi configurado
