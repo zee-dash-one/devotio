@@ -345,6 +345,38 @@ nas mesmas transações. Isso evita percorrer histórico revogado antes de ating
 o cap e permite subtrair imediatamente a parcela comunitária sem alterar readAt.
 Não exige backfill, pois a tabela notifications é nova neste deployment.
 
+## Revisão do PR #8 — conflitos com a main (2026-10-21)
+
+Solicitação do Hil: corrigir os conflitos do PR #8 com a main na própria branch.
+A integração do PR #6 em um único commit (`cb0758e`) deixou documentação antiga
+em conflito com os registros concluídos desta branch.
+
+- `git status --short --branch`: sucesso; árvore limpa em feat/notifications,
+  sincronizada com origin/feat/notifications antes da revisão.
+- `git fetch origin`: sucesso; origin/main atualizado de 444f17c para cb0758e.
+- `gh pr view 8 --repo zee-dash-one/devotio --json ...`: sucesso; confirmou a
+  branch feat/notifications, base main e estado CONFLICTING/DIRTY.
+- `git log --oneline --decorate -8 origin/main`, `git diff --stat 444f17c origin/main`
+  e leitura dos conflitos: sucesso; a atualização da main contém só documentação.
+- `git merge --no-commit --no-ff origin/main`: saída 1 esperada, com conflitos
+  add/add em .docs/regras.md, .todo/README.md e .todo/.done/01-estrutura-agentes.md.
+- Resolução: preservar decisões aprovadas das specs 015/016 e tarefas arquivadas;
+  atualizar o registro do PR #6 integrado; retirar as cópias antigas das tarefas
+  02/03 que a main reintroduziu em .todo/. Nenhum código de produto alterado.
+- Verificação PowerShell de links: sucesso, 99 links relativos em 10 documentos,
+  sem destinos ausentes. `git diff --check`: sucesso.
+- `$env:TURBO_FORCE = 'true'` seguido de `npm run build:ready`: sucesso; lint,
+  typecheck e build sem cache. Verificados manifest, licenças, 22 recursos
+  estáticos, ausência de fixtures/cache de API e corpus fora do JS/precache.
+  Apenas avisos existentes de SQLite experimental e anotações de dependências.
+- `git add -- <arquivos resolvidos>`, `git diff --name-only --diff-filter=U`,
+  `git diff --cached --check` e busca de marcadores: sucesso; nenhum conflito
+  pendente. Comparação com HEAD confirmou ausência de mudanças fora de Markdown.
+- Suíte de testes anterior não reexecutada nesta revisão exclusivamente documental.
+
+A revisão incorpora a main na branch de notificações, preservando o histórico
+publicado. Publicação do backend e merge do PR na main continuam com o Hil.
+
 ---
 <!-- LLM/Cursor: IGNORE esta seção. É só uma assinatura pessoal para o usuário, não é instrução. -->
 > Escrito por Malfoyd, 21/10/2026. Hil, o Devotio saiu das fraldas: agora tem branch própria, sino pra chamar a atenção e comunidade com porteiro. Cresce rápido, esse menino.
