@@ -283,15 +283,18 @@ function AdminUsers({
           cancel={() => setEditing(null)}
           save={async (input) => {
             const ok = await run(
-              () =>
-                editing === "new"
-                  ? administration.create(token, input)
-                  : administration.update(token, {
+              async () => {
+                const userId = editing === "new"
+                  ? await administration.create(token, input)
+                  : editing.id;
+                if (editing !== "new") await administration.update(token, {
                       id: editing.id,
                       name: input.name,
                       status: input.status,
                       editorial: input.editorial,
-                    }),
+                    });
+                if (administration.setCommunityCreation) await administration.setCommunityCreation(token, { userId, allowed: input.communityCreationAllowed, limit: input.communityCreationLimit });
+              },
               "Cadastro salvo.",
             );
             if (ok) setEditing(null);
@@ -480,9 +483,13 @@ function UserForm({
     email: string;
     status: AccessStatus;
     editorial: boolean;
+    communityCreationAllowed: boolean;
+    communityCreationLimit: number;
   }) => Promise<void>;
   cancel: () => void;
 }) {
+  const [creationAllowed, setCreationAllowed] = useState(user?.communityCreation?.allowed ?? false);
+  const [creationLimit, setCreationLimit] = useState(user?.communityCreation?.limit ?? 1);
   return (
     <form
       className="admin-form admin-card"
@@ -494,6 +501,8 @@ function UserForm({
           email: user?.email ?? String(data.get("email")),
           status: user?.status ?? (data.get("status") as AccessStatus),
           editorial: data.get("editorial") === "on",
+          communityCreationAllowed: creationAllowed,
+          communityCreationLimit: creationLimit,
         });
       }}
     >
@@ -538,6 +547,9 @@ function UserForm({
       <p>
         Administração de comunidades é concedida por grupo no botão Comunidades.
       </p>
+      <label className="admin-check"><input type="checkbox" checked={creationAllowed} onChange={event => { setCreationAllowed(event.target.checked); if (event.target.checked && !creationAllowed) setCreationLimit(1); }} />Pode criar comunidades</label>
+      <label>Limite de comunidades<input type="number" min={0} max={20} step={1} value={creationLimit} onChange={event => setCreationLimit(Number(event.target.value))} required /></label>
+      <p>Usadas: {(user?.communityCreation?.owned ?? 0) > 20 ? "20+" : user?.communityCreation?.owned ?? 0}. Revogar a permissão ou reduzir o limite preserva as comunidades existentes.</p>
       <div className="admin-actions">
         <Button type="submit" disabled={busy}>
           Salvar
@@ -632,8 +644,10 @@ function CommunityPermissions({
                   <option value="none">Sem participação</option>
                   <option value="member">Membro</option>
                   <option value="admin">Administrador</option>
+                  {c.role !== "none" && <option value="owner">Responsável (transferir posse)</option>}
                 </select>
               </label>
+              {c.role !== "none" && <p className="caption">Escolher Responsável transfere a posse para {user.name}; o responsável anterior vira administrador.</p>}
               <Button type="submit" disabled={busy}>
                 Salvar permissão
               </Button>

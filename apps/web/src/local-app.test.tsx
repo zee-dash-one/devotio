@@ -35,6 +35,7 @@ function server(loggedIn: boolean, actor = profile, conflict = false, manages = 
     if (options?.body) {
       const command = JSON.parse(String(options.body));
       if (command.action === "logout") { loggedIn = false; return new Response("null"); }
+      if (command.action === "joinCommunity") return new Response(JSON.stringify("esperanca"));
       if (command.action === "setFavorite") {
         const index = favorites.findIndex(item => item.devotional.date === command.date);
         if (command.saved && index < 0) favorites.push({ devotional: devotional(command.date), favoritedAt: Date.now() });
@@ -76,6 +77,8 @@ function server(loggedIn: boolean, actor = profile, conflict = false, manages = 
     }
     const input = JSON.parse(new URL(path, "http://localhost").searchParams.get("input")!);
     if (input.query === "socialMarkers") return new Response("[]");
+    if (input.query === "invite") return new Response(JSON.stringify({ id: "esperanca", name: "Esperança" }));
+    if (input.query === "governance") return new Response(JSON.stringify(input.input.kind === "creation" ? { allowed: manages, limit: 3, owned: 2, canCreate: manages } : { items: [], cursor: null }));
     if (input.query === "socialFriends") return new Response(JSON.stringify({ userId: actor.id, code: null, friends: [] }));
     if (input.query === "communities") return new Response(JSON.stringify(manages ? ["Esperança", "Caminho"].map((name, index) => ({ id: index ? "caminho" : "esperanca", name, description: "Teste", scripture: "", role: "admin" })) : []));
     if (input.query === "quoteDrafts") return new Response(JSON.stringify(drafts.filter(draft => draft.communityId === input.id)));
@@ -636,6 +639,18 @@ describe("entrada local integrada", () => {
     fireEvent.click(enter);
     await screen.findByRole("heading", { name: /A fé também se vive/ });
     await waitFor(() => expect(window.location.pathname).toBe("/comunidade"));
+  });
+  it("solicita entrada por código e aguarda aprovação sem abrir a comunidade", async () => {
+    window.history.replaceState(null, "", "/comunidade");
+    const fetcher = server(true);
+    render(<StrictMode><LocalApp /></StrictMode>);
+    fireEvent.click(await screen.findByRole("button", { name: "Entrar com código" }));
+    fireEvent.change(screen.getByLabelText("Código de convite"), { target: { value: "ESPERANC" } });
+    fireEvent.click(screen.getByRole("button", { name: "Encontrar comunidade" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Pedir entrada" }));
+    expect(await screen.findByText(/Pedido enviado. Aguarde a aprovação/)).toBeTruthy();
+    expect(window.location.pathname).toBe("/comunidade");
+    expect(fetcher.mock.calls.some(([, options]) => options?.body && JSON.parse(String(options.body)).action === "joinCommunity")).toBe(true);
   });
   it("navega pelas três áreas com a sessão aberta", async () => {
     server(true);
