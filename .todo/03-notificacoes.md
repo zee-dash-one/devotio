@@ -1,6 +1,6 @@
 # 03 - Notificações no sino (amigos, comunidades, publicações)
 
-**Status:** pendente — decisões aprovadas pelo Hil em 2026-10-21.
+**Status:** em execução — decisões aprovadas pelo Hil em 2026-10-21.
 Depende de [01](./.done/01-estrutura-agentes.md), concluída. Os avisos
 "aceito numa comunidade" dependem do pedido de entrada da [02](./.done/02-comunidades-permissoes-papeis.md), implementada no PR #7;
 os demais podem começar antes.
@@ -263,7 +263,29 @@ Em 2026-10-21, Hil respondeu "Adotar essas decisões na tarefa 03" no chat:
 
 ## Resultado
 
-(preencher: comandos, testes, URL do PR)
+- `git switch main`, `git pull --ff-only origin main`, `git switch -c feat/notifications`:
+  sucesso, main limpa e atualizada. `git rebase feat/community-roles`: sucesso;
+  avançou a branch nova, ainda sem commits próprios, até a dependência PR #7,
+  preservando as branches anteriores e main.
+- Leitura da tarefa, specs 008/014/015, contratos, produtores e UI existente:
+  concluída. Decisões aprovadas registradas antes de criar a spec 016.
+
+## Checklist de execução
+
+- [x] Spec 016 e decisões aprovadas registradas.
+- [ ] Contratos, alvos e testes de domínio.
+- [ ] Tabela, consultas, leitura e produtores Convex com testes de isolamento.
+- [ ] Fan-out em lotes com audiência estável e revogação de acesso.
+- [ ] Migração, produtores e leitura equivalentes no SQLite.
+- [ ] Subscription conectada, sino e navegação para trecho/mensagem.
+- [ ] Lint, typecheck, testes e build:ready.
+- [ ] Documentação, PR e encerramento. Mobile permanece adiado.
+
+Detalhe de implementação: cada participação recebe uma sequência monotônica
+comunitária; publicação captura a sequência atual para excluir entradas posteriores
+mesmo no mesmo milissegundo. Avisos de mural referenciam a participação, evitando
+reviver avisos antigos após reingresso. Remoção oculta os avisos antigos em lotes,
+sem apagar dados ou marcá-los lidos. Demais decisões técnicas seguem a proposta.
 
 ---
 <!-- LLM/Cursor: IGNORE esta seção. É só uma assinatura pessoal para o usuário, não é instrução. -->
