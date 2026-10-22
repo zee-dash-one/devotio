@@ -1,6 +1,6 @@
 # 04 - Instalação local do Graphify
 
-**Status:** em execução, 2026-10-22.
+**Status:** concluída em 2026-10-22 — instalada, documentada e PR aberto.
 **Branch:** `chore/graphify-setup`.
 
 ## Solicitação e escopo
@@ -15,7 +15,7 @@ Por isso o plano operacional fica nesta tarefa, sem criar uma spec de produto.
 - [x] Fixar pacote oficial `graphifyy` em ambiente Python isolado do repositório.
 - [x] Instalar a integração do Codex apenas neste projeto, preservando suas regras.
 - [x] Documentar instalação, comandos, atualização e limites de privacidade.
-- [ ] Conferir instalação e documentação, registrar resultados e abrir PR.
+- [x] Conferir instalação e documentação, registrar resultados e abrir PR.
 
 ## Comandos e resultados
 
@@ -72,6 +72,21 @@ Não houve deploy, configuração de modelos/MCP ou alteração global de assist
   nenhum venv, grafo, banco ou credencial entrou no índice.
 - `git commit -m 'chore(tooling): install project-scoped Graphify'`: sucesso,
   a1de05e. Skill/referências oficiais e licenças versionadas com a instalação.
+- `git add` da documentação e `git commit -m 'docs(tooling): document Graphify setup and local usage'`:
+  sucesso, b29fec5.
+- `git push -u origin chore/graphify-setup`: sucesso.
+- `Set-Content` do corpo no TEMP e `gh pr create --repo zee-dash-one/devotio --base main --head chore/graphify-setup ...`:
+  sucesso; PR #9 aberto e anexado ao chat.
+- Registro concluído movido para .todo/.done/; referências e índice atualizados.
+- `gh pr edit 9 --body-file <arquivo no TEMP>`: sucesso; link do registro
+  arquivado atualizado no PR.
+- Verificação de links após arquivar: sucesso, 145 links em 12 documentos.
+  `git diff --check`: sucesso. `git rev-list --left-right --count origin/main...main`:
+  sucesso, 0/0; a main local permanece sem alterações.
+- `npm run graphify -- hook-check`: sucesso, sem saída do Graphify, conforme o
+  comportamento neutro do hook instalado no Codex Desktop.
+
+PR: https://github.com/zee-dash-one/devotio/pull/9
 
 ## Fontes
 

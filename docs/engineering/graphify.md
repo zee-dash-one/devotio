@@ -109,4 +109,4 @@ Codex ou o diretório `.tools` inteiro.
 ## Registro
 
 Comandos executados e resultados ficam na
-[tarefa 04](../../.todo/04-graphify.md). Não houve deploy ou merge nesta instalação.
+[tarefa 04](../../.todo/.done/04-graphify.md). Não houve deploy ou merge nesta instalação.

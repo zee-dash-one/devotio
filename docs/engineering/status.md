@@ -10,7 +10,7 @@ clustering com `--no-label` gerou 65 comunidades, relatório e HTML, com 1.335 n
 e 3.794 arestas no mapa consolidado. Artefatos ficam em graphify-out/, ignorados
 pelo Git. Nenhum modelo, MCP ou serviço cloud foi configurado. A ferramenta é
 opcional e não participa do build/deploy. Procedimento em
-[Graphify](graphify.md); evidências na [tarefa 04](../../.todo/04-graphify.md).
+[Graphify](graphify.md); evidências na [tarefa 04](../../.todo/.done/04-graphify.md).
 
 ## Notificações conectadas e locais — spec 016, 21/10/2026
 

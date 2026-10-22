@@ -6,7 +6,7 @@ da tarefa, movido para [`.done/`](./.done/).
 
 ## Tarefas
 
-- [ ] [04 - Instalação local do Graphify](./04-graphify.md)
+Nenhuma tarefa aberta. Registros concluídos em [`.done/`](./.done/).
 
 ## Decisões pendentes do Hil
 
