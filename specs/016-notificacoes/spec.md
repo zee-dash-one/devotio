@@ -76,7 +76,8 @@ da audiência antiga e ocultar avisos de participação revogada.
 
 ## 9. Perguntas em aberto
 
-Nenhuma decisão pendente neste escopo. O plano técnico e checklist ficam na tarefa 03.
+Nenhuma decisão pendente neste escopo. O plano técnico e checklist estão na
+[tarefa 03 concluída](../../.todo/.done/03-notificacoes.md).
 
 ## 10. Aprovação e lançamento
 

@@ -25,7 +25,7 @@ recursos, manifest/ícones/licenças válidos, corpus ARC1911 fora do JS/precach
 ausência de fixtures/cache de API. Permanecem avisos de dependências e SQLite
 experimental, sem falhas no build.
 
-Publicação depende dos PRs #6/#7 e da revisão da tarefa 03. Hil publica backend
+Publicação depende da revisão dos PRs #6, #7 e #8, nessa ordem. Hil publica backend
 antes da web; o backfill de owners da spec 015 continua obrigatório. Não houve
 deploy, backfill em dados reais ou merge nesta execução. Google real, aparelhos
 físicos e mobile não foram homologados nesta rodada; mobile permanece adiado.

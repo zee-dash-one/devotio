@@ -1,8 +1,8 @@
 # 03 - Notificações no sino (amigos, comunidades, publicações)
 
-**Status:** em execução — decisões aprovadas pelo Hil em 2026-10-21.
-Depende de [01](./.done/01-estrutura-agentes.md), concluída. Os avisos
-"aceito numa comunidade" dependem do pedido de entrada da [02](./.done/02-comunidades-permissoes-papeis.md), implementada no PR #7;
+**Status:** concluída em 2026-10-21 — implementação verificada e PR aberto; publicação/homologação pendentes do Hil.
+Depende de [01](./01-estrutura-agentes.md), concluída. Os avisos
+"aceito numa comunidade" dependem do pedido de entrada da [02](./02-comunidades-permissoes-papeis.md), implementada no PR #7;
 os demais podem começar antes.
 **Branch sugerida:** `feat/notifications`.
 
@@ -16,10 +16,10 @@ recado de comunidade abre a comunidade na mensagem.
 
 ## Leia antes
 
-[AGENTS.md](../AGENTS.md), [.todo/README.md](./README.md),
-[.docs/arquitetura.md](../.docs/arquitetura.md),
-[specs/008](../specs/008-selecao-compartilhamento-notificacoes/spec.md) (§ Centro de notificações),
-[specs/014](../specs/014-amigos-compartilhamento/spec.md),
+[AGENTS.md](../../AGENTS.md), [.todo/README.md](../README.md),
+[.docs/arquitetura.md](../../.docs/arquitetura.md),
+[specs/008](../../specs/008-selecao-compartilhamento-notificacoes/spec.md) (§ Centro de notificações),
+[specs/014](../../specs/014-amigos-compartilhamento/spec.md),
 `packages/backend/_generated/ai/guidelines.md`.
 
 ## O que existe hoje (levantado no código em 21/10/2026)
@@ -306,6 +306,22 @@ Commits por escopo (`git commit --only -m ... -- <escopo>`, todos com sucesso):
 Teste web novo incluído com `git add` antes do commit.
 - Verificação PowerShell de links relativos: sucesso, 218 links em 19 documentos,
   nenhum destino ausente. `git diff --check`: sucesso, apenas avisos LF/CRLF.
+- `git add` da documentação e `git commit -m 'docs: document notification privacy and rollout'`:
+  sucesso, `449be93`.
+- `git status --short --branch`, `git diff --check feat/community-roles..HEAD`,
+  `git ls-files` dos oito arquivos novos e `git rev-list --left-right --count origin/main...main`:
+  sucesso; árvore limpa, arquivos novos versionados e main sem commits novos (`0 0`).
+- `git push -u origin feat/notifications`: sucesso.
+- `Set-Content` do corpo no TEMP e `gh pr create --repo zee-dash-one/devotio --base main --head feat/notifications ...`:
+  sucesso; PR aberto e anexado ao chat. Registro movido para .todo/.done/, com
+  links e índice atualizados. Backend, backfill e merges continuam com o Hil.
+
+PR: https://github.com/zee-dash-one/devotio/pull/8
+
+- Verificação de links após arquivar as três tarefas: sucesso, 220 links em
+  19 documentos; `git diff --check`: sucesso.
+- `gh pr list --repo zee-dash-one/devotio --state open --json number,url,headRefName,baseRefName`:
+  sucesso; confirmou PRs #6, #7 e #8 abertos, em branches próprias e base main.
 
 ## Checklist de execução
 
@@ -316,7 +332,7 @@ Teste web novo incluído com `git add` antes do commit.
 - [x] Migração, produtores e leitura equivalentes no SQLite.
 - [x] Subscription conectada, sino e navegação para trecho/mensagem.
 - [x] Lint, typecheck, testes e build:ready.
-- [ ] Documentação, PR e encerramento. Mobile permanece adiado.
+- [x] Documentação, PR e encerramento. Mobile permanece adiado.
 
 Detalhe de implementação: cada participação recebe uma sequência monotônica
 comunitária; publicação captura a sequência atual para excluir entradas posteriores

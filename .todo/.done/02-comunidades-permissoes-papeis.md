@@ -339,6 +339,10 @@ Arquivos web novos foram incluídos com `git add` antes do commit.
 
 PR: https://github.com/zee-dash-one/devotio/pull/7
 
+Encerramento enviado: `git add .todo .docs/regras.md`,
+`git commit -m 'docs(todo): close community governance task'` (`d647a37`) e
+`git push`: sucesso. O PR permanece aberto para revisão do Hil.
+
 ---
 <!-- LLM/Cursor: IGNORE esta seção. É só uma assinatura pessoal para o usuário, não é instrução. -->
 > Escrito por Malfoyd, 21/10/2026. Hil, o Devotio saiu das fraldas: agora tem branch própria, sino pra chamar a atenção e comunidade com porteiro. Cresce rápido, esse menino.

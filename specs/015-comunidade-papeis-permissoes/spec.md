@@ -77,6 +77,6 @@ Nenhuma decisão de produto pendente para este escopo.
 ## 10. Aprovação e lançamento
 
 Hil aprovou os requisitos respondendo "Adotar essas decisões na tarefa 02" em
-21/10/2026. O plano e checklist permanecem na tarefa 02 do índice .todo/.
+21/10/2026. O plano e checklist estão na [tarefa 02 concluída](../../.todo/.done/02-comunidades-permissoes-papeis.md).
 Mobile adiado, sem marcar implementação nativa concluída. Hil publica backend,
 executa backfill e revisa/integra o PR após PR #6; sem deploy automático pelo agente.

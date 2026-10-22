@@ -37,7 +37,7 @@ Builds). Backend Convex é publicado à parte e **antes** do merge.
   sino discreto, sem push/som/animação; apenas Lida marca leitura. Convex usa
   subscriptions e SQLite, SSE. Sem avisar autor ou novos membros sobre histórico;
   acesso revogado oculta publicações sem marcá-las lidas. Rollout com o Hil;
-  evidências em [.todo/03](../.todo/03-notificacoes.md).
+  evidências em [.todo/03](../.todo/.done/03-notificacoes.md).
 
 ## Segurança
 

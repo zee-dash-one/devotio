@@ -6,7 +6,7 @@ da tarefa, movido para [`.done/`](./.done/).
 
 ## Tarefas
 
-- [ ] [03 - Notificações no sino (amigos, comunidades, publicações)](./03-notificacoes.md) (decisões aprovadas em 21/10; implementação de 02 no PR #7)
+Nenhuma tarefa aberta. Registros concluídos em [`.done/`](./.done/).
 
 ## Decisões pendentes do Hil
 
