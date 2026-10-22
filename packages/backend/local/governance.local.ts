@@ -85,6 +85,8 @@ export class LocalGovernance {
         if (input.decision === "approve") {
           if (!this.approved(request.userId)) throw new LocalError("O solicitante precisa ter acesso aprovado.", 403);
           this.db.run("INSERT OR IGNORE INTO members VALUES (?,?,?,'member')", randomUUID(), request.communityId, request.userId);
+          const member = this.db.get<Member>("SELECT * FROM members WHERE communityId=? AND userId=?", request.communityId, request.userId)!;
+          this.db.notices.accepted(request.userId, request.communityId, member.id);
         }
         this.db.run("UPDATE communityJoinRequests SET state=?,decidedAt=?,decidedBy=? WHERE id=?", input.decision === "approve" ? "approved" : "rejected", this.db.now(), userId, request.id);
       }
@@ -94,7 +96,8 @@ export class LocalGovernance {
     if (input.kind === "leave") {
       if (actor.role === "owner") throw new LocalError("Transfira a posse antes de sair da comunidade.", 403);
       if (canManage(actor.role) && this.managers(input.id) <= 1) throw new LocalError("A comunidade precisa manter um gestor ativo.", 403);
-      this.db.run("DELETE FROM members WHERE id=?", actor.id); return null;
+      this.db.run("DELETE FROM members WHERE id=?", actor.id);
+      this.db.notices.hideMembership(actor.id, actor.userId); return null;
     }
     const target = this.db.get<Member>("SELECT * FROM members WHERE id=? AND communityId=?", input.memberId, input.id);
     if (!target || target.id === actor.id) throw new LocalError("Escolha outro participante desta comunidade.", 403);
