@@ -559,3 +559,12 @@
   border: 1px solid var(--line);
   border-radius: 8px;
 }
+
+.member-list li {
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.member-list .form {
+  margin: 0;
+}

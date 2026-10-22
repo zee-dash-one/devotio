@@ -168,6 +168,7 @@ export class LocalSocial {
             throw new Error("Vocês precisam participar desta comunidade.");
       }
       this.store.profile(other);
+      if (!this.store.isApproved(other)) throw new Error("Esta pessoa não está disponível para convites.");
       const pair = friendPair(actor, other);
       if (this.pair(actor, other)) return null;
       for (const id of [actor, other])
@@ -215,7 +216,7 @@ export class LocalSocial {
     }
     const recipients = input.recipientIds.map((id) => {
       const other = this.store.profile(id);
-      assertFriendRecipient(this.pair(actor, id), actor, id, true);
+      assertFriendRecipient(this.pair(actor, id), actor, id, this.store.isApproved(id));
       return { id, name: other.name };
     });
     const chapter = this.store.chapter(
@@ -266,6 +267,7 @@ export class LocalSocial {
       );
       this.changed(owner);
     }
+    for (const recipient of input.recipientIds) this.store.notices.friendShare(record, recipient);
     return id;
   }
 }

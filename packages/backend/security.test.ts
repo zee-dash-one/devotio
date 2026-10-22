@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { convexTest } from "convex-test";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { convexTest, type TestConvex } from "convex-test";
 import { makeFunctionReference } from "convex/server";
 import { refs } from "domain/convex";
 import schema from "./schema";
@@ -9,14 +9,17 @@ import type { Id } from "./server";
 const modules = {
   "./_generated/server.ts": () => import("./server"),
   "./communities.ts": () => import("./communities"),
+  "./communityGovernance.ts": () => import("./communityGovernance"),
+  "./notifications.ts": () => import("./notifications"),
   "./home.ts": () => import("./home"),
   "./editorial.ts": () => import("./editorial"),
 };
-const setup = () => convexTest(schema, modules);
+const stores: TestConvex<typeof schema>[] = [];
+const setup = () => { const t = convexTest(schema, modules); stores.push(t); return t; };
 async function community() {
   const t = setup();
   await t.run(async ctx => {
-    for (const authId of ["leader", "member", "outsider"]) await ctx.db.insert("users", { authId, name: authId, email: `${authId}@example.com` });
+    for (const authId of ["leader", "member", "outsider"]) await ctx.db.insert("users", { authId, name: authId, email: `${authId}@example.com`, communityCreationAllowed: authId !== "member" });
   });
   const admin = t.withIdentity({ subject: "leader", name: "Líder" });
   const member = t.withIdentity({ subject: "member", name: "Membro" });
@@ -30,9 +33,15 @@ async function community() {
   });
   const code = (await admin.query(refs.communities, {}))[0].inviteCode!;
   await member.mutation(refs.join, { code });
+  const request = await t.run(ctx => ctx.db.query("communityJoinRequests").first());
+  await admin.mutation(makeFunctionReference<"mutation">("communityGovernance:decideJoinRequest"), { requestId: request!._id, decision: "approve" });
   return { t, admin, member, outsider, id, code };
 }
-afterEach(() => vi.useRealTimers());
+beforeEach(() => vi.useFakeTimers());
+afterEach(async () => {
+  try { for (const t of stores.splice(0)) await t.finishAllScheduledFunctions(vi.runAllTimers); }
+  finally { vi.useRealTimers(); }
+});
 describe("autorização e consistência no servidor", () => {
   it("pagina o mural sem truncar o histórico nem repetir mensagens", async () => {
     const { t, admin, id } = await community();

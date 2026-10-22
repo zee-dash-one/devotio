@@ -166,6 +166,8 @@ export function createLocalRepository(storage: LocalCacheStorage, onExpired: () 
   }
   async function afterCommand(input: LocalCommand, result: unknown) {
     switch (input.action) {
+      case "governance":
+        await invalidate(key => key.startsWith("governance:") || key === "communities" || key.startsWith("community:")); break;
       case "social": await invalidate(key => key.startsWith("social:")); break;
       case "publish": case "schedule": case "withdraw": {
         const date = input.action === "withdraw" ? input.date : input.input.date;
@@ -174,13 +176,13 @@ export function createLocalRepository(storage: LocalCacheStorage, onExpired: () 
       }
       case "setFavorite": case "restoreFavorite": reading = undefined; await favoritesRequest; reading = undefined; await invalidate(key => key === "reading"); break;
       case "createCommunity": case "joinCommunity":
-        await invalidate(key => key === "communities" || key.startsWith("community:" + String(result) + ":")); break;
+        await invalidate(key => key.startsWith("governance:") || key === "communities" || key.startsWith("community:" + String(result) + ":")); break;
       case "readNotification": await acceptNotificationEvent(result); break;
       case "saveQuoteDrafts": await invalidate(key => input.ids.some(id => key === "drafts:" + id)); break;
       case "updateQuoteDraft": case "deleteQuoteDraft": case "publishQuoteDraft":
         await invalidate(key => key === "drafts:" + input.id || (input.action === "publishQuoteDraft" && key.startsWith("community:" + input.id + ":"))); break;
       case "sendQuote": case "sendMessage": case "createChecklist": case "updateScripture": case "removeMember":
-        await invalidate(key => key.startsWith("community:" + input.id + ":") || (input.action === "removeMember" && key === "communities")); break;
+        await invalidate(key => key.startsWith("community:" + input.id + ":") || (input.action === "removeMember" && (key === "communities" || key.startsWith("governance:")))); break;
       case "setTick":
         await invalidate(key => {
           const detail = entries.get(key)?.value as CommunityDetail | undefined;
@@ -250,6 +252,7 @@ export function createLocalRepository(storage: LocalCacheStorage, onExpired: () 
       watchShares: input => watch("social:shares:" + JSON.stringify(input), () => query<SharePage>({ query: "socialShares", input })),
     },
     notifications: {
+      manualRefresh: true,
       watchSummary: () => watch("notifications:summary", async () => {
         if (notificationSummary) return notificationSummary;
         const value = notificationSummarySchema.parse(await query<NotificationSummary>({ query: "notificationSummary" }));
@@ -276,6 +279,16 @@ export function createLocalRepository(storage: LocalCacheStorage, onExpired: () 
       await windowRequest?.catch(() => {}); await favoritesRequest?.catch(() => {}); reading = undefined;
       await loadWindow();
       await invalidate(() => true);
+    },
+    governance: {
+      watchCreation: () => watch("governance:creation", () => query({ query: "governance", input: { kind: "creation" } })),
+      watchMine: cursor => watch("governance:mine:" + cursor, () => query({ query: "governance", input: { kind: "mine", cursor } })),
+      watchRequests: (id, cursor) => watch("governance:requests:" + id + ":" + cursor, () => query({ query: "governance", input: { kind: "requests", id, cursor } })),
+      cancel: requestId => command({ action: "governance", input: { kind: "cancel", requestId } }),
+      decide: (requestId, decision) => command({ action: "governance", input: { kind: "decide", requestId, decision } }),
+      setRole: (id, memberId, role) => command({ action: "governance", input: { kind: "setRole", id, memberId, role } }),
+      leave: id => command({ action: "governance", input: { kind: "leave", id } }),
+      transfer: (id, memberId) => command({ action: "governance", input: { kind: "transfer", id, memberId } }),
     },
     watchHome: date => watch("home:" + date, () => home(date)),
     watchCommunities: () => watch("communities", () => query<Community[]>({ query: "communities" })),

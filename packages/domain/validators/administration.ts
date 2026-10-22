@@ -35,5 +35,5 @@ export const adminListSchema = z.object({
 export const communityPermissionSchema = z.object({
   userId: z.string().min(1),
   communityId: z.string().min(1),
-  role: z.enum(["admin", "member", "none"]),
+  role: z.enum(["owner", "admin", "member", "none"]),
 });

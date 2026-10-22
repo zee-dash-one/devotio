@@ -5,6 +5,7 @@ import { effectiveAccess, initialAccess } from "domain/core";
 import { query, mutation, internalMutation, env } from "./_generated/server";
 import { z } from "zod";
 import { lookupUser, registerUser } from "./access";
+import { creationPermission } from "./communityGovernance";
 
 export const statusValidator = v.union(
   v.literal("pending"),
@@ -14,6 +15,8 @@ export const statusValidator = v.union(
 const accessValidator = v.object({
   status: statusValidator,
   editorial: v.boolean(),
+  canCreateCommunity: v.optional(v.boolean()),
+  communityLimit: v.optional(v.number()),
 });
 export const bootstrap = mutation({
   args: {},
@@ -35,6 +38,8 @@ export const access = query({
       ? {
           status: effectiveAccess(user.status),
           editorial: user.editorial === true,
+          canCreateCommunity: (await creationPermission(ctx, user)).canCreate,
+          communityLimit: user.communityCreationLimit ?? 1,
         }
       : null;
   },

@@ -1,5 +1,56 @@
 # Estado real do projeto
 
+## Notificações conectadas e locais — spec 016, 21/10/2026
+
+Implementados na branch da tarefa 03: sino conectado por subscription, contador
+99+, lista paginada, destinos bíblicos/mensagens antigas e leitura exclusivamente
+pelo botão Lida. Recados de amigos, aceite, remoção forçada e publicações geram
+avisos idempotentes; autor não recebe a própria publicação e entradas posteriores
+não recebem histórico. Agregados transacionais tornam o contador independente
+do tamanho do histórico. Revogação oculta avisos da participação anterior sem
+apagar dados nem alterar readAt; reingresso não os revive.
+
+SQLite preserva avisos/readAt legados e migra referências/tipos uma vez; remove
+o aviso fixo obsoleto de permissão. SSE continua após commit e Atualizar avisos
+fica no local. O servidor confere destinatário do recado e acesso comunitário;
+painel não recebe avisos privados nem identifica o responsável na remoção.
+
+Verificação final sem cache: 234 testes passaram (98 domínio, 76 backend, 60 web),
+sem skips ou erros não tratados. Incluem lote de 250 membros, entrada posterior
+com relógio fixo, isolamento, contador/leitura, remoção pelo painel, migração com
+reabertura e navegação real do roteador em jsdom. Os testes existentes com jobs
+agendados agora aguardam sua conclusão entre casos. HTTP/SSE passou na execução
+autorizada fora do sandbox. Lint, typecheck e build:ready passaram; PWA com 22
+recursos, manifest/ícones/licenças válidos, corpus ARC1911 fora do JS/precache e
+ausência de fixtures/cache de API. Permanecem avisos de dependências e SQLite
+experimental, sem falhas no build.
+
+Publicação depende da revisão dos PRs #6, #7 e #8, nessa ordem. Hil publica backend
+antes da web; o backfill de owners da spec 015 continua obrigatório. Não houve
+deploy, backfill em dados reais ou merge nesta execução. Google real, aparelhos
+físicos e mobile não foram homologados nesta rodada; mobile permanece adiado.
+
+## Criação, posse e pedidos comunitários — spec 015, 21/10/2026
+
+Implementados na branch da tarefa 02: permissão de criação com limite 0–20,
+owner, entrada por aprovação, cancelamento/recusa visível, gestão de admins,
+saída e transferência. Painel proprietário configura permissão/limite, transfere
+posse e bloqueia desativação de owner. Regras são verificadas no Convex e SQLite;
+web apresenta controles e status. Migração local preserva vínculos e concessões
+de fixture; o painel de credenciais permanece exclusivo do caminho conectado.
+
+220 testes distintos passaram: 96 domínio, 66 backend e 58 web; suíte completa
+inicial mais reexecuções dos arquivos alterados. HTTP/SSE passou fora da restrição
+de rede do sandbox. Lint, typecheck e build:ready passaram sem cache: PWA com 22
+recursos, corpus ARC1911 fora do JS/precache e ausência de fixtures/cache de API.
+
+Rollout pendente: Hil publica backend antes da web e executa a função interna
+`communities:backfillOwners` com cursor null; grupos sem gestor ativo são
+reportados nos logs e precisam de correção pelo painel. Endpoints antigos são
+mantidos; list/detail sem governance=true projetam owner como admin para a web
+anterior. PR depende do PR #6; publicação, backfill real, Google e homologação
+física não foram executados. Mobile segue adiado. Ver [operação](../operations/user-administration.md).
+
 ## Configuração de deploy — correção de 21/10/2026
 
 A integração Git foi reconectada pelo proprietário após a transferência para

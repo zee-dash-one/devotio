@@ -13,3 +13,4 @@ export * from "./validators/bible";
 export * from "./bible";
 export * from "./editorial";
 export * from "./social";
+export * from "./community-governance";

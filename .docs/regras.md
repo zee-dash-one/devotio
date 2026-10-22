@@ -23,16 +23,21 @@ Builds). Backend Convex é publicado à parte e **antes** do merge.
 - Gestão de usuários: rota não listada `/gestao-acesso`, uma única credencial de
   proprietário (login + senha + TOTP em variáveis do Convex), sessão de 30 min.
   Administrador de comunidade não é superusuário.
-- Comunidade hoje ([spec 002](../specs/002-comunidade-v1/spec.md)): quem cria vira
-  `admin`; entra quem tem o código de convite; só `admin` publica no mural, fixa
-  escritura, cria listas e remove membros; a comunidade nunca fica sem admin ativo.
-  Mudanças em andamento: [.todo/02](../.todo/02-comunidades-permissoes-papeis.md).
+- Comunidade ([spec 015](../specs/015-comunidade-papeis-permissoes/spec.md), aprovada
+  em 21/10): criar exige permissão/limite; criador vira owner; código gera pedido
+  para owner/admin aprovarem. Só owner/admin publicam, fixam escritura e criam
+  listas. Admin promove membro; só owner remove/rebaixa admin. Owner transfere
+  antes de sair/desativar. Nenhuma comunidade pode perder o último gestor ativo.
+  Implementação e rollout: [.todo/02](../.todo/.done/02-comunidades-permissoes-papeis.md).
 - Amigos e recados ([spec 014](../specs/014-amigos-compartilhamento/spec.md)):
   amizade consentida, até 20 destinatários por recado, recado de até 1.000
   caracteres, privado entre remetente e destinatários.
-- Notificações ([spec 008](../specs/008-selecao-compartilhamento-notificacoes/spec.md)):
-  sino discreto, sem push/som/animação; marcar como lida por ação explícita.
-  Hoje só existem no modo local (SQLite). Evolução: [.todo/03](../.todo/03-notificacoes.md).
+- Notificações ([spec 016](../specs/016-notificacoes/spec.md)):
+  recado de amigo, entrada aprovada, remoção forçada e publicação comunitária;
+  sino discreto, sem push/som/animação; apenas Lida marca leitura. Convex usa
+  subscriptions e SQLite, SSE. Sem avisar autor ou novos membros sobre histórico;
+  acesso revogado oculta publicações sem marcá-las lidas. Rollout com o Hil;
+  evidências em [.todo/03](../.todo/.done/03-notificacoes.md).
 
 ## Segurança
 

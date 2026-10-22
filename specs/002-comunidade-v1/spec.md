@@ -1,5 +1,9 @@
 # Spec: Comunidade (v1 — funcionalidades base)
 
+> Revisão aprovada em 21/10/2026: a [spec 015](../015-comunidade-papeis-permissoes/spec.md)
+> substitui as regras históricas abaixo sobre criação irrestrita, posse, entrada
+> imediata e papéis/saída. Os demais requisitos permanecem como referência.
+
 > Revisão de 02/10/2026: aprovação histórica dos requisitos preservada; não significa implementação concluída. A distribuição inicial web e as lacunas estão no [catálogo](../README.md). Novos requisitos de fundação constam da [spec 004](../004-fundacao-lancamento/spec.md), em rascunho.
 
 **ID:** 002-comunidade-v1

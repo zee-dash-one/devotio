@@ -64,7 +64,7 @@ describe("regras de acesso ao piloto", () => {
       communityPermissionSchema.safeParse({
         userId: "a",
         communityId: "b",
-        role: "owner",
+        role: "superadmin",
       }).success,
     ).toBe(false);
   });

@@ -1,9 +1,10 @@
 import type { Role } from "./types";
 export function canManage(role: Role | null | undefined): boolean {
-  return role === "admin";
+  return role === "owner" || role === "admin";
 }
-export function canRemoveMember(role: Role, adminCount: number): boolean {
-  return role !== "admin" || adminCount > 1;
+export function canRemoveMember(role: Role, adminCount: number, actor: Role = "owner"): boolean {
+  return role !== "owner" && canManage(actor) &&
+    (role === "member" || (actor === "owner" && adminCount > 1));
 }
 export function isPublished(
   publishedAt: number,

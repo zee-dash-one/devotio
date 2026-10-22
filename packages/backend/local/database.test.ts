@@ -94,7 +94,7 @@ describe("SQLite local: autorização, snapshots e persistência", () => {
     expect(() => db.query(outsider, { query: "community", id: "esperanca", cursor: null })).toThrow(LocalError);
     expect(() => db.command(member, { action: "sendMessage", id: "esperanca", content: "Não permitido" })).toThrow("liderança");
     expect(() => db.command(leader, { action: "sendMessage", id: "caminho", content: "Não permitido" })).toThrow("não está disponível");
-    expect(() => db.command(leader, { action: "removeMember", id: "esperanca", memberId: "esperanca-daniel" })).toThrow("administrador");
+    expect(() => db.command(leader, { action: "removeMember", id: "esperanca", memberId: "esperanca-daniel" })).toThrow("responsável");
     db.command(leader, { action: "sendMessage", id: "esperanca", content: "Aviso local" });
     const detail = db.query(member, { query: "community", id: "esperanca", cursor: null }) as CommunityDetail;
     expect(detail.messages.at(-1)?.content).toBe("Aviso local");
@@ -116,7 +116,8 @@ describe("SQLite local: autorização, snapshots e persistência", () => {
     const { db, outsider } = setup();
     expect(db.query(outsider, { query: "invite", code: "ESPERANC" })).toEqual({ id: "esperanca", name: "Comunidade Esperança" });
     db.command(outsider, { action: "joinCommunity", code: "ESPERANC" }); db.command(outsider, { action: "joinCommunity", code: "ESPERANC" });
-    expect(db.all("SELECT * FROM members WHERE userId='lucas'")).toHaveLength(1);
+    expect(db.all("SELECT * FROM members WHERE userId='lucas'")).toHaveLength(0);
+    expect(db.all("SELECT * FROM communityJoinRequests WHERE userId='lucas' AND state='pending'")).toHaveLength(1);
     expect(() => db.command(outsider, { action: "joinCommunity", code: "INVALIDO" })).toThrow();
   });
   it("mantém snapshots privados, não sobrescreve após correção e permite removê-los fora da janela", () => {
@@ -165,7 +166,9 @@ describe("SQLite local: autorização, snapshots e persistência", () => {
     setupBible(first);
     first.command(first.profile("daniel"), { action: "saveQuoteDrafts", ids: ["esperanca"], selection, requestId: "3537e982-5116-45df-95d9-c2c9f7f1cbbf" });
     const session = first.login("marina");
-    first.command(session.profile, { action: "readNotification", id: "welcome-marina" });
+    first.command(first.profile("daniel"), { action: "sendMessage", id: "esperanca", content: "Aviso persistente" });
+    const notice = first.get<{ id: string }>("SELECT id FROM notifications WHERE userId='marina'")!;
+    first.command(session.profile, { action: "readNotification", id: notice.id });
     first.command(first.profile("ester"), { action: "schedule", input: { ...publication, mode: "create", date: "2026-10-06", selection } });
     first.command(session.profile, { action: "setFavorite", date: "2026-10-04", timeZone: "UTC", saved: true });
     first.command(first.profile("ester"), { action: "withdraw", date: "2026-10-04", reason: "Teste" }); first.close();

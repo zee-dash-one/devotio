@@ -33,6 +33,8 @@ export function canManageEditorial(user: {
 export interface AccessState {
   status: AccessStatus;
   editorial: boolean;
+  canCreateCommunity?: boolean;
+  communityLimit?: number;
 }
 export interface ManagedUser {
   id: string;
@@ -41,6 +43,7 @@ export interface ManagedUser {
   status: AccessStatus;
   editorial: boolean;
   linked: boolean;
+  communityCreation?: import("./community-governance").CreationPermission;
 }
 export interface AdminSession {
   token: string;
@@ -54,9 +57,10 @@ export interface AdminPage {
 export interface CommunityPermission {
   id: string;
   name: string;
-  role: "admin" | "member" | "none";
+  role: "owner" | "admin" | "member" | "none";
 }
 export interface Administration {
+  setCommunityCreation?(token: string, input: { userId: string; allowed: boolean; limit?: number }): Promise<void>;
   login(input: z.input<typeof adminLoginSchema>): Promise<AdminSession>;
   logout(token: string): Promise<void>;
   list(

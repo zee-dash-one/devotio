@@ -53,6 +53,8 @@ import {
 import { useWriting } from "../context";
 import { Quote } from "../quote";
 import { useFriends, CommunityFriendButton } from "../social";
+import { CreationActions, MyJoinRequests, PendingJoinRequests, MemberGovernance, LeaveCommunity } from "../community-governance";
+import { roleLabels } from "domain/core";
 type DialogKind = "create" | "join" | null;
 export function CommunitiesPage() {
   const { data, error } = useCommunities();
@@ -112,7 +114,7 @@ export function CommunitiesPage() {
                 <ArrowUpRight size={20} />
               </div>
               <span className="eyebrow">
-                {group.role === "admin"
+                {canManage(group.role)
                   ? "VOCÊ CUIDA DESTE ESPAÇO"
                   : "SEU ESPAÇO DE COMUNHÃO"}
               </span>
@@ -127,16 +129,8 @@ export function CommunitiesPage() {
           ))}
         </div>
       )}
-      <div className="create-community">
-        <div>
-          <h3>Um novo espaço de cuidado.</h3>
-          <p>Reúna sua igreja ou seu grupo em uma comunidade.</p>
-        </div>
-        <Button variant="ghost" onClick={() => setDialog("create")}>
-          <Plus size={17} />
-          Criar comunidade
-        </Button>
-      </div>
+      <MyJoinRequests />
+      <CreationActions onCreate={() => setDialog("create")} />
       <aside className="community-note">
         <Leaf size={21} strokeWidth={1.2} />
         <p>
@@ -160,6 +154,7 @@ function CommunityDialog({
 }) {
   const repo = useRepository();
   const navigate = useNavigate();
+  const [sent, setSent] = useState(false);
   const [invitation, setInvitation] = useState<{
     code: string;
     name: string;
@@ -174,7 +169,7 @@ function CommunityDialog({
           ? "Dê um nome a este espaço de comunhão. Você será responsável por cuidar dele."
           : "Insira o código de oito caracteres compartilhado pela liderança."}
       </p>
-      {kind === "create" ? (
+      {sent ? <Success>Pedido enviado. Aguarde a aprovação. Acompanhe em Suas solicitações.</Success> : kind === "create" ? (
         <ActionForm
           label="Criar comunidade"
           onSubmit={async (data) => {
@@ -207,14 +202,10 @@ function CommunityDialog({
         </ActionForm>
       ) : invitation ? (
         <ActionForm
-          label="Confirmar entrada"
+          label="Pedir entrada"
           onSubmit={async () => {
-            const id = await repo.joinCommunity(invitation.code);
-            onClose();
-            await navigate({
-              to: "/comunidade/$communityId",
-              params: { communityId: id },
-            });
+            await repo.joinCommunity(invitation.code);
+            setSent(true);
           }}
         >
           <div className="invitation-preview">
@@ -430,7 +421,7 @@ export function CommunityPage({
               </Button>
             )}
           </div>
-          {messageId && repo.sharing && (
+          {messageId && (repo.sharing || repo.communityMessage) && (
             <TargetMessage communityId={id} messageId={messageId} />
           )}
           {cursor && (
@@ -523,6 +514,7 @@ export function CommunityPage({
             </div>
             <span className="caption">{data.members.length} pessoas</span>
           </div>
+          {admin && repo.governance && <PendingJoinRequests governance={repo.governance} id={id} />}
           <ul className="member-list">
             {data.members.map((member) => (
               <li key={member.id}>
@@ -530,7 +522,7 @@ export function CommunityPage({
                 <div>
                   <strong>{member.name}</strong>
                   <span>
-                    {member.role === "admin" ? "Liderança" : "Membro"}
+                    {roleLabels[member.role]}
                   </span>
                 </div>
                 {admin && (
@@ -540,15 +532,17 @@ export function CommunityPage({
                     title={
                       canRemoveMember(
                         member.role,
-                        data.members.filter((m) => m.role === "admin").length,
+                        data.members.filter((m) => canManage(m.role)).length,
+                        group.role,
                       )
                         ? "Remover membro"
                         : copy.lastAdmin
                     }
                     disabled={
-                      !canRemoveMember(
+                      member.id === group.memberId || !canRemoveMember(
                         member.role,
-                        data.members.filter((m) => m.role === "admin").length,
+                        data.members.filter((m) => canManage(m.role)).length,
+                        group.role,
                       )
                     }
                     onClick={() =>
@@ -558,10 +552,12 @@ export function CommunityPage({
                     <Trash2 size={17} />
                   </IconButton>
                 )}
+                {admin && repo.governance && <MemberGovernance governance={repo.governance} group={group} member={member} />}
                 {repo.social && friends.data && <CommunityFriendButton social={repo.social} data={friends.data} communityId={id} userId={member.userId} name={member.name} />}
               </li>
             ))}
           </ul>
+          {repo.governance && <LeaveCommunity governance={repo.governance} group={group} />}
         </section>
       )}
       {modal && (
@@ -987,7 +983,9 @@ function TargetMessage({
   }>({ id: "" });
   useEffect(() => {
     let active = true;
-    void repo.sharing!.message(communityId, messageId).then(
+    const read = repo.communityMessage ?? repo.sharing?.message;
+    if (!read) return;
+    void read(communityId, messageId).then(
       (message) => {
         if (active) setState({ id: messageId, message });
       },

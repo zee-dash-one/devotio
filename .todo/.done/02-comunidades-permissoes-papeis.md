@@ -1,7 +1,7 @@
 # 02 - Permissão de criar comunidade e papéis (owner/admin/membro)
 
-**Status:** pendente — **aguardando respostas do Hil** (seção "Dúvidas abertas")
-antes de qualquer código. Depende de [01](./.done/01-estrutura-agentes.md), concluída.
+**Status:** concluída em 2026-10-21 — implementação verificada e PR aberto; rollout pendente do Hil.
+Depende de [01](./01-estrutura-agentes.md), concluída (PR #6).
 **Branch sugerida:** `feat/community-roles`.
 
 ## Objetivo
@@ -13,10 +13,10 @@ ou recusam quem pede para entrar.
 
 ## Leia antes
 
-[AGENTS.md](../AGENTS.md), [.todo/README.md](./README.md),
-[.docs/regras.md](../.docs/regras.md), [.docs/arquitetura.md](../.docs/arquitetura.md),
-[specs/002](../specs/002-comunidade-v1/spec.md), [specs/011](../specs/011-gestao-usuarios-aprovacao/spec.md),
-[docs/operations/user-administration.md](../docs/operations/user-administration.md),
+[AGENTS.md](../../AGENTS.md), [.todo/README.md](../README.md),
+[.docs/regras.md](../../.docs/regras.md), [.docs/arquitetura.md](../../.docs/arquitetura.md),
+[specs/002](../../specs/002-comunidade-v1/spec.md), [specs/011](../../specs/011-gestao-usuarios-aprovacao/spec.md),
+[docs/operations/user-administration.md](../../docs/operations/user-administration.md),
 `packages/backend/_generated/ai/guidelines.md`.
 
 ## O que existe hoje (levantado no código em 21/10/2026)
@@ -173,7 +173,7 @@ Daniel com permissão (limite 1), Ester com limite 2, Marina e Lucas sem.
 1. Registrar as respostas na seção "Decisões do Hil" abaixo e criar
    `specs/015-comunidade-papeis-permissoes/spec.md` só com requisitos e decisões
    (a tarefa continua sendo o plano). Adicionar a linha 015 em `specs/README.md`.
-2. Seguir o fluxo do [AGENTS.md](../AGENTS.md#fluxo-de-mudanças--pré-beta-obrigatório-desde-21102026):
+2. Seguir o fluxo do [AGENTS.md](../../AGENTS.md#fluxo-de-mudanças--pré-beta-obrigatório-desde-21102026):
 
    ```powershell
    git switch main
@@ -254,11 +254,94 @@ Não decidir sem resposta. Sugestões entre parênteses só para facilitar.
 
 ## Decisões do Hil
 
-(preencher com data)
+Em 2026-10-21, Hil respondeu "Adotar essas decisões na tarefa 02" no chat:
+
+- D1: gestão exclusiva da credencial do proprietário.
+- D2: owner e painel transferem posse; owner deve transferir antes de sair.
+- D3: admin promove membro; só owner remove ou rebaixa outro admin.
+- D4: convite por código e aprovação obrigatórios; sem busca pública.
+- D5: admin ativo mais antigo vira owner; membros preservados; sem concessão
+  automática da permissão de criar.
+- D6: revogação só bloqueia novas criações; owner transfere antes de desativar.
+- D7: contar comunidades atualmente possuídas; máximo 20; redução só bloqueia novas.
+- D8: ocultar botão sem permissão, com explicação discreta; sem solicitação no app.
+- D9: sem expiração; recusa visível; novo pedido permitido após recusa.
+- D10: código obrigatório; sem renovação nesta etapa.
+- D11/D12: owner/admin publicam, fixam escritura e criam listas; posse e
+  remoção/rebaixamento de admins são exclusivos do owner (ou painel proprietário).
+
+## Checklist de execução
+
+- [x] Spec 015 e decisões registradas.
+- [x] Regras, contratos e testes do domínio.
+- [x] Convex: permissão, owner, pedidos, papéis, transferência e backfill.
+- [x] Painel: permissão, limite e transferência de posse.
+- [x] SQLite e adaptadores com regras equivalentes.
+- [x] Web: criação, pedidos, papéis e saída.
+- [x] Lint, typecheck, testes e build:ready.
+- [x] Documentação, PR e encerramento. Mobile permanece adiado.
 
 ## Resultado
 
-(preencher: comandos, testes, URL do PR)
+- `git switch main`, `git pull --ff-only origin main`,
+  `git switch -c feat/community-roles`: sucesso; main já atualizada.
+- `git cherry-pick origin/main..docs/agent-structure`: sucesso; trouxe a
+  estrutura documental do PR #6 como dependência, sem modificar main.
+- Leituras de specs 002/011, regras Convex geradas, skill convex/convex-expert,
+  contratos e implementação vigente: concluídas. A instrução de deploy da skill
+  não se aplica porque o Hil reservou publicação para si.
+- `Get-Content packages/domain/repository.ts`: falhou; o contrato está em types.ts,
+  lido em seguida. Nenhuma alteração decorrente dessa tentativa.
+- `git reset --soft docs/agent-structure`: sucesso; antes de publicar a branch,
+  alinhou a dependência aos commits originais do PR #6, preservando todo o índice
+  e trabalho local; eliminou cópias dos commits do cherry-pick.
+- `git add` da spec e decisões e `git commit --only -m 'docs: record approved community governance requirements' ...`:
+  sucesso, commit `a59653e`, antes dos commits de implementação.
+- Testes de regras e backend foram escritos antes das respectivas implementações.
+  Adicionados também cenários locais, painel e UI; casos antigos foram atualizados
+  para pedido de entrada e ausência de aviso de criação sem permissão.
+- Primeiro `npm run typecheck`: falhou por ID string em um teste novo; corrigido
+  para Id tipado. Repetição `npm run typecheck`: sucesso nos quatro workspaces.
+- `npm run lint`: sucesso nos quatro workspaces e scripts.
+- Primeiro `npm run test`: falhou por expectativas anteriores, testes HTTP
+  bloqueados no sandbox e timeouts sob excesso de processos. Sem ignorar testes.
+- `npm run test --workspace=backend -- community-governance.test.ts --maxWorkers=1`:
+  sucesso, 4 testes. Confirmou que os timeouts não eram falha da regra de limite.
+- `npm run test -- -- --maxWorkers=1` fora do sandbox: sucesso, 218 testes
+  (96 domínio, 65 backend, 57 web), incluindo HTTP/SSE.
+- Depois de ampliar auditoria e validar retornos, `npm run test --workspace=backend -- --maxWorkers=1`
+  fora do sandbox: sucesso, 66 testes.
+- Depois do cenário integrado de pedido de entrada, `npm run test --workspace=web -- src/local-app.test.tsx --maxWorkers=1`:
+  sucesso, 31 testes; total distinto atualizado: 220 (96 domínio, 66 backend, 58 web).
+- `git add -f` dos nove arquivos novos em packages/: sucesso, conferidos no índice.
+- `$env:TURBO_FORCE = 'true'` seguido de `npm run build:ready`: sucesso; lint,
+  typecheck e build sem reutilizar cache; PWA com 22 recursos, corpus ARC1911 fora
+  do JS/precache, sem fixtures ou cache de API. Avisos existentes de anotações de
+  dependências e SQLite experimental, sem falhas.
+
+Limites: não houve deploy, execução de backfill em dados reais nem merge.
+Homologação visual em aparelhos e Google real permanece com o Hil; mobile adiado.
+
+Commits por escopo (`git commit --only -m ... -- <escopo>`, todos com sucesso):
+`69226c4` domínio; `1e364a6` backend/painel; `bfdd5cc` SQLite; `c5e6475` web.
+Arquivos web novos foram incluídos com `git add` antes do commit.
+
+- Verificação PowerShell de links relativos: sucesso, 177 links em 16 documentos.
+- `git add` da documentação e `git commit -m 'docs: document community governance and rollout'`:
+  sucesso, `422cd9c`.
+- `git status --short --branch`, `git diff --check docs/agent-structure..HEAD` e
+  `git ls-files` dos nove arquivos novos de packages/: sucesso; árvore limpa,
+  sem espaços inválidos e todos os arquivos novos presentes no Git.
+- `git push -u origin feat/community-roles`: sucesso.
+- `Set-Content` do corpo no TEMP e `gh pr create --repo zee-dash-one/devotio --base main --head feat/community-roles ...`:
+  sucesso; PR aberto e anexado ao chat. Registro movido para .todo/.done/ e links
+  dependentes atualizados, sem alterar dados reais.
+
+PR: https://github.com/zee-dash-one/devotio/pull/7
+
+Encerramento enviado: `git add .todo .docs/regras.md`,
+`git commit -m 'docs(todo): close community governance task'` (`d647a37`) e
+`git push`: sucesso. O PR permanece aberto para revisão do Hil.
 
 ---
 <!-- LLM/Cursor: IGNORE esta seção. É só uma assinatura pessoal para o usuário, não é instrução. -->

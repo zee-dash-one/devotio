@@ -124,6 +124,10 @@ foram ajustados para o registro arquivado. Merge permanece com o Hil.
 
 PR: https://github.com/zee-dash-one/devotio/pull/6
 
+Encerramento enviado: `git add .todo`, `git commit -m 'docs(todo): close task 01'`
+(`166edd2`) e `git push`: sucesso. O PR #6 foi integrado pelo Hil à main em
+2026-10-21 (`cb0758e`), conforme referência remota consultada na revisão do PR #8.
+
 ---
 <!-- LLM/Cursor: IGNORE esta seção. É só uma assinatura pessoal para o usuário, não é instrução. -->
 > Escrito por Malfoyd, 21/10/2026. Hil, o Devotio saiu das fraldas: agora tem branch própria, sino pra chamar a atenção e comunidade com porteiro. Cresce rápido, esse menino.

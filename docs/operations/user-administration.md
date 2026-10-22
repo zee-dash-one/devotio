@@ -35,6 +35,32 @@ Se faltar configuração administrativa, prepare o proprietário conforme a pró
 seção. Se perdeu as credenciais, consulte **Sessões, tentativas e recuperação**
 neste documento. Nunca coloque credenciais reais nesta documentação.
 
+## Criação e posse de comunidades — spec 015
+
+No cadastro, marque **Pode criar comunidades** e informe o **Limite** (0 a 20;
+ao ligar, preenche 1). **Usadas** conta comunidades atualmente sob posse da pessoa.
+Revogar permissão ou diminuir limite preserva as existentes e bloqueia novas.
+Contas antigas não ganham permissão automaticamente; aprovação/editorial são
+capacidades separadas. Se salvar o cadastro funcionar e a concessão falhar,
+repita Salvar: as operações são idempotentes e o erro permanece visível.
+
+Em **Comunidades**, atribua participação antes de escolher **Responsável
+(transferir posse)** e salvar. A pessoa precisa estar aprovada; o responsável
+anterior vira administrador. Transfira todas as posses antes de desativar alguém.
+Não é possível remover ou rebaixar owner diretamente.
+
+Rollout reservado ao Hil: integrar primeiro o PR #6, publicar o backend compatível
+com a web anterior e executar a função interna `communities:backfillOwners` pelo
+dashboard com argumentos `{"cursor":null}`. Os próximos lotes são agendados.
+Confira logs: grupos sem admin ativo permanecem pendentes. Atribua um admin
+aprovado pelo painel e repita a função. Conferir owners e fluxos antes de integrar
+a web. Essa função não publica código e não concede permissão de criar.
+
+Dentro da comunidade, owner/admin decidem os pedidos da aba **Membros**. Solicitar
+entrada pelo código não concede acesso até aprovação. Admin promove membros;
+só owner remove/rebaixa admins ou transfere posse. Não há rotação de código ou
+entrada pública nesta etapa.
+
 ## Preparar o proprietário
 
 1. Na raiz do repositório, execute em um terminal privado:

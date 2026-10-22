@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { componentsGeneric, makeFunctionReference } from "convex/server";
 import type { ComponentApi } from "@convex-dev/better-auth/_generated/component.js";
 import betterAuth from "@convex-dev/better-auth/test";
@@ -19,6 +19,8 @@ const modules = {
   "./adminSession.ts": () => import("./adminSession"),
   "./adminLogin.ts": () => import("./adminLogin"),
   "./communities.ts": () => import("./communities"),
+  "./communityGovernance.ts": () => import("./communityGovernance"),
+  "./notifications.ts": () => import("./notifications"),
   "./home.ts": () => import("./home"),
   "./editorial.ts": () => import("./editorial"),
   "./editorialAccess.ts": () => import("./editorialAccess"),
@@ -28,10 +30,12 @@ const q = (name: string) => makeFunctionReference<"query">(name);
 const components = componentsGeneric() as unknown as {
   betterAuth: ComponentApi;
 };
+const stores: TestConvex<typeof schema>[] = [];
 function setup() {
   const t = convexTest(schema, modules);
   betterAuth.register(t);
   rateLimiter.register(t);
+  stores.push(t);
   return t;
 }
 async function google(
@@ -96,17 +100,48 @@ async function admin(t: ReturnType<typeof setup>) {
   return token;
 }
 beforeEach(() => {
+  vi.useFakeTimers();
   vi.stubEnv("ADMIN_LOGIN", "owner@example.com");
   vi.stubEnv("ADMIN_PASSWORD_HASH", "test-hash");
   vi.stubEnv("ADMIN_TOTP_SECRET", "12345678901234567890");
   vi.stubEnv("PILOT_EXISTING_USERS_BEFORE", "2020-01-01T00:00:00Z");
 });
-afterEach(() => {
-  vi.unstubAllEnvs();
-  vi.useRealTimers();
+afterEach(async () => {
+  try { for (const t of stores.splice(0)) await t.finishAllScheduledFunctions(vi.runAllTimers); }
+  finally { vi.unstubAllEnvs(); vi.useRealTimers(); }
 });
 
 describe("aprovação no backend conectado", () => {
+  it("notifica remoção pelo painel uma única vez sem identificar quem removeu", async () => {
+    const t = setup();
+    await admin(t);
+    const { userId, communityId } = await t.run(async ctx => {
+      const ownerId = await ctx.db.insert("users", { name: "Owner", email: "owner@example.test", status: "approved" });
+      const userId = await ctx.db.insert("users", { name: "Member", email: "member@example.test", status: "approved" });
+      const communityId = await ctx.db.insert("communities", { name: "Fixture group", description: "", scripture: "", inviteCode: "FIXTURE2", createdAt: Date.now(), ownerId });
+      await ctx.db.insert("communityMembers", { communityId, userId: ownerId, role: "owner" });
+      await ctx.db.insert("communityMembers", { communityId, userId, role: "member" });
+      return { userId, communityId };
+    });
+    const input = { token, userId, communityId, role: "none" };
+    await t.mutation(m("administration:setCommunity"), input);
+    await t.mutation(m("administration:setCommunity"), input);
+    const rows = await t.run(ctx => ctx.db.query("notifications").collect());
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ kind: "communityRemoved", userId, communityName: "Fixture group" });
+    expect(rows[0].actorName).toBeUndefined();
+  });
+  it("reserva permissão de criação ao proprietário, valida limite e audita", async () => {
+    const t = setup();
+    const id = await t.run(ctx => ctx.db.insert("users", { name: "Ana", email: "ana@example.test", status: "approved" }));
+    const input = { token, userId: id, allowed: true };
+    await expect(t.mutation(m("administration:setCommunityCreation"), input)).rejects.toThrow();
+    await admin(t);
+    await expect(t.mutation(m("administration:setCommunityCreation"), { ...input, limit: 21 })).rejects.toThrow();
+    await t.mutation(m("administration:setCommunityCreation"), input);
+    expect(await t.run(ctx => ctx.db.get(id))).toMatchObject({ communityCreationAllowed: true, communityCreationLimit: 1 });
+    expect(await t.run(ctx => ctx.db.query("userAdminEvents").collect())).toEqual([expect.objectContaining({ target: id, action: "community-creation:true:1" })]);
+  });
   it("persiste pendência, não duplica e bloqueia consultas/mutações diretas", async () => {
     const t = setup(),
       user = await google(t, "new@example.com");
@@ -300,11 +335,12 @@ describe("aprovação no backend conectado", () => {
     await admin(t);
     const user = await google(t, "leader@example.com", 1);
     await user.mutation(accessRefs.bootstrap, {});
+    const leader = (await t.run((ctx) => ctx.db.query("users").collect()))[0];
+    await t.mutation(m("administration:setCommunityCreation"), { token, userId: leader._id, allowed: true });
     const communityId = await user.mutation(refs.create, {
       name: "Grupo",
       description: "",
     });
-    const leader = (await t.run((ctx) => ctx.db.query("users").collect()))[0];
     await expect(
       t.mutation(m("administration:update"), {
         token,
@@ -313,7 +349,7 @@ describe("aprovação no backend conectado", () => {
         status: "disabled",
         editorial: false,
       }),
-    ).rejects.toThrow("outra pessoa");
+    ).rejects.toThrow("Transfira");
     const successor = await t.mutation(m("administration:create"), {
       token,
       name: "Sucessor",
@@ -327,6 +363,8 @@ describe("aprovação no backend conectado", () => {
       communityId,
       role: "admin",
     });
+    await expect(t.mutation(m("administration:update"), { token, id: leader._id, name: leader.name, status: "disabled", editorial: false })).rejects.toThrow("Transfira");
+    await t.mutation(m("administration:setCommunity"), { token, userId: successor, communityId, role: "owner" });
     await t.mutation(m("administration:update"), {
       token,
       id: leader._id,
@@ -344,7 +382,7 @@ describe("aprovação no backend conectado", () => {
         communityId,
         role: "member",
       }),
-    ).rejects.toThrow("outra pessoa");
+    ).rejects.toThrow("Transfira");
   });
   it("exige gestão editorial no servidor e deriva autoria da identidade", async () => {
     const t = setup();

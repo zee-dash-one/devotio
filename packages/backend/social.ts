@@ -2,6 +2,7 @@ import { ConvexError, v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import type { QueryCtx, Id } from "./server";
 import { findUser } from "./access";
+import { notify } from "./notifications";
 import { editorialScripture } from "./scriptures";
 import { scriptureSelectionValidator } from "./scriptureValidators";
 import {
@@ -283,6 +284,7 @@ export const send = mutation({
         .unique();
       if (!marker) await ctx.db.insert("shareMarkers", location);
     }
+    for (const userId of args.recipientIds) await notify(ctx, { userId, kind: "friendShare", actorName: actor.name, shareId: id, target: { version: quote.version, book: quote.book, chapter: quote.chapter, verse: quote.first }, text: quote.reference, sourceKey: `share:${id}:${userId}` });
     return id;
   },
 });

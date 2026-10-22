@@ -6,12 +6,17 @@ import {
   updateManagedUserSchema,
   adminListSchema,
   communityPermissionSchema,
+  communityCreationSchema,
+  canManage,
 } from "domain/core";
 import { mutation, env } from "./_generated/server";
 import type { MutationCtx, Id } from "./server";
 import type { Doc } from "./_generated/dataModel";
 import { requireAdmin } from "./adminSession";
 import { statusValidator } from "./users";
+import { creationPermission, transferOwner, addMember } from "./communityGovernance";
+import { notifyRemoval } from "./notifications";
+import { creationValidator } from "./communityValidators";
 
 const userValidator = v.object({
   id: v.id("users"),
@@ -20,8 +25,9 @@ const userValidator = v.object({
   status: statusValidator,
   editorial: v.boolean(),
   linked: v.boolean(),
+  communityCreation: creationValidator,
 });
-function present(user: Doc<"users">) {
+async function present(ctx: MutationCtx, user: Doc<"users">) {
   return {
     id: user._id,
     name: user.name,
@@ -29,6 +35,7 @@ function present(user: Doc<"users">) {
     status: effectiveAccess(user.status),
     editorial: user.editorial === true,
     linked: !!user.authId,
+    communityCreation: await creationPermission(ctx, user),
   };
 }
 async function audit(ctx: MutationCtx, target: string, action: string) {
@@ -48,7 +55,7 @@ async function protectLastAdmin(
   for await (const member of ctx.db
     .query("communityMembers")
     .withIndex("by_community", (q) => q.eq("communityId", communityId))) {
-    if (member.userId === userId || member.role !== "admin") continue;
+    if (member.userId === userId || !canManage(member.role)) continue;
     const other = await ctx.db.get(member.userId);
     if (other && hasApprovedAccess(other.status)) return;
   }
@@ -103,7 +110,7 @@ export const list = mutation({
       .withIndex("by_key", (q) => q.eq("key", "main"))
       .unique();
     return {
-      users: page.page.map(present),
+      users: await Promise.all(page.page.map(user => present(ctx, user))),
       cursor: page.isDone ? null : page.continueCursor,
       approvalRequired: settings?.approvalRequired ?? true,
     };
@@ -161,11 +168,13 @@ export const update = mutation({
     const input = updateManagedUserSchema.parse(args);
     const current = await ctx.db.get(args.id);
     if (!current) throw new ConvexError("Cadastro não encontrado.");
+    if (input.status !== "approved" && (await ctx.db.query("communities").withIndex("by_ownerId", q => q.eq("ownerId", args.id)).first())) throw new ConvexError("Transfira a posse das comunidades antes de desativar o responsável.");
     if (hasApprovedAccess(current.status) && input.status !== "approved") {
       for await (const member of ctx.db
         .query("communityMembers")
         .withIndex("by_user", (q) => q.eq("userId", args.id))) {
-        if (member.role === "admin")
+        if (member.role === "owner") throw new ConvexError("Transfira a posse antes de desativar o responsável.");
+        if (canManage(member.role))
           await protectLastAdmin(ctx, member.communityId, args.id);
       }
     }
@@ -216,6 +225,7 @@ export const communities = mutation({
         name: v.string(),
         role: v.union(
           v.literal("admin"),
+          v.literal("owner"),
           v.literal("member"),
           v.literal("none"),
         ),
@@ -255,7 +265,7 @@ export const setCommunity = mutation({
     token: v.string(),
     userId: v.id("users"),
     communityId: v.id("communities"),
-    role: v.union(v.literal("admin"), v.literal("member"), v.literal("none")),
+    role: v.union(v.literal("owner"), v.literal("admin"), v.literal("member"), v.literal("none")),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -265,7 +275,7 @@ export const setCommunity = mutation({
       community = await ctx.db.get(args.communityId);
     if (!user || !community)
       throw new ConvexError("Cadastro ou comunidade não encontrado.");
-    if (args.role === "admin" && !hasApprovedAccess(user.status))
+    if ((args.role === "admin" || args.role === "owner") && !hasApprovedAccess(user.status))
       throw new ConvexError("Aprove o acesso antes de conceder administração.");
     const member = await ctx.db
       .query("communityMembers")
@@ -273,18 +283,36 @@ export const setCommunity = mutation({
         q.eq("communityId", args.communityId).eq("userId", args.userId),
       )
       .unique();
+    if (args.role === "owner") {
+      if (!member) throw new ConvexError("Adicione a pessoa à comunidade antes de transferir a posse.");
+      await transferOwner(ctx, args.communityId, member._id);
+      await audit(ctx, args.userId, `community:${args.communityId}:owner`);
+      return null;
+    }
+    if (member?.role === "owner" || community.ownerId === args.userId) throw new ConvexError("Transfira a posse antes de alterar ou remover o responsável.");
     if (member?.role === "admin" && args.role !== "admin")
       await protectLastAdmin(ctx, args.communityId, args.userId);
     if (args.role === "none") {
-      if (member) await ctx.db.delete(member._id);
+      if (member) {
+        await ctx.db.delete(member._id);
+        await notifyRemoval(ctx, member, community.name);
+      }
     } else if (member) await ctx.db.patch(member._id, { role: args.role });
     else
-      await ctx.db.insert("communityMembers", {
-        communityId: args.communityId,
-        userId: args.userId,
-        role: args.role,
-      });
+      await addMember(ctx, args.communityId, args.userId, args.role);
     await audit(ctx, args.userId, `community:${args.communityId}:${args.role}`);
+    return null;
+  },
+});
+export const setCommunityCreation = mutation({
+  args: { token: v.string(), userId: v.id("users"), allowed: v.boolean(), limit: v.optional(v.number()) },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.token);
+    const input = communityCreationSchema.parse(args);
+    if (!(await ctx.db.get(args.userId))) throw new ConvexError("Cadastro não encontrado.");
+    await ctx.db.patch(args.userId, { communityCreationAllowed: input.allowed, communityCreationLimit: input.limit });
+    await audit(ctx, args.userId, `community-creation:${input.allowed}:${input.limit}`);
     return null;
   },
 });

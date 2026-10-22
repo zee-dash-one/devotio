@@ -1,6 +1,8 @@
 // Multiple-dot filename excludes this development module from Convex entry points.
 import { DatabaseSync, type SQLInputValue } from "node:sqlite";
 import { LocalSocial } from "./social.local";
+import { LocalGovernance } from "./governance.local";
+import { LocalNotifications } from "./notifications.local";
 import { randomUUID, createHash } from "node:crypto";
 import { readFileSync, existsSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -9,12 +11,12 @@ import { alm1911Chapter } from "./alm1911.local";
 import { bibleVersionNames, type BibleVersion } from "../../domain/validators/bible";
 import { scriptureLicenseForVersion, editorialMonthDates, availableEditorialDates } from "../../domain/editorial";
 import {
-  bibleDatasetSchema, bibleBooksSchema, canManage, canRemoveMember, canPublish,
+  bibleDatasetSchema, bibleBooksSchema, canManage, canRemoveMember, canPublish, hasApprovedAccess,
   isPublished, dateInZone, recentDates, isRecent, searchWords, publicationMidnight, canScheduleDate, scheduleSchema,
   type LocalProfile, type Devotional, type HomeData, type Community, type CommunityDetail,
   type Member, type Favorite, type BibleBook, type BibleChapter, type BibleResults,
   type BibleCatalog, type EditorialEntry, type LocalCommand, type LocalQuery, bibleQuote,
-  type Message, type NotificationSummary, type NotificationPage, type CommunityQuoteDraft,
+  type Message, type NotificationSummary, type CommunityQuoteDraft,
 } from "../../domain/index";
 
 export class LocalError extends Error {
@@ -29,6 +31,8 @@ export const profiles: LocalProfile[] = [
 type Row = Record<string, unknown>;
 type PublicationRow = { data: string; publishedAt: number; withdrawn: number };
 export class LocalDatabase {
+  readonly governance: LocalGovernance;
+  readonly notices: LocalNotifications;
   readonly social: LocalSocial;
   readonly db: DatabaseSync;
   private listeners = new Map<string, Set<(summary: NotificationSummary) => void>>();
@@ -63,7 +67,9 @@ export class LocalDatabase {
     if (!this.all<{ name: string }>("PRAGMA table_info(quoteDrafts)").some(column => column.name === "state")) this.db.exec("ALTER TABLE quoteDrafts ADD COLUMN state TEXT NOT NULL DEFAULT 'draft'");
     if (bibleDirectory && existsSync(join(bibleDirectory, "aa.json"))) this.importBible(bibleDirectory);
     this.seed();
+    this.governance = new LocalGovernance(this);
     this.social = new LocalSocial(this, id => this.notificationsChanged(id));
+    this.notices = new LocalNotifications(this);
   }
   get<T = Row>(sql: string, ...args: SQLInputValue[]): T | undefined { return this.db.prepare(sql).get(...args) as T | undefined; }
   all<T = Row>(sql: string, ...args: SQLInputValue[]): T[] { return this.db.prepare(sql).all(...args) as T[]; }
@@ -91,19 +97,15 @@ export class LocalDatabase {
       for (const listener of listeners) { try { listener(summary); } catch { listeners.delete(listener); } }
     }
   }
-  private notificationsChanged(userId: string) {
+  notificationsChanged(userId: string) {
     this.run("INSERT INTO metadata(key,value) VALUES (?, '1') ON CONFLICT(key) DO UPDATE SET value=CAST(value AS INTEGER)+1", "notifications:" + userId);
     this.changedNotifications.add(userId);
   }
   notificationSummary(userId: string): NotificationSummary {
-    return { revision: Number(this.get<{ value: string }>("SELECT value FROM metadata WHERE key=?", "notifications:" + userId)?.value ?? 0), unread: this.get<{ count: number }>("SELECT COUNT(*) count FROM notifications n WHERE userId=? AND readAt IS NULL AND (communityId IS NULL OR EXISTS(SELECT 1 FROM members m WHERE m.userId=n.userId AND m.communityId=n.communityId))", userId)!.count };
+    return this.notices.summary(userId);
   }
   private communityNotice(communityId: string, author: string, messageId: string) {
-    const entity = this.get<{ name: string }>("SELECT name FROM communities WHERE id=?", communityId)!.name;
-    for (const member of this.all<{ userId: string }>("SELECT userId FROM members WHERE communityId=? AND userId<>?", communityId, author)) {
-      this.run("INSERT INTO notifications(id,userId,type,entity,text,communityId,messageId,createdAt,readAt,sourceKey) VALUES (?,?,'community',?,'Nova mensagem para comunidade',?,?,?,NULL,?)", randomUUID(), member.userId, entity, communityId, messageId, this.now(), `message:${messageId}:${member.userId}`);
-      this.notificationsChanged(member.userId);
-    }
+    this.notices.post(communityId, author, messageId);
   }
   importBible(directory: string) {
     const raw = readFileSync(join(directory, "aa.json"), "utf8").replace(/^\uFEFF/, "");
@@ -141,10 +143,6 @@ export class LocalDatabase {
   private seed() {
     this.transaction(() => {
       for (const profile of profiles) this.run("INSERT OR IGNORE INTO users VALUES (?,?)", profile.id, JSON.stringify(profile));
-      for (const profile of profiles) {
-        const result = this.run("INSERT OR IGNORE INTO notifications(id,userId,type,entity,text,createdAt,sourceKey) VALUES (?,?,'system','Devotio','Você tem direito a criar uma comunidade.',?,?)", "welcome-" + profile.id, profile.id, this.now(), "welcome:" + profile.id);
-        if (result.changes) this.notificationsChanged(profile.id);
-      }
       // Refresh the known mock profile's presentation without replacing account data or memberships.
       const editor = this.profile("ester");
       this.run("UPDATE users SET data=? WHERE id='ester'", JSON.stringify({ ...editor, label: profiles[3].label, description: profiles[3].description }));
@@ -180,9 +178,12 @@ export class LocalDatabase {
   session(token?: string): LocalProfile | null {
     if (!token) return null;
     const row = this.get<{ userId: string }>("SELECT userId FROM sessions WHERE token=? AND expiresAt>?", token, this.now());
-    return row ? this.profile(row.userId) : null;
+    if (!row) return null;
+    try { this.requireApproved(row.userId); return this.profile(row.userId); }
+    catch { return null; }
   }
   login(id: string) {
+    this.requireApproved(id);
     const profile = this.profile(id), token = randomUUID();
     this.run("DELETE FROM sessions WHERE expiresAt<=?", this.now());
     const expiresAt = this.now() + LOCAL_SESSION_SECONDS * 1000;
@@ -206,7 +207,9 @@ export class LocalDatabase {
     return row && isPublished(row.publishedAt, !!row.withdrawn, this.now()) ? JSON.parse(row.data) as Devotional : null;
   }
   query(user: LocalProfile, input: LocalQuery): unknown {
+    this.requireApproved(user.id);
     switch (input.query) {
+      case "governance": return this.governance.query(user.id, input.input);
       case "socialFriends": return this.social.friends(user.id);
       case "socialShares": return this.social.shares(user.id, input.input);
       case "socialMarkers": return this.social.markers(user.id, input.chapter);
@@ -214,7 +217,7 @@ export class LocalDatabase {
       case "devotionals": return Object.fromEntries(input.dates.map(date => [date, this.query(user, { query: "home", date, timeZone: input.timeZone })]));
       case "home": return { user, devotional: this.published(input.date, input.timeZone), settings: { monthlyVerse: "Um coração atento ao que permanece.", monthlyReference: "Tema ilustrativo do mês", weeklyVerse: "Caminhar com presença e cuidado.", weeklyReference: "Tema ilustrativo da semana" } } satisfies HomeData;
       case "reading": return { dates: recentDates(dateInZone(input.timeZone, new Date(this.now()))), favorites: this.all<{ data: string }>("SELECT data FROM favorites WHERE userId=? ORDER BY date DESC", user.id).map(r => JSON.parse(r.data) as Favorite) };
-      case "communities": return this.all<Community>("SELECT c.*,m.role FROM communities c JOIN members m ON m.communityId=c.id WHERE m.userId=? ORDER BY c.name", user.id).map(c => ({ ...c, inviteCode: canManage(c.role) ? c.inviteCode : undefined }));
+      case "communities": return this.all<Community>("SELECT c.*,m.role,m.id memberId FROM communities c JOIN members m ON m.communityId=c.id WHERE m.userId=? ORDER BY c.name", user.id).map(c => ({ ...c, inviteCode: canManage(c.role) ? c.inviteCode : undefined }));
       case "invite": return this.get("SELECT id,name FROM communities WHERE inviteCode=?", input.code) ?? null;
       case "community": return this.detail(user.id, input.id, input.cursor);
       case "communityMessage": {
@@ -229,9 +232,7 @@ export class LocalDatabase {
       }
       case "notificationSummary": return this.notificationSummary(user.id);
       case "notifications": {
-        const rows = this.all<NotificationPage["items"][number] & { seq: number }>("SELECT seq,id,type,entity,text,communityId,messageId,createdAt,readAt FROM notifications n WHERE userId=? AND seq<? AND (communityId IS NULL OR EXISTS(SELECT 1 FROM members m WHERE m.userId=n.userId AND m.communityId=n.communityId)) ORDER BY seq DESC LIMIT 31", user.id, input.cursor ? Number(input.cursor) : Number.MAX_SAFE_INTEGER);
-        const page = rows.slice(0, 30);
-        return { items: page.map(({ seq: _seq, ...item }) => item), nextCursor: rows.length > 30 ? String(page.at(-1)!.seq) : null } satisfies NotificationPage;
+        return this.notices.page(user.id, input.cursor);
       }
       case "bible": return this.catalog();
       case "chapter": return this.chapter(input.abbrev, input.chapter);
@@ -249,24 +250,26 @@ export class LocalDatabase {
     }
   }
   command(user: LocalProfile, input: LocalCommand): unknown {
+    this.requireApproved(user.id);
     return this.transaction(() => {
       switch (input.action) {
+        case "governance": return this.governance.command(user.id, input.input);
         case "social": {
           try { return this.social.command(user.id, input.input); }
           catch (error) { throw new LocalError(error instanceof Error ? error.message : "Não foi possível concluir."); }
         }
         case "login": case "logout": throw new LocalError("Operação de sessão inválida.");
         case "createCommunity": {
+          const permission = this.governance.creation(user.id);
+          if (!permission.allowed) throw new LocalError("Você não tem permissão para criar comunidades. Fale com a administração.", 403);
+          if (!permission.canCreate) throw new LocalError("Você atingiu o limite de comunidades que pode criar.", 403);
           const id = randomUUID(), code = Array.from({ length: 8 }, () => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[parseInt(randomUUID().slice(0, 8), 16) % 31]).join("");
-          this.run("INSERT INTO communities VALUES (?,?,?,'',?)", id, input.input.name, input.input.description, code);
-          this.run("INSERT INTO members VALUES (?,?,?,'admin')", randomUUID(), id, user.id);
+          this.run("INSERT INTO communities(id,name,description,scripture,inviteCode,ownerId) VALUES (?,?,?,'',?,?)", id, input.input.name, input.input.description, code, user.id);
+          this.run("INSERT INTO members VALUES (?,?,?,'owner')", randomUUID(), id, user.id);
           return id;
         }
         case "joinCommunity": {
-          const group = this.get<{ id: string }>("SELECT id FROM communities WHERE inviteCode=?", input.code);
-          if (!group) throw new LocalError("Não encontramos uma comunidade com esse código.", 404);
-          this.run("INSERT OR IGNORE INTO members VALUES (?,?,?,'member')", randomUUID(), group.id, user.id);
-          return group.id;
+          return this.governance.requestJoin(user.id, input.code);
         }
         case "sendMessage": {
           this.membership(user.id, input.id, true); const messageId = randomUUID();
@@ -331,10 +334,7 @@ export class LocalDatabase {
           this.communityNotice(input.id, user.id, input.requestId); return input.requestId;
         }
         case "readNotification": {
-          const notice = this.get<{ communityId: string | null; readAt: number | null }>("SELECT communityId,readAt FROM notifications WHERE id=? AND userId=?", input.id, user.id);
-          if (!notice) throw new LocalError("Notificação não encontrada.", 404);
-          if (notice.communityId) this.membership(user.id, notice.communityId);
-          if (notice.readAt === null) { this.run("UPDATE notifications SET readAt=? WHERE id=? AND userId=?", this.now(), input.id, user.id); this.notificationsChanged(user.id); }
+          this.notices.markRead(user.id, input.id);
           return this.notificationSummary(user.id);
         }
         case "updateScripture": this.membership(user.id, input.id, true); this.run("UPDATE communities SET scripture=? WHERE id=?", input.scripture, input.id); return null;
@@ -352,12 +352,12 @@ export class LocalDatabase {
           return null;
         }
         case "removeMember": {
-          this.membership(user.id, input.id, true);
+          const actor = this.membership(user.id, input.id, true);
           const member = this.get<Member>("SELECT * FROM members WHERE id=? AND communityId=?", input.memberId, input.id);
           if (!member) return null;
-          const count = this.get<{ count: number }>("SELECT COUNT(*) count FROM members WHERE communityId=? AND role='admin'", input.id)!.count;
-          if (!canRemoveMember(member.role, count)) throw new LocalError("A comunidade precisa manter ao menos um administrador.");
-          this.run("DELETE FROM members WHERE id=?", member.id); this.notificationsChanged(member.userId); return null;
+          const count = this.governance.managers(input.id);
+          if (member.id === actor.id || !canRemoveMember(member.role, count, actor.role)) throw new LocalError("Você não pode remover este participante. A comunidade precisa manter um responsável.", 403);
+          this.run("DELETE FROM members WHERE id=?", member.id); this.notices.removed(member, input.id); return null;
         }
         case "setFavorite": {
           if (!input.saved) {
@@ -425,13 +425,20 @@ export class LocalDatabase {
     });
   }
   private audit(userId: string, action: string, date: string, reason: string) { this.run("INSERT INTO audit VALUES (?,?,?,?,?,?)", randomUUID(), userId, action, date, reason, this.now()); }
+  private requireApproved(userId: string) {
+    if (!this.isApproved(userId)) throw new LocalError("Seu acesso ainda não foi aprovado ou está desativado.", 403);
+  }
+  isApproved(userId: string) {
+    const user = this.get<{ status: "pending" | "approved" | "disabled" | null }>("SELECT json_extract(data,'$.status') status FROM users WHERE id=?", userId);
+    return !!user && hasApprovedAccess(user.status ?? undefined);
+  }
   private detail(userId: string, id: string, cursor: string | null): CommunityDetail {
     const association = this.membership(userId, id);
     const group = this.get<Omit<Community, "role">>("SELECT * FROM communities WHERE id=?", id)!;
     const messages = this.all<{ seq: number; id: string; content: string; name: string; sentAt: number; quote: string | null }>("SELECT m.seq,m.id,m.content,m.quote,json_extract(u.data,'$.name') name,m.sentAt FROM messages m JOIN users u ON u.id=m.userId WHERE communityId=? AND seq<? ORDER BY seq DESC LIMIT 51", id, cursor ? Number(cursor) : Number.MAX_SAFE_INTEGER);
     const hasMore = messages.length > 50, page = messages.slice(0, 50);
     return {
-      community: { ...group, role: association.role, inviteCode: canManage(association.role) ? group.inviteCode : undefined },
+      community: { ...group, role: association.role, memberId: association.id, inviteCode: canManage(association.role) ? group.inviteCode : undefined },
       members: this.all<Member>("SELECT m.id,m.userId,m.role,json_extract(u.data,'$.name') name FROM members m JOIN users u ON u.id=m.userId WHERE m.communityId=? ORDER BY m.role,u.id", id),
       messages: page.map(({ seq: _seq, quote, ...m }) => ({ ...m, quote: quote ? JSON.parse(quote) : undefined })).reverse(), hasMore, nextCursor: hasMore ? String(page.at(-1)!.seq) : null,
       lists: this.all<{ id: string; name: string }>("SELECT id,name FROM checklists WHERE communityId=? ORDER BY rowid", id).map(list => ({ ...list, items: this.all<{ id: string; text: string }>("SELECT id,text FROM items WHERE listId=? ORDER BY position", list.id).map(item => ({ ...item, checked: !!this.get("SELECT 1 FROM ticks WHERE itemId=? AND userId=?", item.id, userId), count: this.get<{ count: number }>("SELECT COUNT(*) count FROM ticks t JOIN members m ON m.userId=t.userId AND m.communityId=? WHERE t.itemId=?", id, item.id)!.count })) })),

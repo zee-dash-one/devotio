@@ -21,6 +21,7 @@ import type {
   ConnectedPublication,
 } from "../administration";
 import { editorialSaveSchema } from "../editorial";
+import { communityCreationSchema } from "../community-governance";
 
 export function createConnectedEditorial(
   client: ConvexReactClient,
@@ -81,6 +82,9 @@ export function createAdministration(
   client: ConvexReactClient,
 ): Administration {
   return {
+    setCommunityCreation: async (token, input) => {
+      await safeAdmin(client.mutation(ref<"mutation">("administration:setCommunityCreation"), { ...communityCreationSchema.parse(input), token }));
+    },
     login: (input) =>
       safeAdmin(
         client.action(
