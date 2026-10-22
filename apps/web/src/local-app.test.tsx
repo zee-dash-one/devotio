@@ -28,7 +28,7 @@ function server(loggedIn: boolean, actor = profile, conflict = false, manages = 
   const requests = new Map<string, CommunityQuoteDraft>();
   const book = { abbrev: "jo", name: "João", chapters: 21, testament: "NT" as const, order: 43 };
   const makeQuote = (selection: BibleSelection) => bibleQuote({ book, chapter: selection.chapter, verses: ["Versículo bíblico de teste", "Segundo verso de teste"].map((text, index) => ({ abbrev: "jo", bookName: "João", chapter: selection.chapter, number: index + 1, text })) }, selection);
-  const notices: AppNotification[] = [{ id: "system-1", type: "system", entity: "Devotio", text: "Você tem direito a criar uma comunidade.", communityId: null, messageId: null, createdAt: Date.parse("2026-10-07T12:00:00Z"), readAt: null }];
+  const notices: AppNotification[] = [{ id: "system-1", type: "system", entity: "Devotio", text: "Aviso de teste.", communityId: null, messageId: null, createdAt: Date.parse("2026-10-07T12:00:00Z"), readAt: null }];
   let revision = 1;
   const fetcher = vi.fn(async (path: string, options?: RequestInit) => {
     if (path.endsWith("session")) return new Response(JSON.stringify({ profile: loggedIn ? actor : null, profiles: [actor], expiresAt: loggedIn ? Date.now() + 86400000 : null }));
@@ -499,7 +499,7 @@ describe("entrada local integrada", () => {
   it("sino abre avisos sem marcar lida e ação Lida atualiza o badge", async () => {
     const fetcher = server(true); render(<StrictMode><LocalApp /></StrictMode>);
     fireEvent.click(await screen.findByRole("button", { name: "Notificações, 1 não lidas" }));
-    await screen.findByText("Você tem direito a criar uma comunidade.");
+    await screen.findByText("Aviso de teste.");
     expect(screen.getByText("07/10/2026")).toBeDefined();
     expect(fetcher.mock.calls.filter(([, options]) => String(options?.body).includes('"readNotification"'))).toHaveLength(0);
     fireEvent.click(screen.getByRole("button", { name: "Marcar notificação de Devotio como lida" }));

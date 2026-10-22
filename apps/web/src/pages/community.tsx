@@ -421,7 +421,7 @@ export function CommunityPage({
               </Button>
             )}
           </div>
-          {messageId && repo.sharing && (
+          {messageId && (repo.sharing || repo.communityMessage) && (
             <TargetMessage communityId={id} messageId={messageId} />
           )}
           {cursor && (
@@ -983,7 +983,9 @@ function TargetMessage({
   }>({ id: "" });
   useEffect(() => {
     let active = true;
-    void repo.sharing!.message(communityId, messageId).then(
+    const read = repo.communityMessage ?? repo.sharing?.message;
+    if (!read) return;
+    void read(communityId, messageId).then(
       (message) => {
         if (active) setState({ id: messageId, message });
       },
