@@ -373,6 +373,12 @@ em conflito com os registros concluídos desta branch.
   `git diff --cached --check` e busca de marcadores: sucesso; nenhum conflito
   pendente. Comparação com HEAD confirmou ausência de mudanças fora de Markdown.
 - Suíte de testes anterior não reexecutada nesta revisão exclusivamente documental.
+- `git commit -m 'chore: reconcile notifications with main'`: sucesso, d4495d1,
+  com pais 3ccdae1 e cb0758e; `git push origin feat/notifications`: sucesso.
+- `git status --short --branch` e `git merge-base --is-ancestor origin/main HEAD`:
+  sucesso; árvore limpa, branch sincronizada e main incorporada.
+- `gh pr view 8 --repo zee-dash-one/devotio --json ...`: sucesso após o envio;
+  GitHub confirmou MERGEABLE e CLEAN, base cb0758e e resolução d4495d1.
 
 A revisão incorpora a main na branch de notificações, preservando o histórico
 publicado. Publicação do backend e merge do PR na main continuam com o Hil.
