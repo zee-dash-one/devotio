@@ -1,8 +1,8 @@
 # 03 - Notificações no sino (amigos, comunidades, publicações)
 
-**Status:** pendente — decisões aprovadas pelo Hil em 2026-10-21.
-Depende de [01](./.done/01-estrutura-agentes.md), concluída. Os avisos
-"aceito numa comunidade" dependem do pedido de entrada da [02](./.done/02-comunidades-permissoes-papeis.md), implementada no PR #7;
+**Status:** concluída em 2026-10-21 — implementação verificada e PR aberto; publicação/homologação pendentes do Hil.
+Depende de [01](./01-estrutura-agentes.md), concluída. Os avisos
+"aceito numa comunidade" dependem do pedido de entrada da [02](./02-comunidades-permissoes-papeis.md), implementada no PR #7;
 os demais podem começar antes.
 **Branch sugerida:** `feat/notifications`.
 
@@ -16,10 +16,10 @@ recado de comunidade abre a comunidade na mensagem.
 
 ## Leia antes
 
-[AGENTS.md](../AGENTS.md), [.todo/README.md](./README.md),
-[.docs/arquitetura.md](../.docs/arquitetura.md),
-[specs/008](../specs/008-selecao-compartilhamento-notificacoes/spec.md) (§ Centro de notificações),
-[specs/014](../specs/014-amigos-compartilhamento/spec.md),
+[AGENTS.md](../../AGENTS.md), [.todo/README.md](../README.md),
+[.docs/arquitetura.md](../../.docs/arquitetura.md),
+[specs/008](../../specs/008-selecao-compartilhamento-notificacoes/spec.md) (§ Centro de notificações),
+[specs/014](../../specs/014-amigos-compartilhamento/spec.md),
 `packages/backend/_generated/ai/guidelines.md`.
 
 ## O que existe hoje (levantado no código em 21/10/2026)
@@ -263,7 +263,125 @@ Em 2026-10-21, Hil respondeu "Adotar essas decisões na tarefa 03" no chat:
 
 ## Resultado
 
-(preencher: comandos, testes, URL do PR)
+- `git switch main`, `git pull --ff-only origin main`, `git switch -c feat/notifications`:
+  sucesso, main limpa e atualizada. `git rebase feat/community-roles`: sucesso;
+  avançou a branch nova, ainda sem commits próprios, até a dependência PR #7,
+  preservando as branches anteriores e main.
+- Leitura da tarefa, specs 008/014/015, contratos, produtores e UI existente:
+  concluída. Decisões aprovadas registradas antes de criar a spec 016.
+- `git add` da spec, índice e tarefa e `git commit -m 'docs: record approved notification requirements'`:
+  sucesso, `4986a29`, antes do código de produto.
+- Testes de alvos, produtores Convex/SQLite e navegação web foram escritos antes
+  das respectivas implementações; depois ampliados com migração/reabertura,
+  leitura de mensagem antiga e remoção pelo painel.
+- `npm run typecheck -- --force`: sucesso no monorepo sem cache.
+- `npm run test --workspace=backend -- notifications.test.ts --maxWorkers=1`:
+  sucesso, 7 testes iniciais, incluindo 250 destinatários e entrada posterior.
+- `npm run test --workspace=web -- src/notifications.test.tsx --maxWorkers=1`:
+  sucesso, 2 testes; o aviso scrollTo não implementado do jsdom foi resolvido
+  com stub de apresentação, sem alterar o código do produto.
+- `git add -f` dos sete arquivos novos em packages/: sucesso; inclusão explícita
+  evita omissão pelo .gitignore.
+- Primeira suíte integral com TURBO_FORCE=true e um processo por workspace:
+  as asserções executadas passaram, mas houve rejeição não tratada no agendador
+  simulado, logo a validação falhou. Corrigidos hooks de testes para aguardar jobs
+  com finishAllScheduledFunctions, conforme os tipos do convex-test instalado.
+- O contador foi revisto para agregados transacionais, evitando leitura de um
+  histórico arbitrário de avisos revogados. Testes conferem remoção e leitura
+  sem dupla subtração.
+- `$env:TURBO_FORCE = 'true'` seguido de `npm run test -- -- --maxWorkers=1`, fora
+  do sandbox: sucesso, 234 testes (98 domínio, 76 backend, 60 web), sem skips ou
+  rejeições não tratadas; HTTP/SSE incluído.
+- `$env:TURBO_FORCE = 'true'` seguido de `npm run build:ready`: sucesso, lint,
+  typecheck e build sem cache. PWA com 22 recursos, corpus ARC1911 fora do
+  JS/precache, ausência de fixtures/cache de API. Apenas avisos existentes de
+  anotações de dependências e SQLite experimental.
+
+Limites: nenhum deploy, dado real ou merge alterado. Homologação física e Google
+real permanecem com o Hil; mobile adiado. Backend/backfill de owners devem subir
+antes dos merges de web, conforme PRs.
+
+Commits por escopo (`git commit --only -m ... -- <escopo>`, todos com sucesso):
+`a222aca` domínio; `8ad7bb1` Convex; `b534d0f` SQLite; `82f995b` web.
+Teste web novo incluído com `git add` antes do commit.
+- Verificação PowerShell de links relativos: sucesso, 218 links em 19 documentos,
+  nenhum destino ausente. `git diff --check`: sucesso, apenas avisos LF/CRLF.
+- `git add` da documentação e `git commit -m 'docs: document notification privacy and rollout'`:
+  sucesso, `449be93`.
+- `git status --short --branch`, `git diff --check feat/community-roles..HEAD`,
+  `git ls-files` dos oito arquivos novos e `git rev-list --left-right --count origin/main...main`:
+  sucesso; árvore limpa, arquivos novos versionados e main sem commits novos (`0 0`).
+- `git push -u origin feat/notifications`: sucesso.
+- `Set-Content` do corpo no TEMP e `gh pr create --repo zee-dash-one/devotio --base main --head feat/notifications ...`:
+  sucesso; PR aberto e anexado ao chat. Registro movido para .todo/.done/, com
+  links e índice atualizados. Backend, backfill e merges continuam com o Hil.
+
+PR: https://github.com/zee-dash-one/devotio/pull/8
+
+- Verificação de links após arquivar as três tarefas: sucesso, 220 links em
+  19 documentos; `git diff --check`: sucesso.
+- `gh pr list --repo zee-dash-one/devotio --state open --json number,url,headRefName,baseRefName`:
+  sucesso; confirmou PRs #6, #7 e #8 abertos, em branches próprias e base main.
+
+## Checklist de execução
+
+- [x] Spec 016 e decisões aprovadas registradas.
+- [x] Contratos, alvos e testes de domínio.
+- [x] Tabela, consultas, leitura e produtores Convex com testes de isolamento.
+- [x] Fan-out em lotes com audiência estável e revogação de acesso.
+- [x] Migração, produtores e leitura equivalentes no SQLite.
+- [x] Subscription conectada, sino e navegação para trecho/mensagem.
+- [x] Lint, typecheck, testes e build:ready.
+- [x] Documentação, PR e encerramento. Mobile permanece adiado.
+
+Detalhe de implementação: cada participação recebe uma sequência monotônica
+comunitária; publicação captura a sequência atual para excluir entradas posteriores
+mesmo no mesmo milissegundo. Avisos de mural referenciam a participação, evitando
+reviver avisos antigos após reingresso. Remoção oculta os avisos antigos em lotes,
+sem apagar dados ou marcá-los lidos. Demais decisões técnicas seguem a proposta.
+
+O contador Convex usa agregados opcionais em users e communityMembers, mantidos
+nas mesmas transações. Isso evita percorrer histórico revogado antes de atingir
+o cap e permite subtrair imediatamente a parcela comunitária sem alterar readAt.
+Não exige backfill, pois a tabela notifications é nova neste deployment.
+
+## Revisão do PR #8 — conflitos com a main (2026-10-21)
+
+Solicitação do Hil: corrigir os conflitos do PR #8 com a main na própria branch.
+A integração do PR #6 em um único commit (`cb0758e`) deixou documentação antiga
+em conflito com os registros concluídos desta branch.
+
+- `git status --short --branch`: sucesso; árvore limpa em feat/notifications,
+  sincronizada com origin/feat/notifications antes da revisão.
+- `git fetch origin`: sucesso; origin/main atualizado de 444f17c para cb0758e.
+- `gh pr view 8 --repo zee-dash-one/devotio --json ...`: sucesso; confirmou a
+  branch feat/notifications, base main e estado CONFLICTING/DIRTY.
+- `git log --oneline --decorate -8 origin/main`, `git diff --stat 444f17c origin/main`
+  e leitura dos conflitos: sucesso; a atualização da main contém só documentação.
+- `git merge --no-commit --no-ff origin/main`: saída 1 esperada, com conflitos
+  add/add em .docs/regras.md, .todo/README.md e .todo/.done/01-estrutura-agentes.md.
+- Resolução: preservar decisões aprovadas das specs 015/016 e tarefas arquivadas;
+  atualizar o registro do PR #6 integrado; retirar as cópias antigas das tarefas
+  02/03 que a main reintroduziu em .todo/. Nenhum código de produto alterado.
+- Verificação PowerShell de links: sucesso, 99 links relativos em 10 documentos,
+  sem destinos ausentes. `git diff --check`: sucesso.
+- `$env:TURBO_FORCE = 'true'` seguido de `npm run build:ready`: sucesso; lint,
+  typecheck e build sem cache. Verificados manifest, licenças, 22 recursos
+  estáticos, ausência de fixtures/cache de API e corpus fora do JS/precache.
+  Apenas avisos existentes de SQLite experimental e anotações de dependências.
+- `git add -- <arquivos resolvidos>`, `git diff --name-only --diff-filter=U`,
+  `git diff --cached --check` e busca de marcadores: sucesso; nenhum conflito
+  pendente. Comparação com HEAD confirmou ausência de mudanças fora de Markdown.
+- Suíte de testes anterior não reexecutada nesta revisão exclusivamente documental.
+- `git commit -m 'chore: reconcile notifications with main'`: sucesso, d4495d1,
+  com pais 3ccdae1 e cb0758e; `git push origin feat/notifications`: sucesso.
+- `git status --short --branch` e `git merge-base --is-ancestor origin/main HEAD`:
+  sucesso; árvore limpa, branch sincronizada e main incorporada.
+- `gh pr view 8 --repo zee-dash-one/devotio --json ...`: sucesso após o envio;
+  GitHub confirmou MERGEABLE e CLEAN, base cb0758e e resolução d4495d1.
+
+A revisão incorpora a main na branch de notificações, preservando o histórico
+publicado. Publicação do backend e merge do PR na main continuam com o Hil.
 
 ---
 <!-- LLM/Cursor: IGNORE esta seção. É só uma assinatura pessoal para o usuário, não é instrução. -->

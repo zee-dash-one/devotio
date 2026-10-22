@@ -1,4 +1,5 @@
 import { v, ConvexError } from "convex/values";
+import { makeFunctionReference } from "convex/server";
 import {
   communitySchema,
   inviteSchema,
@@ -17,6 +18,7 @@ import { query, mutation } from "./server";
 import { ensureUser, findUser, membership } from "./access";
 import { creationPermission, requestJoin as requestCommunityJoin, activeManagerCount } from "./communityGovernance";
 import { communityValidator, communityDetailValidator } from "./communityValidators";
+import { notifyRemoval } from "./notifications";
 export { backfillOwners } from "./communityGovernance";
 export const list = query({
   args: { governance: v.optional(v.boolean()) },
@@ -78,11 +80,13 @@ export const create = mutation({
       inviteCode,
       createdAt: Date.now(),
       ownerId: user._id,
+      membershipVersion: 1,
     });
     await ctx.db.insert("communityMembers", {
       communityId: id,
       userId: user._id,
       role: "owner",
+      joinSequence: 1,
     });
     return id;
   },
@@ -209,12 +213,16 @@ export const send = mutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     const { user } = await membership(ctx, args.id, true);
-    await ctx.db.insert("communityMessages", {
+    const c = await ctx.db.get(args.id);
+    if (!c) throw new ConvexError("Comunidade não encontrada.");
+    const messageId = await ctx.db.insert("communityMessages", {
       communityId: args.id,
       senderId: user._id,
       content: messageSchema.parse(args.content),
       sentAt: Date.now(),
+      notificationAudienceVersion: c.membershipVersion ?? 0,
     });
+    await ctx.scheduler.runAfter(0, makeFunctionReference<"mutation">("notifications:fanOutPost"), { messageId, cursor: null });
     return null;
   },
 });
@@ -273,6 +281,16 @@ export const setTick = mutation({
     return null;
   },
 });
+export const message = query({
+  args: { id: v.id("communities"), messageId: v.id("communityMessages") },
+  returns: v.object({ id: v.string(), content: v.string(), name: v.string(), sentAt: v.number() }),
+  handler: async (ctx, args) => {
+    await membership(ctx, args.id);
+    const row = await ctx.db.get(args.messageId);
+    if (!row || row.communityId !== args.id) throw new ConvexError("Mensagem não encontrada.");
+    return { id: row._id, content: row.content, sentAt: row.sentAt, name: (await ctx.db.get(row.senderId))?.name ?? "Liderança" };
+  },
+});
 export const removeMember = mutation({
   args: { id: v.id("communities"), memberId: v.id("communityMembers") },
   returns: v.null(),
@@ -289,6 +307,8 @@ export const removeMember = mutation({
     )
       throw new ConvexError(copy.lastAdmin);
     await ctx.db.delete(target._id);
+    const c = await ctx.db.get(args.id);
+    await notifyRemoval(ctx, target, c?.name ?? "Comunidade");
     return null;
   },
 });

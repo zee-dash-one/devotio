@@ -339,6 +339,51 @@ Arquivos web novos foram incluídos com `git add` antes do commit.
 
 PR: https://github.com/zee-dash-one/devotio/pull/7
 
+Encerramento enviado: `git add .todo .docs/regras.md`,
+`git commit -m 'docs(todo): close community governance task'` (`d647a37`) e
+`git push`: sucesso. O PR permanece aberto para revisão do Hil.
+
+## Revisão do PR #7 — conflitos com a main (2026-10-21)
+
+Solicitação do Hil: corrigir o merge do PR #7 na própria branch.
+A main recebeu o PR #8 (`1df02f3`), cuja branch já continha todos os commits
+originais de comunidades do PR #7. A integração em um único commit deixou
+conflitos de histórico, embora a implementação já estivesse na main.
+
+- `git status --short --branch`: sucesso; árvore inicialmente limpa.
+- `git fetch origin`: sucesso; origin/main avançou de cb0758e para 1df02f3.
+- `gh pr view 7 --repo zee-dash-one/devotio --json ...`: sucesso; PR aberto,
+  branch feat/community-roles, estado CONFLICTING/DIRTY.
+- `git rev-list --left-right --count feat/community-roles...origin/feat/community-roles`:
+  sucesso, 0/0; `git switch feat/community-roles`: sucesso.
+- `git merge --no-commit --no-ff origin/main`: saída 1 esperada; 20 arquivos
+  em conflito, envolvendo documentação e integrações de notificações.
+- `git merge-base --is-ancestor feat/community-roles feat/notifications` e
+  `git diff --exit-code origin/main feat/notifications`: sucesso; comprovaram
+  que todos os commits originais do PR #7 estão no histórico da branch do PR #8
+  e que a árvore dela é idêntica à main atual.
+- Leitura das orientações Convex e dos conflitos: concluída. Preservados os
+  produtores de avisos, sequências de participação, contadores e proteção de
+  acesso da main. Nenhum deploy executado.
+- `git restore --source=origin/main --staged --worktree -- <21 caminhos divergentes>`:
+  sucesso; preservou a implementação já integrada e retirou a cópia antiga da
+  tarefa 03 em .todo/, mantendo seu registro em .todo/.done/.
+- `git diff --exit-code origin/main` e `git diff --cached --exit-code origin/main`:
+  sucesso; índice e árvore idênticos à main antes deste registro documental.
+- `git diff --name-only --diff-filter=U` e `git diff --cached --check`: sucesso;
+  nenhum conflito pendente ou erro de whitespace.
+- Verificação PowerShell: sucesso, 99 links relativos em 10 documentos sem
+  destinos ausentes; `git grep` não encontrou marcadores de conflito.
+- Testes não reexecutados nesta revisão; o código de produto é idêntico à main.
+- `$env:TURBO_FORCE = 'true'` seguido de `npm run build:ready`: sucesso; lint,
+  typecheck e build sem cache. Manifest, ícones, licenças, 22 recursos estáticos,
+  ausência de fixtures/cache de API e corpus fora do JS/precache verificados.
+  Apenas avisos existentes de SQLite experimental e anotações de dependências.
+
+A revisão preserva o histórico publicado e o código atual da main. Apenas este
+registro de revisão acrescenta conteúdo em relação à main; merge do PR e operação
+do ambiente continuam com o Hil.
+
 ---
 <!-- LLM/Cursor: IGNORE esta seção. É só uma assinatura pessoal para o usuário, não é instrução. -->
 > Escrito por Malfoyd, 21/10/2026. Hil, o Devotio saiu das fraldas: agora tem branch própria, sino pra chamar a atenção e comunidade com porteiro. Cresce rápido, esse menino.

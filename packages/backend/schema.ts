@@ -2,7 +2,18 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { scriptureSelectionValidator } from "./scriptureValidators";
 import { quoteValidator, recipientValidator, directionValidator } from "./socialValidators";
+import { notificationKindValidator, notificationTargetValidator } from "./notificationValidators";
 export default defineSchema({
+  notifications: defineTable({
+    userId: v.id("users"), kind: notificationKindValidator, sourceKey: v.string(),
+    actorName: v.optional(v.string()), communityId: v.optional(v.id("communities")), communityName: v.optional(v.string()),
+    messageId: v.optional(v.id("communityMessages")), shareId: v.optional(v.id("scriptureShares")),
+    recipientMembershipId: v.optional(v.id("communityMembers")), target: v.optional(notificationTargetValidator),
+    text: v.string(), readAt: v.union(v.number(), v.null()), hidden: v.boolean(),
+  }).index("by_userId", ["userId"])
+    .index("by_userId_and_hidden", ["userId", "hidden"])
+    .index("by_sourceKey", ["sourceKey"])
+    .index("by_recipientMembershipId", ["recipientMembershipId"]),
   friendCodes: defineTable({ userId: v.id("users"), code: v.string() })
     .index("by_userId", ["userId"]).index("by_code", ["code"]),
   friendships: defineTable({ low: v.id("users"), high: v.id("users"), requesterId: v.id("users"), state: v.union(v.literal("pending"), v.literal("accepted")) })
@@ -34,6 +45,7 @@ export default defineSchema({
     editorial: v.optional(v.boolean()),
     communityCreationAllowed: v.optional(v.boolean()),
     communityCreationLimit: v.optional(v.number()),
+    notificationUnread: v.optional(v.number()),
   })
     .index("by_authId", ["authId"])
     .index("by_tokenIdentifier", ["tokenIdentifier"])
@@ -94,6 +106,7 @@ export default defineSchema({
   }).index("by_key", ["key"]),
   communities: defineTable({
     ownerId: v.optional(v.id("users")),
+    membershipVersion: v.optional(v.number()),
     name: v.string(),
     description: v.string(),
     scripture: v.string(),
@@ -109,6 +122,8 @@ export default defineSchema({
     .index("by_userId_and_state", ["userId", "state"])
     .index("by_userId", ["userId"]),
   communityMembers: defineTable({
+    joinSequence: v.optional(v.number()),
+    notificationUnread: v.optional(v.number()),
     userId: v.id("users"),
     communityId: v.id("communities"),
     role: v.union(v.literal("owner"), v.literal("admin"), v.literal("member")),
@@ -117,6 +132,7 @@ export default defineSchema({
     .index("by_community", ["communityId"])
     .index("by_pair", ["communityId", "userId"]),
   communityMessages: defineTable({
+    notificationAudienceVersion: v.optional(v.number()),
     communityId: v.id("communities"),
     senderId: v.id("users"),
     content: v.string(),

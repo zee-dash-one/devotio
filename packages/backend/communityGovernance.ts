@@ -6,6 +6,17 @@ import type { QueryCtx, MutationCtx, Id } from "./server";
 import type { Doc } from "./_generated/dataModel";
 import { findUser, membership } from "./access";
 import { creationValidator, requestPageValidator } from "./communityValidators";
+import { notify, hideMembership } from "./notifications";
+
+export async function addMember(ctx: MutationCtx, id: Id<"communities">, userId: Id<"users">, role: "admin" | "member") {
+  const c = await ctx.db.get(id);
+  if (!c) throw new ConvexError("Comunidade não encontrada.");
+  const existing = await ctx.db.query("communityMembers").withIndex("by_pair", q => q.eq("communityId", id).eq("userId", userId)).unique();
+  if (existing) return existing._id;
+  const joinSequence = (c.membershipVersion ?? 0) + 1;
+  await ctx.db.patch(id, { membershipVersion: joinSequence });
+  return ctx.db.insert("communityMembers", { communityId: id, userId, role, joinSequence });
+}
 
 export async function creationPermission(ctx: QueryCtx, user: Doc<"users">) {
   const groups = await ctx.db.query("communities").withIndex("by_ownerId", q => q.eq("ownerId", user._id)).take(21);
@@ -67,7 +78,9 @@ export const decideJoinRequest = mutation({
     if (args.decision === "approve") {
       if (!applicant || !hasApprovedAccess(applicant.status)) throw new ConvexError("O solicitante precisa ter acesso aprovado.");
       const existing = await ctx.db.query("communityMembers").withIndex("by_pair", q => q.eq("communityId", request.communityId).eq("userId", request.userId)).unique();
-      if (!existing) await ctx.db.insert("communityMembers", { communityId: request.communityId, userId: request.userId, role: "member" });
+      const memberId = existing?._id ?? await addMember(ctx, request.communityId, request.userId, "member");
+      const c = await ctx.db.get(request.communityId);
+      await notify(ctx, { userId: request.userId, kind: "communityAccepted", communityId: request.communityId, communityName: c?.name ?? "Comunidade", text: "Sua entrada foi aprovada.", sourceKey: `accepted:${memberId}` });
     }
     await ctx.db.patch(request._id, { state: args.decision === "approve" ? "approved" : "rejected", decidedAt: Date.now(), decidedBy: user._id });
     return null;
@@ -101,7 +114,9 @@ export const leave = mutation({
     const c = await ctx.db.get(args.id);
     if (member.role === "owner" || c?.ownerId === member.userId) throw new ConvexError("Transfira a posse antes de sair da comunidade.");
     if (canManage(member.role) && await activeManagerCount(ctx, args.id) <= 1) throw new ConvexError("A comunidade precisa manter um gestor ativo.");
-    await ctx.db.delete(member._id); return null;
+    await ctx.db.delete(member._id);
+    await hideMembership(ctx, member);
+    return null;
   },
 });
 export async function transferOwner(ctx: MutationCtx, id: Id<"communities">, memberId: Id<"communityMembers">) {

@@ -81,6 +81,7 @@ export interface Repository {
   notifications?: import("./sharing").NotificationsRepository;
   sharing?: import("./sharing").SharingRepository;
   governance?: import("./community-governance").CommunityGovernance;
+  communityMessage?(id: string, messageId: string): Promise<Message>;
   refresh?(): Promise<void>;
   watchHome(date: string): Watch<HomeData>;
   watchCommunities(): Watch<Community[]>;

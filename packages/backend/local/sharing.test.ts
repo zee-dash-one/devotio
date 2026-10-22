@@ -76,7 +76,7 @@ describe("trechos e avisos locais", () => {
     expect(db.all("SELECT * FROM messages WHERE id=?", input.requestId)).toHaveLength(1);
     expect(() => db.command(admin, { ...input, comment: "Outro conteúdo" })).toThrow("outra mensagem");
     expect(db.notificationSummary(member.id).unread).toBe(1);
-    expect(db.notificationSummary(admin.id).unread).toBe(1);
+    expect(db.notificationSummary(admin.id).unread).toBe(0);
   });
   it("abrir aviso não marca lida; só destinatário pode marcar, com idempotência", () => {
     const db = setup(), member = db.profile("marina");
@@ -97,7 +97,7 @@ describe("trechos e avisos locais", () => {
     db.command(admin, input);
     const page = db.query(member, { query: "notifications", cursor: null }) as NotificationPage;
     db.command(admin, { action: "removeMember", id: "esperanca", memberId: "esperanca-marina" });
-    expect(db.notificationSummary(member.id).unread).toBe(0);
+    expect(db.notificationSummary(member.id).unread).toBe(1);
     expect((db.query(member, { query: "notifications", cursor: null }) as NotificationPage).items.every(item => item.type === "system")).toBe(true);
     expect(() => db.query(member, { query: "communityMessage", id: "esperanca", messageId: input.requestId })).toThrow();
     expect(() => db.command(member, { action: "readNotification", id: page.items.find(item => item.type === "community")!.id })).toThrow();

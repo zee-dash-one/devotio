@@ -9,6 +9,7 @@ const modules = {
   "./_generated/server.ts": () => import("./_generated/server"),
   "./communities.ts": () => import("./communities"),
   "./communityGovernance.ts": () => import("./communityGovernance"),
+  "./notifications.ts": () => import("./notifications"),
 };
 const mutation = (name: string) => makeFunctionReference<"mutation">("communityGovernance:" + name);
 const requests = makeFunctionReference<"query", { id: string; cursor: string | null }, JoinRequestPage>("communityGovernance:joinRequests");

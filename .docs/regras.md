@@ -32,9 +32,12 @@ Builds). Backend Convex é publicado à parte e **antes** do merge.
 - Amigos e recados ([spec 014](../specs/014-amigos-compartilhamento/spec.md)):
   amizade consentida, até 20 destinatários por recado, recado de até 1.000
   caracteres, privado entre remetente e destinatários.
-- Notificações ([spec 008](../specs/008-selecao-compartilhamento-notificacoes/spec.md)):
-  sino discreto, sem push/som/animação; marcar como lida por ação explícita.
-  Hoje só existem no modo local (SQLite). Evolução: [.todo/03](../.todo/03-notificacoes.md).
+- Notificações ([spec 016](../specs/016-notificacoes/spec.md)):
+  recado de amigo, entrada aprovada, remoção forçada e publicação comunitária;
+  sino discreto, sem push/som/animação; apenas Lida marca leitura. Convex usa
+  subscriptions e SQLite, SSE. Sem avisar autor ou novos membros sobre histórico;
+  acesso revogado oculta publicações sem marcá-las lidas. Rollout com o Hil;
+  evidências em [.todo/03](../.todo/.done/03-notificacoes.md).
 
 ## Segurança
 

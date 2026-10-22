@@ -1,5 +1,10 @@
 # Spec: Seleção bíblica, compartilhamento e notificações
 
+> Extensão aprovada em 21/10/2026: a [spec 016](../016-notificacoes/spec.md)
+> define os quatro eventos, produção conectada, contador 99+, acesso revogado e
+> paridade local. Substitui o exemplo antigo de aviso fixo de criação; mantém
+> leitura exclusivamente por Lida e ausência de push/som/animação.
+
 > Extensão aprovada em 19/10/2026: a [spec 014](../014-amigos-compartilhamento/spec.md)
 > adiciona envio privado entre amigos e marcações distintas no leitor. Não altera
 > escopos de anotações/orações existentes nem o compartilhamento comunitário.

@@ -252,6 +252,7 @@ export function createLocalRepository(storage: LocalCacheStorage, onExpired: () 
       watchShares: input => watch("social:shares:" + JSON.stringify(input), () => query<SharePage>({ query: "socialShares", input })),
     },
     notifications: {
+      manualRefresh: true,
       watchSummary: () => watch("notifications:summary", async () => {
         if (notificationSummary) return notificationSummary;
         const value = notificationSummarySchema.parse(await query<NotificationSummary>({ query: "notificationSummary" }));
