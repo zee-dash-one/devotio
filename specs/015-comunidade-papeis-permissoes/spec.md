@@ -1,7 +1,7 @@
 # Spec: Permissão de criação e papéis comunitários
 
 **ID:** 015-comunidade-papeis-permissoes
-**Status:** aprovada; em desenvolvimento
+**Status:** aprovada; implementada na branch, rollout/homologação pendentes
 **Versão alvo:** v1 web/PWA
 
 ## 1. Contexto e problema

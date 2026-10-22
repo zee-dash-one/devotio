@@ -18,7 +18,7 @@ Requisitos aprovados orientam código; planos orientam implementação; tasks re
 | [012](012-versoes-biblia/spec.md) | Escolha da versão bíblica e Almeida 1911 | Aprovada em 09/10; corpus publicado e verificado por HTTP, correção do menu em validação | Configurações, leitura e busca por edição na web local/conectada |
 | [013](013-editorial-biblia-publicada/spec.md) | Editorial integrado à Bíblia publicada | Autorizada em 09/10; código implementado, publicação/homologação pendentes | Datas livres, seleção bíblica, limites, autoria, horário de Brasília e corpus padronizado |
 | [014](014-amigos-compartilhamento/spec.md) | Amigos e partilha privada da Palavra | Implementada no checkout em 19/10; homologação/publicação pendentes | Perfil, convites, recados privados, marcações e leitor simplificado |
-| [015](015-comunidade-papeis-permissoes/spec.md) | Permissão de criação e papéis comunitários | Aprovada pelo Hil em 21/10; em desenvolvimento | Owner, limite, pedidos de entrada e gestão de papéis |
+| [015](015-comunidade-papeis-permissoes/spec.md) | Permissão de criação e papéis comunitários | Aprovada pelo Hil em 21/10; implementada na branch, rollout pendente | Owner, limite, pedidos de entrada e gestão de papéis |
 
 [Roadmap](../docs/product/roadmap.md) determina a ordem proposta. A [ADR 001](../docs/adr/001-web-first-free-launch.md) registra distribuição web primeiro; tasks nativas permanecem abertas e adiadas.
 

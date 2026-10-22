@@ -272,13 +272,13 @@ Em 2026-10-21, Hil respondeu "Adotar essas decisões na tarefa 02" no chat:
 
 ## Checklist de execução
 
-- [ ] Spec 015 e decisões registradas.
-- [ ] Regras, contratos e testes do domínio.
-- [ ] Convex: permissão, owner, pedidos, papéis, transferência e backfill.
-- [ ] Painel: permissão, limite e transferência de posse.
-- [ ] SQLite e adaptadores com regras equivalentes.
-- [ ] Web: criação, pedidos, papéis e saída.
-- [ ] Lint, typecheck, testes e build:ready.
+- [x] Spec 015 e decisões registradas.
+- [x] Regras, contratos e testes do domínio.
+- [x] Convex: permissão, owner, pedidos, papéis, transferência e backfill.
+- [x] Painel: permissão, limite e transferência de posse.
+- [x] SQLite e adaptadores com regras equivalentes.
+- [x] Web: criação, pedidos, papéis e saída.
+- [x] Lint, typecheck, testes e build:ready.
 - [ ] Documentação, PR e encerramento. Mobile permanece adiado.
 
 ## Resultado
@@ -292,6 +292,39 @@ Em 2026-10-21, Hil respondeu "Adotar essas decisões na tarefa 02" no chat:
   não se aplica porque o Hil reservou publicação para si.
 - `Get-Content packages/domain/repository.ts`: falhou; o contrato está em types.ts,
   lido em seguida. Nenhuma alteração decorrente dessa tentativa.
+- `git reset --soft docs/agent-structure`: sucesso; antes de publicar a branch,
+  alinhou a dependência aos commits originais do PR #6, preservando todo o índice
+  e trabalho local; eliminou cópias dos commits do cherry-pick.
+- `git add` da spec e decisões e `git commit --only -m 'docs: record approved community governance requirements' ...`:
+  sucesso, commit `a59653e`, antes dos commits de implementação.
+- Testes de regras e backend foram escritos antes das respectivas implementações.
+  Adicionados também cenários locais, painel e UI; casos antigos foram atualizados
+  para pedido de entrada e ausência de aviso de criação sem permissão.
+- Primeiro `npm run typecheck`: falhou por ID string em um teste novo; corrigido
+  para Id tipado. Repetição `npm run typecheck`: sucesso nos quatro workspaces.
+- `npm run lint`: sucesso nos quatro workspaces e scripts.
+- Primeiro `npm run test`: falhou por expectativas anteriores, testes HTTP
+  bloqueados no sandbox e timeouts sob excesso de processos. Sem ignorar testes.
+- `npm run test --workspace=backend -- community-governance.test.ts --maxWorkers=1`:
+  sucesso, 4 testes. Confirmou que os timeouts não eram falha da regra de limite.
+- `npm run test -- -- --maxWorkers=1` fora do sandbox: sucesso, 218 testes
+  (96 domínio, 65 backend, 57 web), incluindo HTTP/SSE.
+- Depois de ampliar auditoria e validar retornos, `npm run test --workspace=backend -- --maxWorkers=1`
+  fora do sandbox: sucesso, 66 testes.
+- Depois do cenário integrado de pedido de entrada, `npm run test --workspace=web -- src/local-app.test.tsx --maxWorkers=1`:
+  sucesso, 31 testes; total distinto atualizado: 220 (96 domínio, 66 backend, 58 web).
+- `git add -f` dos nove arquivos novos em packages/: sucesso, conferidos no índice.
+- `$env:TURBO_FORCE = 'true'` seguido de `npm run build:ready`: sucesso; lint,
+  typecheck e build sem reutilizar cache; PWA com 22 recursos, corpus ARC1911 fora
+  do JS/precache, sem fixtures ou cache de API. Avisos existentes de anotações de
+  dependências e SQLite experimental, sem falhas.
+
+Limites: não houve deploy, execução de backfill em dados reais nem merge.
+Homologação visual em aparelhos e Google real permanece com o Hil; mobile adiado.
+
+Commits por escopo (`git commit --only -m ... -- <escopo>`, todos com sucesso):
+`69226c4` domínio; `1e364a6` backend/painel; `bfdd5cc` SQLite; `c5e6475` web.
+Arquivos web novos foram incluídos com `git add` antes do commit.
 
 ---
 <!-- LLM/Cursor: IGNORE esta seção. É só uma assinatura pessoal para o usuário, não é instrução. -->

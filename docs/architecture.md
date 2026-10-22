@@ -41,6 +41,39 @@ Membros não recebem emails ou autores dos ticks. Contagens pequenas podem permi
 
 ## Modelo de Dados
 
+### Papéis e criação de comunidades (spec 015 — 21/10/2026)
+
+`Repository.governance` compartilha entre Convex e SQLite a consulta de permissão,
+pedidos paginados, decisão, cancelamento, papéis, saída e transferência. Regras e
+Zod ficam no domínio; todas as operações conferem identidade e permissão no servidor.
+
+| Alteração | Dados e acesso |
+|---|---|
+| users | communityCreationAllowed e communityCreationLimit opcionais; padrão sem permissão, limite 1; concessão exclusiva do painel e auditada |
+| communities | ownerId opcional durante migração; índice by_ownerId; quota conta posse atual dentro da transação de criação |
+| communityMembers | owner/admin/member; owner único, protegido de remoção/rebaixamento; transferência promove alvo e rebaixa antigo owner atomicamente |
+| communityJoinRequests | Par comunidade/usuário único por consulta transacional; pending/approved/rejected/cancelled, requestedAt e decisão; índices por comunidade/estado, comunidade/usuário, usuário/estado e usuário |
+
+Permissão e limite são independentes de aprovação e editorial. Transferência não
+exige permissão de criar do destinatário; libera a vaga de quem deixou a posse.
+A leitura da quota limita a busca a 21 registros, suficientes para decidir qualquer
+limite permitido (máximo 20); a UI apresenta 20+ para legados acima desse valor.
+Owner transfere antes de sair ou ser desativado; admin promove membro, mas só
+owner rebaixa/remove admins. Painel mantém os mesmos invariantes e auditoria.
+
+`communities:join` continua aceitando código e retornando o ID; agora cria pedido.
+`list/detail` sem o argumento opcional governance projetam owner como admin para
+compatibilidade com a web anterior. A nova web solicita governance=true. Backend
+e backfill devem preceder o merge. `communities:backfillOwners` processa 25 grupos
+por lote e agenda os seguintes; escolhe o vínculo admin ativo mais antigo, sem
+conceder criação. Grupos sem gestor ativo ficam intactos e são reportados nos logs.
+
+SQLite migra uma vez com metadata governance-v1: adiciona ownerId, reconstrói o
+CHECK de members sem perder vínculos, cria pedidos e atribui owners por ordem dos
+vínculos. Daniel recebe limite 1 (já usado); Ester, 2; Marina/Lucas sem permissão.
+Concessão local de fixture é um helper interno, sem endpoint público. O painel
+administrativo continua exclusivo do ambiente conectado; mobile permanece adiado.
+
 ### Amigos e partilhas privadas (spec 014 — 19/10/2026)
 
 `Repository.social` mantém um contrato comum para Convex e SQLite. Domain contém

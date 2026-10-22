@@ -23,10 +23,12 @@ Builds). Backend Convex é publicado à parte e **antes** do merge.
 - Gestão de usuários: rota não listada `/gestao-acesso`, uma única credencial de
   proprietário (login + senha + TOTP em variáveis do Convex), sessão de 30 min.
   Administrador de comunidade não é superusuário.
-- Comunidade hoje ([spec 002](../specs/002-comunidade-v1/spec.md)): quem cria vira
-  `admin`; entra quem tem o código de convite; só `admin` publica no mural, fixa
-  escritura, cria listas e remove membros; a comunidade nunca fica sem admin ativo.
-  Mudanças em andamento: [.todo/02](../.todo/02-comunidades-permissoes-papeis.md).
+- Comunidade ([spec 015](../specs/015-comunidade-papeis-permissoes/spec.md), aprovada
+  em 21/10): criar exige permissão/limite; criador vira owner; código gera pedido
+  para owner/admin aprovarem. Só owner/admin publicam, fixam escritura e criam
+  listas. Admin promove membro; só owner remove/rebaixa admin. Owner transfere
+  antes de sair/desativar. Nenhuma comunidade pode perder o último gestor ativo.
+  Implementação e rollout: [.todo/02](../.todo/02-comunidades-permissoes-papeis.md).
 - Amigos e recados ([spec 014](../specs/014-amigos-compartilhamento/spec.md)):
   amizade consentida, até 20 destinatários por recado, recado de até 1.000
   caracteres, privado entre remetente e destinatários.

@@ -1,5 +1,26 @@
 # Estado real do projeto
 
+## Criação, posse e pedidos comunitários — spec 015, 21/10/2026
+
+Implementados na branch da tarefa 02: permissão de criação com limite 0–20,
+owner, entrada por aprovação, cancelamento/recusa visível, gestão de admins,
+saída e transferência. Painel proprietário configura permissão/limite, transfere
+posse e bloqueia desativação de owner. Regras são verificadas no Convex e SQLite;
+web apresenta controles e status. Migração local preserva vínculos e concessões
+de fixture; o painel de credenciais permanece exclusivo do caminho conectado.
+
+220 testes distintos passaram: 96 domínio, 66 backend e 58 web; suíte completa
+inicial mais reexecuções dos arquivos alterados. HTTP/SSE passou fora da restrição
+de rede do sandbox. Lint, typecheck e build:ready passaram sem cache: PWA com 22
+recursos, corpus ARC1911 fora do JS/precache e ausência de fixtures/cache de API.
+
+Rollout pendente: Hil publica backend antes da web e executa a função interna
+`communities:backfillOwners` com cursor null; grupos sem gestor ativo são
+reportados nos logs e precisam de correção pelo painel. Endpoints antigos são
+mantidos; list/detail sem governance=true projetam owner como admin para a web
+anterior. PR depende do PR #6; publicação, backfill real, Google e homologação
+física não foram executados. Mobile segue adiado. Ver [operação](../operations/user-administration.md).
+
 ## Configuração de deploy — correção de 21/10/2026
 
 A integração Git foi reconectada pelo proprietário após a transferência para
