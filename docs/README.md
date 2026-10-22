@@ -39,6 +39,7 @@ No modo local, AA usa o SQLite da aplicação. A entrega 012 acrescenta ARC1911 
 
 ## Engenharia
 
+- [Graphify local](engineering/graphify.md): instalação isolada, skill Codex e consultas ao mapa de código.
 - [Stack](engineering/stack.md): escolha por camada; existente versus planejado.
 - [Arquitetura](architecture.md): fronteiras, fluxos, permissões e modelo de dados.
 - [Estado real](engineering/status.md): evidências no repositório e bloqueios.

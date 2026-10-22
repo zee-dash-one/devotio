@@ -166,6 +166,10 @@ A reconstrução de 03/10/2026 entrega a base web e backend, testes e documenta�
 
 ## Para agentes
 
+Graphify está disponível como ferramenta local: `npm run graphify:code` gera o
+mapa AST e `npm run graphify -- query "<pergunta>"` consulta relações. Veja
+[instalação, skill Codex e limites](docs/engineering/graphify.md).
+
 Agentes (Cursor, Codex, Claude etc.) começam por [AGENTS.md](AGENTS.md). Desde
 21/10/2026 o projeto está em pré-beta: toda mudança vai numa branch nova, com
 commits por escopo e PR para a `main`; nada é commitado direto na `main`.

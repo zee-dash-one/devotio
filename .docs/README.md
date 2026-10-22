@@ -17,6 +17,7 @@ Fontes existentes, por assunto:
 | Princípios inegociáveis | [docs/constitution.md](../docs/constitution.md) |
 | Arquitetura e modelo de dados | [docs/architecture.md](../docs/architecture.md) |
 | Estado real (o que está pronto de fato) | [docs/engineering/status.md](../docs/engineering/status.md) |
+| Graphify local e skill Codex | [docs/engineering/graphify.md](../docs/engineering/graphify.md) |
 | Publicação, Convex e Cloudflare | [docs/operations/release.md](../docs/operations/release.md) |
 | Gestão de usuários (`/gestao-acesso`) | [docs/operations/user-administration.md](../docs/operations/user-administration.md) |
 | UI/UX | [docs/design/experience.md](../docs/design/experience.md) |

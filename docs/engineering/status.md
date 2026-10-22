@@ -1,5 +1,17 @@
 # Estado real do projeto
 
+## Graphify local — 22/10/2026
+
+Graphify 0.9.94 instalado em `.tools/graphify`, com Python 3.12.10 e integração
+Codex no projeto. `npm run graphify:code` extrai AST local incluindo packages/;
+`.graphifyignore` exclui credenciais, bancos, corpus, dependências e gerados.
+Uma extração e consulta ao contrato CommunityGovernance foram executadas;
+clustering com `--no-label` gerou 65 comunidades, relatório e HTML, com 1.335 nós
+e 3.794 arestas no mapa consolidado. Artefatos ficam em graphify-out/, ignorados
+pelo Git. Nenhum modelo, MCP ou serviço cloud foi configurado. A ferramenta é
+opcional e não participa do build/deploy. Procedimento em
+[Graphify](graphify.md); evidências na [tarefa 04](../../.todo/.done/04-graphify.md).
+
 ## Notificações conectadas e locais — spec 016, 21/10/2026
 
 Implementados na branch da tarefa 03: sino conectado por subscription, contador
