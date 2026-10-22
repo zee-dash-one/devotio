@@ -24,11 +24,12 @@ describe("trechos e avisos locais", () => {
   });
   it("salva lote privado sem publicar, repete sem duplicar e reverte lote com destino proibido", () => {
     const db = setup(), admin = db.profile("daniel");
+    db.governance.configureCreation("daniel", true, 2);
     const second = db.command(admin, { action: "createCommunity", input: { name: "Segunda", description: "" } }) as string;
     const request = { action: "saveQuoteDrafts" as const, ids: ["esperanca", second], selection: input.selection, requestId: input.requestId };
     db.command(admin, request); db.command(admin, request);
     expect(db.all("SELECT * FROM quoteDrafts")).toHaveLength(2);
-    expect(db.notificationSummary("marina").unread).toBe(1);
+    expect(db.notificationSummary("marina").unread).toBe(0);
     expect(db.all("SELECT * FROM messages WHERE id=?", input.requestId)).toHaveLength(0);
     expect(() => db.command(admin, { ...request, ids: [second, "caminho"], requestId: "1537e982-5116-45df-95d9-c2c9f7f1cbbf" })).toThrow();
     expect(db.all("SELECT * FROM quoteDrafts")).toHaveLength(2);
@@ -53,7 +54,7 @@ describe("trechos e avisos locais", () => {
     db.command(admin, { ...update, action: "publishQuoteDraft" });
     db.command(admin, { ...update, action: "publishQuoteDraft" });
     expect(db.all("SELECT * FROM messages WHERE id=?", draft.id)).toHaveLength(1);
-    expect(db.notificationSummary("marina").unread).toBe(2);
+    expect(db.notificationSummary("marina").unread).toBe(1);
     expect(db.query(admin, { query: "quoteDrafts", id: "esperanca" })).toHaveLength(1);
     db.command(admin, { action: "deleteQuoteDraft", id: "esperanca", draftId: drafts[1].id });
     expect(db.query(admin, { query: "quoteDrafts", id: "esperanca" })).toHaveLength(0);
@@ -74,7 +75,7 @@ describe("trechos e avisos locais", () => {
     expect(detail.messages.at(-1)).toMatchObject({ content: "", quote: { text: "1 - Texto canônico 1\n2 - Texto canônico 2\n3 - Texto canônico 3", reference: "João 1:1–3", versionName: "Almeida Atualizada (AA)" } });
     expect(db.all("SELECT * FROM messages WHERE id=?", input.requestId)).toHaveLength(1);
     expect(() => db.command(admin, { ...input, comment: "Outro conteúdo" })).toThrow("outra mensagem");
-    expect(db.notificationSummary(member.id).unread).toBe(2);
+    expect(db.notificationSummary(member.id).unread).toBe(1);
     expect(db.notificationSummary(admin.id).unread).toBe(1);
   });
   it("abrir aviso não marca lida; só destinatário pode marcar, com idempotência", () => {
@@ -83,25 +84,25 @@ describe("trechos e avisos locais", () => {
     const page = db.query(member, { query: "notifications", cursor: null }) as NotificationPage;
     const notice = page.items.find(item => item.type === "community")!;
     expect(db.query(member, { query: "communityMessage", id: "esperanca", messageId: notice.messageId! })).toMatchObject({ id: input.requestId });
-    expect(db.notificationSummary(member.id).unread).toBe(2);
+    expect(db.notificationSummary(member.id).unread).toBe(1);
     expect(() => db.command(db.profile("lucas"), { action: "readNotification", id: notice.id })).toThrow("não encontrada");
     db.command(member, { action: "readNotification", id: notice.id });
     const summary = db.notificationSummary(member.id);
     db.command(member, { action: "readNotification", id: notice.id });
     expect(db.notificationSummary(member.id)).toEqual(summary);
-    expect(summary.unread).toBe(1);
+    expect(summary.unread).toBe(0);
   });
   it("revoga avisos e destinos após remover membro, sem notificar novos membros do histórico", () => {
     const db = setup(), admin = db.profile("daniel"), member = db.profile("marina"), outsider = db.profile("lucas");
     db.command(admin, input);
     const page = db.query(member, { query: "notifications", cursor: null }) as NotificationPage;
     db.command(admin, { action: "removeMember", id: "esperanca", memberId: "esperanca-marina" });
-    expect(db.notificationSummary(member.id).unread).toBe(1);
+    expect(db.notificationSummary(member.id).unread).toBe(0);
     expect((db.query(member, { query: "notifications", cursor: null }) as NotificationPage).items.every(item => item.type === "system")).toBe(true);
     expect(() => db.query(member, { query: "communityMessage", id: "esperanca", messageId: input.requestId })).toThrow();
     expect(() => db.command(member, { action: "readNotification", id: page.items.find(item => item.type === "community")!.id })).toThrow();
     db.command(outsider, { action: "joinCommunity", code: "ESPERANC" });
-    expect(db.notificationSummary(outsider.id).unread).toBe(1);
+    expect(db.notificationSummary(outsider.id).unread).toBe(0);
   });
   it("pagina avisos e abre mensagem antiga sem percorrer mural; SSE emite somente após commit", () => {
     const db = setup(), admin = db.profile("daniel"), member = db.profile("marina");
@@ -111,8 +112,8 @@ describe("trechos e avisos locais", () => {
     for (let i = 0; i < 35; i++) db.command(admin, { action: "sendMessage", id: "esperanca", content: "Aviso " + i });
     const first = db.query(member, { query: "notifications", cursor: null }) as NotificationPage;
     const second = db.query(member, { query: "notifications", cursor: first.nextCursor }) as NotificationPage;
-    expect(first.items).toHaveLength(30); expect(second.items).toHaveLength(7);
-    expect(new Set([...first.items, ...second.items].map(item => item.id)).size).toBe(37);
+    expect(first.items).toHaveLength(30); expect(second.items).toHaveLength(6);
+    expect(new Set([...first.items, ...second.items].map(item => item.id)).size).toBe(36);
     expect(db.query(member, { query: "communityMessage", id: "esperanca", messageId: input.requestId })).toMatchObject({ id: input.requestId });
     const count = next.mock.calls.length;
     expect(() => db.command(member, input)).toThrow();

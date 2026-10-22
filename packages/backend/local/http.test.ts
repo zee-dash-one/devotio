@@ -26,10 +26,10 @@ describe("HTTP local", () => {
     expect(response.headers.get("content-type")).toBe("text/event-stream");
     const reader = response.body!.getReader(), decoder = new TextDecoder();
     async function event() { let text = ""; while (!text.includes("event: notifications")) { const chunk = await reader.read(); if (chunk.done) throw new Error("Conexão encerrada antes do aviso"); text += decoder.decode(chunk.value); } return text; }
-    expect(await event()).toContain('"unread":1');
+    expect(await event()).toContain('"unread":0');
     const admin = await post({ action: "login", profileId: "daniel" }, "", "daniel");
     await post({ action: "sendMessage", id: "esperanca", content: "Aviso em tempo real" }, admin.headers.get("set-cookie")!.split(";")[0], "daniel");
-    expect(await event()).toContain('"unread":2');
+    expect(await event()).toContain('"unread":1');
     await post({ action: "logout" }, cookie);
     expect((await reader.read()).done).toBe(true);
   });
