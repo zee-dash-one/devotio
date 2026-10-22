@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { governanceCommandSchema, governanceQuerySchema } from "./community";
 import { socialCommandSchema, shareFilterSchema } from "./social";
 import { bibleVersionSchema, bibleSearchSchema } from "./bible";
 import { bibleSelectionSchema } from "../sharing";
@@ -26,6 +27,7 @@ export const bibleBooksSchema = z.array(z.object({
   chapters: z.number().int().positive(), testament: z.enum(["VT", "NT"]),
 })).length(66);
 export const localCommandSchema = z.discriminatedUnion("action", [
+  z.object({ action: z.literal("governance"), input: governanceCommandSchema }),
   z.object({ action: z.literal("social"), input: socialCommandSchema }),
   z.object({ action: z.literal("login"), profileId: id }),
   z.object({ action: z.literal("logout") }),
@@ -48,6 +50,7 @@ export const localCommandSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("withdraw"), date: dateSchema, reason: z.string().trim().min(1).max(1000) }),
 ]);
 export const localQuerySchema = z.discriminatedUnion("query", [
+  z.object({ query: z.literal("governance"), input: governanceQuerySchema }),
   z.object({ query: z.literal("socialFriends") }),
   z.object({ query: z.literal("socialShares"), input: shareFilterSchema }),
   z.object({ query: z.literal("socialMarkers"), chapter: shareFilterSchema.shape.chapter.unwrap() }),

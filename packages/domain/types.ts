@@ -1,4 +1,4 @@
-export type Role = "admin" | "member";
+export type Role = "owner" | "admin" | "member";
 export interface User {
   id: string;
   name: string;
@@ -33,6 +33,8 @@ export interface Community {
   scripture: string;
   role: Role;
   inviteCode?: string;
+  memberId?: string;
+  pendingRequests?: number;
 }
 export interface Member {
   id: string;
@@ -78,6 +80,7 @@ export interface Repository {
   bible?: import("./reading").BibleRepository;
   notifications?: import("./sharing").NotificationsRepository;
   sharing?: import("./sharing").SharingRepository;
+  governance?: import("./community-governance").CommunityGovernance;
   refresh?(): Promise<void>;
   watchHome(date: string): Watch<HomeData>;
   watchCommunities(): Watch<Community[]>;

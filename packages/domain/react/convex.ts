@@ -1,5 +1,6 @@
 import { makeFunctionReference } from "convex/server";
 import { createSocialRepository } from "./social";
+import { createGovernanceRepository } from "./community-governance";
 export { createAdministration, createConnectedEditorial, usePilotAccess } from "./administration";
 import { ConvexError } from "convex/values";
 import type { ConvexReactClient, Watch as ConvexWatch } from "convex/react";
@@ -13,12 +14,12 @@ export const refs = {
   home: makeFunctionReference<"query", { date: string }, HomeData>("home:get"),
   communities: makeFunctionReference<
     "query",
-    Record<string, never>,
+    { governance?: boolean },
     Community[]
   >("communities:list"),
   detail: makeFunctionReference<
     "query",
-    { id: string; cursor: string | null },
+    { id: string; cursor: string | null; governance?: boolean },
     CommunityDetail | null
   >("communities:detail"),
   preview: makeFunctionReference<
@@ -92,12 +93,13 @@ export function createConvexRepository(client: ConvexReactClient): Repository {
   return {
     mode: "live",
     social: createSocialRepository(client),
+    governance: createGovernanceRepository(client),
     watchHome: (date) => (next, error) =>
       subscribe(client.watchQuery(refs.home, { date }), next, error),
     watchCommunities: () => (next, error) =>
-      subscribe(client.watchQuery(refs.communities, {}), next, error),
+      subscribe(client.watchQuery(refs.communities, { governance: true }), next, error),
     watchCommunity: (id, cursor) => (next, error) =>
-      subscribe(client.watchQuery(refs.detail, { id, cursor }), next, error),
+      subscribe(client.watchQuery(refs.detail, { id, cursor, governance: true }), next, error),
     createCommunity: (input) => safe(client.mutation(refs.create, input)),
     previewInvite: (code) => safe(client.query(refs.preview, { code })),
     joinCommunity: (code) => safe(client.mutation(refs.join, { code })),
