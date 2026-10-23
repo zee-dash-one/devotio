@@ -125,3 +125,27 @@ Publicação do backend e migração de posse continuam pendentes de decisão do
 `git diff --check`, commit documental `17e0ad0`, envio da branch e abertura do
 PR: sucesso. Registro desta verificação:
 https://github.com/zee-dash-one/devotio/pull/11 (anexado ao chat).
+
+### Correção da inicialização local solicitada pelo Hil
+
+Hil esclareceu que queria login e dados mockados. A primeira inicialização
+herdara a configuração Convex; foi encerrada e substituída pelo Vite com as duas
+URLs vazias somente no processo, preservando os arquivos de ambiente.
+
+Comando usado na raiz (após preparar o corpus, já disponível):
+
+```powershell
+node --input-type=module -e "process.env.VITE_CONVEX_URL = ''; process.env.VITE_CONVEX_SITE_URL = ''; process.chdir('apps/web'); const { createServer } = await import('vite'); const server = await createServer(); await server.listen(); server.printUrls();"
+```
+
+- Servidor reiniciado com sucesso em `http://127.0.0.1:3000/`, agora com SQLite
+  e quatro perfis fictícios. As duas URLs Convex servidas ao cliente estão vazias.
+- Uma verificação Node inline falhou por escape de regex no PowerShell; repetida
+  por here-string. A consulta autenticada dessa tentativa recebeu 401 porque
+  omitiu o cabeçalho obrigatório `X-Devotio-Profile`; não era erro da aplicação.
+- `npm run verify:local`: sucesso; roteiro existente confirmou login mockado,
+  oito datas, 66 livros AA, leitura, busca, comunidades, bloqueio de escrita sem
+  permissão e proteção do SQLite. Sessão temporária de verificação encerrada.
+- Nenhum código de produto ou configuração persistente foi alterado. O servidor
+  mockado permanece ativo para teste do Hil; esta inicialização substitui a
+  inicialização conectada descrita acima.
