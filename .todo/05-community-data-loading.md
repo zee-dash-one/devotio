@@ -36,9 +36,9 @@ não entregaria a gestão aprovada e deixaria as demais funções ausentes.
 
 - [x] Consultar grafo, código e contratos remotos; identificar o erro nos logs.
 - [x] Preservar a otimização de `.graphifyignore` autorizada pelo Hil.
-- [ ] Validar a versão atual antes da publicação.
+- [x] Validar a versão atual antes da publicação.
 - [x] Documentar recuperação e verificação de contratos antes de futuros merges.
-- [ ] Abrir PR com diagnóstico e otimização do grafo, sem merge automático.
+- [x] Abrir PR com diagnóstico e otimização do grafo, sem merge automático.
 - [ ] Publicar o backend mediante decisão explícita do Hil.
 - [ ] Confirmar contratos remotos e carregamento autenticado da Comunidade.
 - [ ] Encerrar e mover este registro para `.done/` somente após a recuperação.
@@ -66,11 +66,27 @@ não entregaria a gestão aprovada e deixaria as demais funções ausentes.
   falhou por timeout de 5s em `local/bible.test.ts` (rollback de importação).
   Testes de comunidades e notificações passaram. Nenhum limite ou teste alterado.
 - Repetição `npm run test -- --concurrency=1 -- --maxWorkers=1`, com
-  `TURBO_FORCE=true`: em execução, sem build concorrente.
+  `TURBO_FORCE=true`: sucesso, sem build concorrente; 234 testes passaram
+  (98 domínio, 76 backend, 60 web). O teste que excedera o tempo passou sem mudanças.
 - Verificação PowerShell dos links relativos nos quatro documentos alterados:
   sucesso. `git diff --check`: sucesso.
 - `git add -- .graphifyignore docs/engineering/graphify.md` e
   `git commit -m 'chore(graphify): focus graph on application code'`: sucesso,
   commit `577e272`, preservando integralmente a alteração autorizada do Hil.
+- `git add` do índice, tarefa e roteiro; `git commit -m 'docs(operations): diagnose community backend version mismatch'`:
+  sucesso, `d74d86c`.
+- `git push -u origin fix/community-data-loading`: sucesso; main não alterada.
+- Primeira tentativa de `gh pr create --body-file`: falhou porque o TEMP do
+  sandbox difere do TEMP da sessão elevada. Corpo recriado no TEMP correto;
+  repetição bem-sucedida, PR aberto e anexado ao chat.
+
+PR: https://github.com/zee-dash-one/devotio/pull/10
+
+## Resultado desta preparação
+
+Diagnóstico, validações locais e PR preparados. A correção do contrato está no
+código existente; falta publicá-lo no piloto e confirmar a tela com sessão real.
+O registro permanece aberto por essa razão. A migração de posse é uma operação
+separada, conforme o roteiro de lançamento aprovado anteriormente.
 
 Nenhum deploy, backfill, merge ou mudança de regra de negócio executado.
