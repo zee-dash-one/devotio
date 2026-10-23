@@ -1,6 +1,6 @@
 # 05 — Carregamento da Comunidade em produção
 
-Status: em andamento em 2026-10-22; publicação depende da decisão do Hil.
+Status: em andamento; backend atualizado em 2026-10-23, confirmação autenticada da tela em produção pendente.
 
 ## Escopo e decisões
 
@@ -39,7 +39,7 @@ não entregaria a gestão aprovada e deixaria as demais funções ausentes.
 - [x] Validar a versão atual antes da publicação.
 - [x] Documentar recuperação e verificação de contratos antes de futuros merges.
 - [x] Abrir PR com diagnóstico e otimização do grafo, sem merge automático.
-- [ ] Publicar o backend mediante decisão explícita do Hil.
+- [x] Publicar o backend mediante decisão explícita do Hil (2026-10-23).
 - [ ] Confirmar contratos remotos e carregamento autenticado da Comunidade.
 - [ ] Encerrar e mover este registro para `.done/` somente após a recuperação.
 
@@ -149,3 +149,42 @@ node --input-type=module -e "process.env.VITE_CONVEX_URL = ''; process.env.VITE_
 - Nenhum código de produto ou configuração persistente foi alterado. O servidor
   mockado permanece ativo para teste do Hil; esta inicialização substitui a
   inicialização conectada descrita acima.
+
+## Atualização dos bancos autorizada — 2026-10-23
+
+Hil solicitou explicitamente atualizar o banco local e o Convex. Essa solicitação
+autoriza a publicação do backend do piloto e o preenchimento de responsáveis
+previsto na spec 015; preservação de dados e validação continuam obrigatórias.
+
+- SQLite verificado em leitura: marcadores `governance-v1=1` e
+  `notifications-v2=1`; quatro usuários, duas comunidades, três participações,
+  uma mensagem, zero pedidos e zero notificações. Nenhuma comunidade sem owner;
+  `PRAGMA integrity_check` retornou `ok`. Migrações já aplicadas pelo servidor.
+- Contagens Convex antes da atualização: quatro usuários, duas comunidades,
+  oito participações e zero mensagens; duas comunidades sem owner.
+- Primeira consulta inline Convex falhou por aspas removidas ao passar argumento
+  pelo PowerShell. Repetição via `spawnSync` do Node preservou o código e passou.
+- `convex dev --help` e `convex run --help`: sucesso; opções de seleção e
+  argumentos confirmadas no CLI instalado, sem atualização de dependências.
+- Arquivo temporário de seleção criado fora do repo, contendo somente
+  `CONVEX_DEPLOYMENT=dev:upbeat-jellyfish-720`, sem credenciais.
+- `npm run deploy:backend -- --env-file <TEMP>/devotio-pilot-deployment.txt`:
+  sucesso, com typecheck habilitado; CLI confirmou explicitamente
+  `upbeat-jellyfish-720` no projeto `adm-zone:devotio-pilot`, o deployment de
+  desenvolvimento usado pelo piloto. Nove índices adicionados; funções prontas.
+- `convex run --deployment upbeat-jellyfish-720 communities:backfillOwners`,
+  com `{"cursor":null}` transmitido via Node: sucesso. Os dois grupos receberam
+  responsável conforme a regra aprovada do admin ativo mais antigo.
+- Consulta somente de leitura após migração: quatro usuários, duas comunidades,
+  oito participações, zero mensagens, zero pedidos e zero notificações. Totais
+  anteriores preservados; zero comunidades sem owner ou com owner inconsistente.
+- `convex function-spec --deployment upbeat-jellyfish-720`: sucesso; as cinco
+  queries esperadas existem e `governance` é opcional em list/detail.
+- `npm run verify:local`: sucesso novamente após a publicação remota; o servidor
+  local continua com login simulado e SQLite. `git status` confirmou que o deploy
+  não alterou código versionado ou a configuração persistente do repositório.
+
+A publicação e a migração autorizadas estão concluídas. O teste autenticado da
+tela em produção deve ser confirmado pelo Hil após recarregar a aplicação; a
+tarefa permanece aberta somente por essa homologação. Não houve merge ou
+publicação da web pelo agente.

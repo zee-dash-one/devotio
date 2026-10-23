@@ -6,7 +6,7 @@ da tarefa, movido para [`.done/`](./.done/).
 
 ## Tarefas
 
-- [05 — Restaurar carregamento da Comunidade](05-community-data-loading.md): backend do piloto desatualizado; publicação e confirmação pendentes.
+- [05 — Restaurar carregamento da Comunidade](05-community-data-loading.md): backend e migração atualizados; confirmação da tela em produção pendente.
 
 ## Decisões pendentes do Hil
 
