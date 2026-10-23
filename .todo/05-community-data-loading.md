@@ -90,3 +90,34 @@ O registro permanece aberto por essa razão. A migração de posse é uma opera�
 separada, conforme o roteiro de lançamento aprovado anteriormente.
 
 Nenhum deploy, backfill, merge ou mudança de regra de negócio executado.
+
+## Verificação após nova publicação — 2026-10-23
+
+Hil informou nova versão em produção com comunidades ainda quebrando e pediu
+iniciar o desenvolvimento para teste local antes de continuar a análise.
+
+- `git status --short --branch`: sucesso; árvore limpa na branch anterior.
+- `git fetch origin`: sucesso; main remota em `90d53fc`, integração do PR #10.
+- `git log HEAD..origin/main` e `git diff --stat HEAD...origin/main`: sucesso;
+  a integração acrescenta somente documentação e exclusões do Graphify, sem
+  alterar código de comunidades ou publicar funções Convex.
+- `git switch main` e `git pull --ff-only origin main`: sucesso; checkout atualizado.
+- `npm run dev`: sucesso; Vite em `http://127.0.0.1:3000/`, mantido em execução.
+- HTTP local: raiz e entrada da aplicação responderam 200. A entrada servida
+  aponta para `upbeat-jellyfish-720.convex.cloud`: é web em desenvolvimento
+  com login real e dados do piloto, não o ambiente simulado SQLite.
+- `convex function-spec --deployment upbeat-jellyfish-720`, filtrado aos cinco
+  contratos do incidente: sucesso; `list` ainda aceita `{}`, `detail` apenas
+  `id`/`cursor`; as três queries de gestão/notificações continuam ausentes.
+- `convex logs --deployment upbeat-jellyfish-720 --history 60`: leitura bem-sucedida;
+  eventos de 23/10 repetem o campo `governance` rejeitado e funções ausentes.
+  Stream encerrado intencionalmente após o diagnóstico; servidor web mantido.
+- `git switch -c docs/community-runtime-followup`: sucesso; registro desta
+  verificação em branch própria a partir da main atualizada.
+
+Conclusão: a incompatibilidade remota anterior permanece no backend que a web
+local usa. Uma nova publicação da web não atualiza esse backend. Não houve nova
+alteração de código de produto que justifique repetir os 234 testes anteriores;
+esta revisão verifica Git, HTTP local, contratos e logs remotos.
+
+Publicação do backend e migração de posse continuam pendentes de decisão do Hil.
