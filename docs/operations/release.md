@@ -85,6 +85,60 @@ links de npm workspaces em `node_modules`; eles podem apontar à pasta anterior.
 Recrie a instalação com `npm ci` na pasta atual. Não marque o pacote como externo
 nem altere os imports para ocultar um link quebrado.
 
+## Comunidade sem dados — diagnóstico de 22/10/2026
+
+A web da main (`08cafd1`) já usa as specs 015/016, mas uma leitura remota do
+deployment `upbeat-jellyfish-720` confirmou contratos anteriores a elas:
+`communities:list` aceita `{}`, `communities:detail` aceita apenas `id` e `cursor`,
+e faltam as funções `communityGovernance:creation`,
+`communityGovernance:myJoinRequests` e `notifications:summary`. Os logs registram
+`ArgumentValidationError` para o campo `governance` e funções não encontradas.
+Isso impede o carregamento da comunidade e também afeta o sino.
+
+O código compatível já está na main. A recuperação é operacional: publicar o
+backend correspondente no deployment do piloto. O registro e o estado da
+recuperação ficam na [tarefa 05](../../.todo/05-community-data-loading.md).
+Este diagnóstico não comprova recuperação nem autoriza publicação pelo agente.
+
+### Recuperação pelo Hil
+
+1. Validar o checkout da main atualizada com `npm run build:ready` e os testes.
+2. Confirmar que o alvo configurado é **dev:upbeat-jellyfish-720**, que atende
+   a web publicada. Não usar `deploy:backend:prod`, que seleciona outro ambiente.
+3. Executar na raiz `npm run deploy:backend` e aguardar sucesso. O comando
+   publica funções, schema e índices das specs 015/016; não é somente um build.
+4. Consultar os contratos publicados com o comando somente de leitura abaixo.
+   `communities:list` e `communities:detail` devem aceitar `governance` opcional;
+   as três funções citadas acima devem existir como queries públicas.
+5. Completar a migração de posse das comunidades antigas conforme
+   [gestão de usuários](user-administration.md#criação-e-posse-de-comunidades--spec-015):
+   `communities:backfillOwners` com `{"cursor":null}` atribui o admin ativo mais
+   antigo como owner. É uma alteração de dados separada, reservada ao Hil;
+   conferir os logs de grupos pendentes. Notificações não exigem backfill.
+6. Com uma conta aprovada que já participa de uma comunidade, recarregar a web,
+   conferir a listagem e abrir Mural, Listas e Membros. Conferir também o sino.
+   Observar logs novos: as falhas de contrato não devem reaparecer. Não criar,
+   remover membros ou publicar recados apenas para diagnosticar o carregamento.
+
+```powershell
+npx convex function-spec --deployment upbeat-jellyfish-720
+npx convex logs --deployment upbeat-jellyfish-720 --history 80
+```
+
+Execute cada comando separadamente. `logs` continua acompanhando eventos até
+Ctrl+C; `--history 80` limita o histórico inicial por quantidade, não por tempo.
+O dashboard do alvo é
+[Logs do piloto](https://dashboard.convex.dev/t/adm-zone/devotio-pilot/upbeat-jellyfish-720/logs).
+
+### Prevenir repetição
+
+Antes de integrar uma web que dependa de novas funções/argumentos, conferir os
+contratos no deployment atendido pela web após a publicação do backend. Build
+e testes locais não comprovam atualização remota. O check do Cloudflare publica
+apenas a web; o checklist do PR precisa registrar separadamente a publicação do
+backend e sua verificação. Não retirar argumentos novos nem ocultar erros no
+cliente para encobrir um backend desatualizado.
+
 ## Validar o build automático pelo merge de um PR (21/10/2026)
 
 Para testar a integração de publicação, mantenha a alteração em uma branch e
