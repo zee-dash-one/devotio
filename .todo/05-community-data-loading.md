@@ -121,3 +121,7 @@ alteração de código de produto que justifique repetir os 234 testes anteriore
 esta revisão verifica Git, HTTP local, contratos e logs remotos.
 
 Publicação do backend e migração de posse continuam pendentes de decisão do Hil.
+
+`git diff --check`, commit documental `17e0ad0`, envio da branch e abertura do
+PR: sucesso. Registro desta verificação:
+https://github.com/zee-dash-one/devotio/pull/11 (anexado ao chat).
