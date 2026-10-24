@@ -6,7 +6,12 @@ da tarefa, movido para [`.done/`](./.done/).
 
 ## Tarefas
 
-- [05 — Restaurar carregamento da Comunidade](05-community-data-loading.md): backend do piloto desatualizado; publicação e confirmação pendentes.
+- [ ] [08 — Direção do arrasto que troca de capítulo](08-direcao-arrasto-capitulo.md): **1º**; fix pequeno só web; validar a direção no celular com o Hil.
+- [ ] [09 — Menu de compartilhar contraído no celular](09-menu-compartilhar-contraido-mobile.md): **2º**, começar após o merge da 08; só web.
+- [ ] [06 — Seleção de versículos um a um](06-selecao-versiculos.md): **3º**, começar após o merge da 08 e da 09; decisões tomadas (23/10); inclui backend (`npm run deploy:backend` antes do merge).
+- [ ] [07 — Seleção e compartilhamento no devocional aberto](07-devocional-compartilhar.md): **4º**, depende de 06 (e 08/09); todas as decisões tomadas (23/10).
+
+Ordem 08 → 09 → 06 → 07: as quatro compartilham arquivos (`apps/web/src/local-app.test.tsx` em todas; `pages/bible.tsx` na 08/06/07; `pages/selection-menu.tsx` na 09/06/07); as pequenas e isoladas entram primeiro para reduzir conflito de merge. Conflitos detalhados na seção "Impacto / conflitos" de cada tarefa.
 
 ## Decisões pendentes do Hil
 

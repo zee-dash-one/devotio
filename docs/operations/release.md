@@ -97,8 +97,19 @@ Isso impede o carregamento da comunidade e também afeta o sino.
 
 O código compatível já está na main. A recuperação é operacional: publicar o
 backend correspondente no deployment do piloto. O registro e o estado da
-recuperação ficam na [tarefa 05](../../.todo/05-community-data-loading.md).
+recuperação ficam na [tarefa 05](../../.todo/.done/05-community-data-loading.md).
 Este diagnóstico não comprova recuperação nem autoriza publicação pelo agente.
+
+**Atualização de 23/10/2026:** após solicitação explícita do Hil para atualizar
+os dois bancos, o backend foi publicado com sucesso em `upbeat-jellyfish-720`
+com typecheck habilitado. A migração `communities:backfillOwners` concluiu para
+as duas comunidades; quatro usuários e oito participações foram preservados,
+sem owners ausentes ou inconsistentes. Os cinco contratos envolvidos foram
+conferidos remotamente: queries presentes e `governance` opcional em list/detail.
+O SQLite já tinha as migrações aplicadas e passou na verificação de integridade
+e no `verify:local`. Confirmação da tela com sessão real em produção ainda
+pendente; veja o registro da tarefa acima. O roteiro abaixo serve para futuras
+publicações e não exige repetir essa migração já concluída.
 
 ### Recuperação pelo Hil
 
@@ -264,3 +275,5 @@ Se houver exposição indevida, interromper o acesso afetado, preservar evidênc
 | Ao mudar serviço/preço/licença | Rever custos, termos e ADR | Responsável do projeto |
 
 Uma pessoa pode acumular papéis; nomes e contato devem ser registrados antes do piloto.
+
+Em 23/10/2026, Hil confirmou o carregamento da Comunidade em produção após a publicação do backend e o backfill de owners. Incidente 05 encerrado.
