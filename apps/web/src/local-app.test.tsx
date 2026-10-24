@@ -113,6 +113,22 @@ function isQuery(path: string, name: string) {
   return input ? (JSON.parse(input) as { query?: string }).query === name : false;
 }
 describe("entrada local integrada", () => {
+  it.each([640, 641, 1000])("menu usa viewport %i somente ao montar", async (width) => {
+    const media = { matches: width <= 640, addEventListener: vi.fn(), removeEventListener: vi.fn() };
+    vi.stubGlobal("matchMedia", vi.fn((query: string) => query === "(max-width: 640px)" ? media : { ...media, matches: false }));
+    window.history.replaceState(null, "", "/biblia"); server(true);
+    render(<StrictMode><LocalApp /></StrictMode>);
+    fireEvent.click(await screen.findByRole("checkbox", { name: /^Versículo 1:/ }));
+    const menu = screen.getByLabelText("Ações dos versículos selecionados");
+    expect(menu.getAttribute("data-state")).toBe(width <= 640 ? "collapsed" : "expanded");
+    media.matches = !media.matches; fireEvent(window, new Event("resize"));
+    expect(menu.getAttribute("data-state")).toBe(width <= 640 ? "collapsed" : "expanded");
+    media.matches = true;
+    fireEvent.click(screen.getByRole("button", { name: /Próximo/ }));
+    await waitFor(() => expect(new URL(window.location.href).searchParams.get("chapter")).toBe("2"));
+    fireEvent.click(await screen.findByRole("checkbox", { name: /^Versículo 1:/ }));
+    expect(screen.getByLabelText("Ações dos versículos selecionados").getAttribute("data-state")).toBe("collapsed");
+  });
   it("compacta o cabeçalho desktop na rolagem, mantém ações e expande no topo sem consultas", async () => {
     const media = { matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() };
     vi.stubGlobal("matchMedia", vi.fn(() => media));

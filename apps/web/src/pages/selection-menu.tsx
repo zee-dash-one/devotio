@@ -24,6 +24,7 @@ import {
 import { useApp, useWriting } from "../context";
 import { useSelectionDrawerGestures } from "../selection-drawer-gestures";
 import { ShareToFriends } from "../social";
+import { isMobileViewport } from "../media";
 
 export function SelectionMenu({
   quote,
@@ -47,7 +48,7 @@ export function SelectionMenu({
     [manualCopy, setManualCopy] = useState(false),
     [sharing, setSharing] = useState(false);
   const payload = quoteText(quote);
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => isMobileViewport());
   const [friendsOpen, setFriendsOpen] = useState(false);
   const panel = useRef<HTMLElement>(null);
   useSelectionDrawerGestures(panel, collapsed, setCollapsed, onSwipe);

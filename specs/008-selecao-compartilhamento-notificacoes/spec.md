@@ -234,3 +234,7 @@ notificações, por ação no modal; atualização delegada para mínima intera�
   notificações, paginação, persistência e orçamento de rede; revisão visual/gestos.
 - Condições públicas de licença e conteúdo das specs 004/005 permanecem aplicáveis
   ao planejamento de publicação; esta spec não autoriza antecipar esse lançamento.
+
+### Menu no celular — revisao aprovada em 23/10/2026
+
+No celular (ate 640 px), o menu inicia contraido; acima de 640 px, expandido. A escolha inicial ocorre somente na montagem: resize/rotacao nao alteram o estado escolhido. Setas, arraste no menu, swipe rapido na leitura e expansao para destinos/copia manual permanecem. Trocar capitulo remonta o menu.
