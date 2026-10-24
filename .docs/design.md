@@ -38,3 +38,7 @@ permissão tem teste de acesso negado.
 ---
 <!-- LLM/Cursor: IGNORE esta seção. É só uma assinatura pessoal para o usuário, não é instrução. -->
 > Escrito por Malfoyd, 21/10/2026. Hil, o Devotio saiu das fraldas: agora tem branch própria, sino pra chamar a atenção e comunidade com porteiro. Cresce rápido, esse menino.
+
+## Seleção e compartilhamento — 24/10/2026
+
+Versos são alternados individualmente, inclusive grupos separados. O mesmo hook e menu atendem Bíblia e Palavra do devocional; Meditar/Oração usam a variante só de texto. Menu inicia contraído em viewport até 640 px, com controle posterior pelo usuário. Compartilhar usa Web Share e fallback; Copiar é independente. Especificações 001, 008 e 009 registram as decisões aprovadas.

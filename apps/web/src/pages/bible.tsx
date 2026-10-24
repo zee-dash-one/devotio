@@ -183,7 +183,7 @@ function BibleReader({ reading, version }: { reading: BibleReaderRepository; ver
           );
         void navigate({
           to: "/biblia",
-          search: { ...params, chapter: number, verse: undefined },
+          search: { ...params, chapter: number, verse: undefined, verses: undefined },
           replace: true,
           resetScroll: false,
         });
@@ -207,7 +207,7 @@ function BibleReader({ reading, version }: { reading: BibleReaderRepository; ver
         if (number && number !== params.chapter)
           void navigate({
             to: "/biblia",
-            search: { ...params, chapter: number, verse: undefined },
+            search: { ...params, chapter: number, verse: undefined, verses: undefined },
             replace: true,
             resetScroll: false,
           });
@@ -260,6 +260,18 @@ function BibleReader({ reading, version }: { reading: BibleReaderRepository; ver
       previousLocation.current = { book: params.book, chapter: params.chapter };
     }
   }, [params.book, params.chapter]);
+  const incomingLink = useRef("");
+  useEffect(() => {
+    if (!current || (params.version && params.version !== version)) return;
+    const key = `${params.book}:${params.chapter}:${params.version ?? ""}:${params.verses ?? ""}`;
+    if (incomingLink.current === key) return;
+    incomingLink.current = key;
+    if (!params.verses) return;
+    const verses = params.verses.split(",").map(Number);
+    if (!verses.every(number => current.verses.some(verse => verse.number === number))) return;
+    setSelected({ book: params.book, chapter: params.chapter, version, first: verses[0], last: verses[verses.length - 1], verses });
+    document.getElementById(`verse-${params.chapter}-${verses[0]}`)?.scrollIntoView({ block: "center" });
+  }, [current, params.book, params.chapter, params.version, params.verses, version]);
   const targetKey =
     picker?.target.kind === "devotional"
       ? picker.target.key
@@ -554,7 +566,7 @@ function BibleReader({ reading, version }: { reading: BibleReaderRepository; ver
                             (quote &&
                               quote.chapter === data.chapter &&
                               selectionVerses(quote).includes(verse.number)) ||
-                            (params.chapter === data.chapter &&
+                            (!params.verses && params.chapter === data.chapter &&
                               params.verse === verse.number)
                               ? "selected-verse"
                               : ""
@@ -567,6 +579,7 @@ function BibleReader({ reading, version }: { reading: BibleReaderRepository; ver
                               ...params,
                               chapter: data.chapter,
                               verse: verse.number,
+                              verses: undefined,
                             }}
                             aria-label={`Versículo ${verse.number}, link direto`}
                           >

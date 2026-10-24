@@ -1,6 +1,6 @@
 # 05 — Carregamento da Comunidade em produção
 
-Status: em andamento; backend atualizado em 2026-10-23, confirmação autenticada da tela em produção pendente.
+Status: concluída em 2026-10-23; Hil confirmou nesta sessão que Comunidades voltou a carregar em produção.
 
 ## Escopo e decisões
 
@@ -40,8 +40,8 @@ não entregaria a gestão aprovada e deixaria as demais funções ausentes.
 - [x] Documentar recuperação e verificação de contratos antes de futuros merges.
 - [x] Abrir PR com diagnóstico e otimização do grafo, sem merge automático.
 - [x] Publicar o backend mediante decisão explícita do Hil (2026-10-23).
-- [ ] Confirmar contratos remotos e carregamento autenticado da Comunidade.
-- [ ] Encerrar e mover este registro para `.done/` somente após a recuperação.
+- [x] Confirmar contratos remotos e carregamento autenticado da Comunidade.
+- [x] Encerrar e mover este registro para `.done/` somente após a recuperação.
 
 ## Comandos e resultados
 
@@ -184,10 +184,7 @@ previsto na spec 015; preservação de dados e validação continuam obrigatóri
   local continua com login simulado e SQLite. `git status` confirmou que o deploy
   não alterou código versionado ou a configuração persistente do repositório.
 
-A publicação e a migração autorizadas estão concluídas. O teste autenticado da
-tela em produção deve ser confirmado pelo Hil após recarregar a aplicação; a
-tarefa permanece aberta somente por essa homologação. Não houve merge ou
-publicação da web pelo agente.
+Naquele momento, publicação e migração estavam concluídas e restava a homologação da tela. A confirmação posterior do Hil está registrada abaixo.
 
 ## Encerramento — 2026-10-23
 
@@ -196,3 +193,20 @@ Hil confirmou nesta sessão: "Sim, voltou a carregar". Backend, migração e val
 Fluxo autorizado para 05–09: uma branch nova da main atualizada, um commit por tarefa, publicação do backend antes do PR/merge autorizados pelo Hil. O registro do PR #11 foi incorporado aqui para fechar a tarefa no PR conjunto.
 
 Comandos: git fetch/pull --ff-only origin main e switch -c feat/verse-selection-and-devotional-sharing: sucesso. Transporte via stash gerou conflito só no índice; restaurado o índice aprovado do stash. Duas tentativas de restore falharam (aspas PowerShell e nome de arquivo), repetidas corretamente com sucesso. Graphify query confirmou os pontos de seleção e compartilhamento.
+
+## Registro final da entrega conjunta — 24/10/2026
+
+PR: https://github.com/zee-dash-one/devotio/pull/12
+
+- Branch: `feat/verse-selection-and-devotional-sharing`, criada da `main` atualizada (90d53fc). Um commit por tarefa, ordem 05 → 08 → 09 → 06 → 07, autorizada pelo Hil.
+- `npm run test --workspace=domain -- --maxWorkers=1 --testTimeout=15000`: 103 testes passaram.
+- `npm run test --workspace=backend -- --maxWorkers=1 --testTimeout=15000`: 78 testes passaram.
+- `npm run test --workspace=web -- --maxWorkers=1 --testTimeout=15000`: 72 testes passaram. A primeira execução apontou uma expectativa antiga sem `verses`; corrigida e suíte inteira repetida com sucesso.
+- O limite padrão de 5 s falhou no teste existente de importação canônica; repetição sequencial com 15 s passou.
+- `npm run test --workspace=web -- src/local-app.test.tsx --maxWorkers=1 --testTimeout=15000 -t 'devocional seleciona Palavra'`: os dois modos passaram novamente após o ajuste final do link.
+- `npm run verify:local`: passou com login mockado e SQLite.
+- `npm run build:ready`: passou (lint, typecheck, build e verificação de manifest, ícones, licenças, 22 recursos públicos e ausência de fixtures/API em cache).
+- `npm run deploy:backend -- --env-file <seletor temporário do piloto>`: sucesso. Alvo confirmado `adm-zone:devotio-pilot`, deployment development `upbeat-jellyfish-720` que atende o piloto publicado. Seletor contém somente o nome público do deployment.
+- `convex function-spec --deployment upbeat-jellyfish-720`: contratos remotos confirmados; `social:send`, `editorial:publish` e `editorialAccess:save` aceitam `verses`; `communities:list/detail` continuam aceitando `governance`. Nenhuma migração de dados foi necessária.
+- `git push -u origin feat/verse-selection-and-devotional-sharing` e `gh pr create --draft`: sucesso, PR #12 aberto. O commit final registra esta documentação antes de tornar o PR pronto e executar o merge autorizado; o merge dispara o Workers Build.
+- Android/iOS físicos e suas folhas nativas de compartilhamento não foram homologados. Implementação responsiva, APIs e fallbacks têm cobertura automatizada.

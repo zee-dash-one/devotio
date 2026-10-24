@@ -8,6 +8,7 @@ const profile: LocalProfile = { id: "marina", name: "Marina Oliveira", label: "M
 beforeEach(() => {
   vi.spyOn(window, "scrollTo").mockImplementation(() => {});
   vi.spyOn(window, "scrollBy").mockImplementation(() => {});
+  HTMLElement.prototype.scrollIntoView = vi.fn();
   window.history.replaceState(null, "", "/");
   localStorage.clear();
   window.getSelection()?.removeAllRanges();
@@ -18,11 +19,11 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
 const manager: LocalProfile = { id: "ester", name: "Ester Costa", label: "Gestor do sistema", description: "Teste", editorial: true };
-function server(loggedIn: boolean, actor = profile, conflict = false, manages = false) {
+function server(loggedIn: boolean, actor = profile, conflict = false, manages = false, withPassage = false) {
   const entries: EditorialEntry[] = [];
   const favorites: Favorite[] = [];
   let removed: { favorite: Favorite; token: string } | null = null;
-  const devotional = (date: string) => ({ id: date, date, reference: "Salmos 23:1", translation: "AA", scripture: "Leitura integrada de teste", reflection: "Reflexão de teste", prayerSuggestion: "Oração de teste", credit: "Teste" });
+  const devotional = (date: string) => ({ id: date, date, reference: withPassage ? "João 1:1–2, 5–6" : "Salmos 23:1", translation: "AA", scripture: withPassage ? "1 - Um\n2 - Dois\n5 - Cinco\n6 - Seis" : "Leitura integrada de teste", reflection: "Reflexão de teste", prayerSuggestion: "Oração de teste", credit: "Teste", ...(withPassage ? { selection: { book: "jo", chapter: 1, first: 1, last: 6, verses: [1, 2, 5, 6], version: "aa" as const } } : {}) });
   const messages: Message[] = [];
   const drafts: CommunityQuoteDraft[] = [];
   const requests = new Map<string, CommunityQuoteDraft>();
@@ -113,6 +114,74 @@ function isQuery(path: string, name: string) {
   return input ? (JSON.parse(input) as { query?: string }).query === name : false;
 }
 describe("entrada local integrada", () => {
+  it.each(["paged", "continuous"])("devocional seleciona Palavra e abre passagem marcada no modo %s", async (mode) => {
+    localStorage.setItem("devotio:preferences:v1:marina", JSON.stringify({ theme: "day", fontSize: 20, mode }));
+    server(true, profile, false, false, true);
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText } });
+    render(<StrictMode><LocalApp /></StrictMode>);
+    fireEvent.click(await screen.findByRole("checkbox", { name: "Versículo 1: Um" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Versículo 5: Cinco" }), { shiftKey: true });
+    expect(screen.getByRole("checkbox", { name: "Versículo 2: Dois" }).getAttribute("aria-checked")).toBe("false");
+    expect(screen.queryByRole("button", { name: "Enviar para comunidade" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Enviar para amigos" })).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "Copiar" }));
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith("1 - Um\n5 - Cinco\n\nJoão 1:1, 5\nAA"));
+    fireEvent.click(screen.getByRole("link", { name: "João 1:1–2, 5–6" }));
+    await waitFor(() => expect(window.location.pathname).toBe("/biblia"));
+    for (const n of [1, 2, 5, 6]) await waitFor(() => expect(document.getElementById(`verse-1-${n}`)?.getAttribute("aria-checked")).toBe("true"));
+    expect(document.getElementById("verse-1-3")?.getAttribute("aria-checked")).toBe("false");
+    expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Limpar seleção" }));
+    expect(document.getElementById("verse-1-1")?.getAttribute("aria-checked")).toBe("false");
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: undefined });
+  });
+  it("devocional legado continua legível e compartilha o texto inteiro pela API nativa", async () => {
+    server(true);
+    const share = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "share", { configurable: true, value: share });
+    render(<StrictMode><LocalApp /></StrictMode>);
+    await screen.findByText("Leitura integrada de teste");
+    expect(screen.queryByRole("link", { name: "Salmos 23:1" })).toBeNull();
+    expect(screen.queryByRole("checkbox")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Compartilhar devocional" }));
+    await waitFor(() => expect(share).toHaveBeenCalledWith({ text: expect.stringContaining("PALAVRA\nSalmos 23:1 — AA") }));
+    expect(share.mock.calls[0][0].text).toContain("Devotio — https://devotio.zee-dash-one.workers.dev");
+    Object.defineProperty(navigator, "share", { configurable: true, value: undefined });
+  });
+  it.each(["Meditar", "Oração"])("%s só abre no toque longo, cancela movimento e copia com referência", async (label) => {
+    server(true);
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText } });
+    render(<StrictMode><LocalApp /></StrictMode>);
+    const target = await screen.findByLabelText(label);
+    fireEvent.click(target);
+    expect(screen.queryByLabelText(`Compartilhar ${label}`)).toBeNull();
+    const pointer = (type: string, x: number) => {
+      const event = new MouseEvent(type, { bubbles: true, clientX: x, clientY: 100, button: 0 });
+      Object.defineProperties(event, { pointerType: { value: "touch" }, pointerId: { value: 1 } }); fireEvent(target, event);
+    };
+    pointer("pointerdown", 100); pointer("pointermove", 125); pointer("pointerup", 125);
+    await new Promise(resolve => setTimeout(resolve, 380));
+    expect(screen.queryByLabelText(`Compartilhar ${label}`)).toBeNull();
+    pointer("pointerdown", 100);
+    await screen.findByLabelText(`Compartilhar ${label}`);
+    pointer("pointerup", 100); fireEvent.click(target);
+    expect(screen.queryByRole("button", { name: "Enviar para amigos" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Copiar" }));
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith(`${label === "Meditar" ? "Reflexão" : "Oração"} de teste\n\nSalmos 23:1`));
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: undefined });
+  });
+  it("compartilhar devocional oferece cópia manual se APIs estiverem indisponíveis", async () => {
+    server(true);
+    Object.defineProperty(navigator, "share", { configurable: true, value: undefined });
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: undefined });
+    render(<StrictMode><LocalApp /></StrictMode>);
+    fireEvent.click(await screen.findByRole("button", { name: "Compartilhar devocional" }));
+    const area = await screen.findByLabelText("Texto para compartilhar") as HTMLTextAreaElement;
+    expect(area.value).toContain("MEDITAR\n\nReflexão de teste\n\nORAÇÃO\n\nOração de teste");
+    expect(screen.queryByRole("button", { name: "Enviar para amigos" })).toBeNull();
+  });
   it("acumula versos separados, copia referência agrupada e alterna pelo teclado", async () => {
     window.history.replaceState(null, "", "/biblia"); server(true);
     const writeText = vi.fn().mockResolvedValue(undefined);

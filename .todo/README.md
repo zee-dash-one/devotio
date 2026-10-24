@@ -6,9 +6,8 @@ da tarefa, movido para [`.done/`](./.done/).
 
 ## Tarefas
 
-- [ ] [07 — Seleção e compartilhamento no devocional aberto](07-devocional-compartilhar.md): **4º**, depende de 06 (e 08/09); todas as decisões tomadas (23/10).
 
-Ordem 08 → 09 → 06 → 07: as quatro compartilham arquivos (`apps/web/src/local-app.test.tsx` em todas; `pages/bible.tsx` na 08/06/07; `pages/selection-menu.tsx` na 09/06/07); as pequenas e isoladas entram primeiro para reduzir conflito de merge. Conflitos detalhados na seção "Impacto / conflitos" de cada tarefa.
+Nenhuma tarefa executável aberta. Tarefas 05–09 arquivadas em [.done/](./.done/).
 
 ## Decisões pendentes do Hil
 

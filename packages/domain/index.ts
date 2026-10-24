@@ -5,6 +5,7 @@ export * from "./access";
 export * from "./reading";
 export * from "./validators/local";
 export * from "./sharing";
+export * from "./devotional-sharing";
 export * from "./writing";
 export * from "./preferences";
 export * from "./administration";

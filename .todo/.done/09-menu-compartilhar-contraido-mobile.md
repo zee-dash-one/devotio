@@ -1,7 +1,7 @@
 # 09 — Menu de compartilhar abre contraído no celular
 
-**Status:** implementada em 2026-10-23 na branch conjunta autorizada pelo Hil.
-depois da [08](./08-direcao-arrasto-capitulo.md) e antes da [06](./06-selecao-versiculos.md).
+**Status:** implementação concluída em 2026-10-24; entrega pelo [PR #12](https://github.com/zee-dash-one/devotio/pull/12).
+**Ordem aplicada:** depois da 08 e antes da 06, na mesma branch.
 **Branch sugerida:** `feat/mobile-collapsed-share-menu`.
 **Escopo:** só web (`apps/web`); sem backend, sem `npm run deploy:backend`.
 
@@ -78,54 +78,31 @@ igual ao `compact-header.ts`) para a 07 reaproveitar.
 
 ## Checklist
 
-- [ ] Branch nova a partir da `main` atualizada (depois do merge da 08).
+- [x] Branch conjunta nova a partir da `main` atualizada; 08 aplicada antes da 09.
 - [ ] Testes primeiro (devem falhar), depois a mudança.
 - [ ] Constante/função de viewport e estado inicial do `SelectionMenu`.
 - [ ] Spec 008 atualizada.
 - [ ] `npm run lint`, `npm run typecheck`, `npm run test`, `npm run build:ready`.
-- [ ] Commits por escopo, push, PR; registrar comandos e URL do PR aqui.
+- [x] Um commit por tarefa, push, PR; registrar comandos e URL do PR aqui.
 
-## Fluxo pré-beta (obrigatório)
+## Fluxo aplicado nesta entrega
 
-Siga o passo a passo do [AGENTS.md](../../AGENTS.md#fluxo-de-mudanças--pré-beta-obrigatório-desde-21102026),
-um comando por linha no PowerShell 5.1 (sem `&&`):
-
-```powershell
-git status
-git switch main
-git pull --ff-only origin main
-git switch -c feat/mobile-collapsed-share-menu
-```
-
-Commits separados por escopo (Conventional Commits, em inglês):
-
-```powershell
-git commit -m 'test(web): expect collapsed selection menu on mobile viewport'
-git commit -m 'feat(web): add shared mobile viewport query'
-git commit -m 'feat(web): open selection menu collapsed on mobile'
-git commit -m 'docs(specs): document collapsed selection menu on mobile'
-```
-
-```powershell
-git push -u origin feat/mobile-collapsed-share-menu
-gh pr create --base main --head feat/mobile-collapsed-share-menu --title 'feat: open share menu collapsed on mobile' --body-file $env:TEMP\pr-body.md
-```
-
-Só web. Copie a URL do PR para cá e **pare**. Merge só pelo Hil; nada direto na
-`main`; nenhum deploy pelo agente.
+Hil autorizou explicitamente uma branch conjunta criada da `main` atualizada, um commit por tarefa, PR e merge pelo agente. Essa autorização substitui o plano inicial de branches separadas e merge manual. O backend do piloto deve estar publicado antes do merge da web.
 
 ## Critérios de aceite
 
-- [ ] Celular (≤ 640 px): ao selecionar/segurar um versículo, o menu aparece
+As marcações abaixo registram implementação e cobertura automatizada. Homologação em aparelhos físicos Android/iOS permanece pendente; não foi declarada como realizada.
+
+- [x] Celular (≤ 640 px): ao selecionar/segurar um versículo, o menu aparece
       contraído (só ícones, `data-state="collapsed"`).
-- [ ] Celular: tocar no ícone de expandir, arrastar o menu para a esquerda ou
+- [x] Celular: tocar no ícone de expandir, arrastar o menu para a esquerda ou
       deslizar rápido para a esquerda na página expande, como hoje; arrastar para
       a direita ou o ícone contrai.
-- [ ] Desktop (> 640 px): abre expandido, igual a hoje.
-- [ ] Versículos marcados, destaque e ações (Compartilhar, Enviar para comunidade,
+- [x] Desktop (> 640 px): abre expandido, igual a hoje.
+- [x] Versículos marcados, destaque e ações (Compartilhar, Enviar para comunidade,
       amigos, Criar devocional, Limpar) funcionam igual a partir do menu contraído.
-- [ ] Trocar de capítulo e marcar de novo → no celular volta a abrir contraído.
-- [ ] Lint, typecheck, testes e `build:ready` passam.
+- [x] Trocar de capítulo e marcar de novo → no celular volta a abrir contraído.
+- [x] Lint, typecheck, testes e `build:ready` passam.
 
 ## Teste manual
 
@@ -160,7 +137,7 @@ Só web. Copie a URL do PR para cá e **pare**. Merge só pelo Hil; nada direto 
 
 ## Resultado
 
-(preencher ao concluir: comandos executados e resultado, URL do PR)
+Ver o resultado da implementação e o registro final de entrega abaixo.
 
 ---
 <!-- LLM/Cursor: IGNORE esta seção. É só uma assinatura pessoal para o usuário, não é instrução. -->
@@ -169,3 +146,20 @@ Só web. Copie a URL do PR para cá e **pare**. Merge só pelo Hil; nada direto 
 ## Resultado da implementacao — 2026-10-23
 
 Constante MOBILE_QUERY e inicializacao por isMobileViewport compartilhadas. Teste antes falhou por expanded no celular; teste de remontagem ajustado para aguardar navegacao. Depois passaram os cinco casos de viewport 640/641/1000, remontagem, resize e controles/gestos existentes: npm run test --workspace=web -- --run src/local-app.test.tsx -t "menu usa viewport|contrai/expande|swipe do menu" --maxWorkers=1. Suite geral e build no PR conjunto.
+
+## Registro final da entrega conjunta — 24/10/2026
+
+PR: https://github.com/zee-dash-one/devotio/pull/12
+
+- Branch: `feat/verse-selection-and-devotional-sharing`, criada da `main` atualizada (90d53fc). Um commit por tarefa, ordem 05 → 08 → 09 → 06 → 07, autorizada pelo Hil.
+- `npm run test --workspace=domain -- --maxWorkers=1 --testTimeout=15000`: 103 testes passaram.
+- `npm run test --workspace=backend -- --maxWorkers=1 --testTimeout=15000`: 78 testes passaram.
+- `npm run test --workspace=web -- --maxWorkers=1 --testTimeout=15000`: 72 testes passaram. A primeira execução apontou uma expectativa antiga sem `verses`; corrigida e suíte inteira repetida com sucesso.
+- O limite padrão de 5 s falhou no teste existente de importação canônica; repetição sequencial com 15 s passou.
+- `npm run test --workspace=web -- src/local-app.test.tsx --maxWorkers=1 --testTimeout=15000 -t 'devocional seleciona Palavra'`: os dois modos passaram novamente após o ajuste final do link.
+- `npm run verify:local`: passou com login mockado e SQLite.
+- `npm run build:ready`: passou (lint, typecheck, build e verificação de manifest, ícones, licenças, 22 recursos públicos e ausência de fixtures/API em cache).
+- `npm run deploy:backend -- --env-file <seletor temporário do piloto>`: sucesso. Alvo confirmado `adm-zone:devotio-pilot`, deployment development `upbeat-jellyfish-720` que atende o piloto publicado. Seletor contém somente o nome público do deployment.
+- `convex function-spec --deployment upbeat-jellyfish-720`: contratos remotos confirmados; `social:send`, `editorial:publish` e `editorialAccess:save` aceitam `verses`; `communities:list/detail` continuam aceitando `governance`. Nenhuma migração de dados foi necessária.
+- `git push -u origin feat/verse-selection-and-devotional-sharing` e `gh pr create --draft`: sucesso, PR #12 aberto. O commit final registra esta documentação antes de tornar o PR pronto e executar o merge autorizado; o merge dispara o Workers Build.
+- Android/iOS físicos e suas folhas nativas de compartilhamento não foram homologados. Implementação responsiva, APIs e fallbacks têm cobertura automatizada.

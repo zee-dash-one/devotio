@@ -1,7 +1,7 @@
 # 06 — Seleção de versículos um a um na leitura bíblica
 
-**Status:** implementada em 2026-10-23 na branch conjunta autorizada pelo Hil.
-[08](./08-direcao-arrasto-capitulo.md) e da [09](./09-menu-compartilhar-contraido-mobile.md).
+**Status:** implementação concluída em 2026-10-24; entrega pelo [PR #12](https://github.com/zee-dash-one/devotio/pull/12).
+**Ordem aplicada:** 08 → 09 → 06 → 07, na mesma branch autorizada pelo Hil.
 **Branch sugerida:** `feat/verse-multi-select`.
 **Usada por:** [07 — Compartilhar no devocional aberto](./07-devocional-compartilhar.md),
 que reaproveita a lógica e o componente de seleção criados aqui.
@@ -159,11 +159,11 @@ capítulos/livros, app mobile.
 
 ## Plano e checklist
 
-- [ ] **Spec 009** — em [`specs/009-configuracoes-leitura/spec.md`](../../specs/009-configuracoes-leitura/spec.md)
+- [x] **Spec 009** — em [`specs/009-configuracoes-leitura/spec.md`](../../specs/009-configuracoes-leitura/spec.md)
       linha 76, trocar "Long-press e arraste deliberado preservam seleção contígua"
       pela regra nova (toque/segurar alternam; seleção não contígua; swipe de capítulo
       continua suspenso com seleção ativa).
-- [ ] **Spec 008** — atualizar
+- [x] **Spec 008** — atualizar
       [`specs/008-selecao-compartilhamento-notificacoes/spec.md`](../../specs/008-selecao-compartilhamento-notificacoes/spec.md)
       (no PR desta tarefa, commit `docs(specs)`), registrando:
   - seleção descontínua permitida (tirar "Seleções descontínuas" do fora do escopo);
@@ -176,93 +176,56 @@ capítulos/livros, app mobile.
   - Compartilhar com Web Share API e fallback para cópia + "copiado";
   - campo novo opcional com a lista de versículos e leitura do formato antigo
     `first`/`last`.
-- [ ] Domínio (`packages/domain`), testes antes: `verses` opcional em
+- [x] Domínio (`packages/domain`), testes antes: `verses` opcional em
       `bibleSelectionSchema` (`validators/sharing.ts`) validando lista ordenada,
       sem repetição e dentro de `first..last`; `toggleVerse`, `verseGroups`,
       `selectionVerses` (antigo → `first..last`); `bibleQuote()` com texto e
       referência agrupada; `bibleQuotePath()` coerente com a 07.
-- [ ] Backend (`packages/backend`): `verses: v.optional(v.array(v.number()))` em
+- [x] Backend (`packages/backend`): `verses: v.optional(v.array(v.number()))` em
       `scriptureSelectionValidator` (propaga para `quoteValidator`, `schema.ts`,
       `editorial*.ts`, `social.ts`, `communityValidators.ts`); `editorialScripture()`
       usando a lista. Sem migração: dados antigos continuam válidos. Testes do backend.
-- [ ] Web: hook/componente reaproveitável; trocar clique/segurar/arraste/
+- [x] Web: hook/componente reaproveitável; trocar clique/segurar/arraste/
       Shift+clique/`selectionchange` em `bible.tsx`; destaque e `aria-checked`
       pela lista de versículos.
-- [ ] Web: CSS anti-seleção e anti-pull-to-refresh; bloqueio do `copy` nativo.
-- [ ] Web: `SelectionMenu` com Compartilhar (Web Share + fallback) e Copiar;
+- [x] Web: CSS anti-seleção e anti-pull-to-refresh; bloqueio do `copy` nativo.
+- [x] Web: `SelectionMenu` com Compartilhar (Web Share + fallback) e Copiar;
       `ShareToFriends` e `returnToWriting` com seleção não contígua.
-- [ ] Atualizar `apps/web/src/local-app.test.tsx` (Shift+clique ~429/446/473 e
+- [x] Atualizar `apps/web/src/local-app.test.tsx` (Shift+clique ~429/446/473 e
       `selectionchange` ~595) e adicionar testes de toggle acumulado, referência
       agrupada e fallback de compartilhar.
-- [ ] `npm run lint`, `npm run typecheck`, `npm run test`, `npm run build:ready`.
-- [ ] Commits por escopo, push, PR com o checklist de backend; registrar comandos e URL do PR aqui.
+- [x] `npm run lint`, `npm run typecheck`, `npm run test`, `npm run build:ready`.
+- [x] Um commit por tarefa, push, PR com o checklist de backend; registrar comandos e URL do PR aqui.
 
-## Fluxo pré-beta (obrigatório)
+## Fluxo aplicado nesta entrega
 
-Siga o passo a passo do [AGENTS.md](../../AGENTS.md#fluxo-de-mudanças--pré-beta-obrigatório-desde-21102026),
-um comando por linha no PowerShell 5.1 (sem `&&`):
-
-```powershell
-git status
-git switch main
-git pull --ff-only origin main
-git switch -c feat/verse-multi-select
-```
-
-Commits separados por escopo (Conventional Commits, em inglês), nesta ordem:
-
-```powershell
-git commit -m 'docs(specs): allow non-contiguous verse selection'
-git commit -m 'feat(domain): add optional verse list to bible selection'
-git commit -m 'feat(domain): toggle verses and format grouped references'
-git commit -m 'feat(backend): accept optional verse list in scripture validators'
-git commit -m 'feat(web): disable native text selection and pull-to-refresh in reader'
-git commit -m 'feat(web): toggle verses one by one in bible reader'
-git commit -m 'feat(web): share via Web Share API with copy fallback'
-git commit -m 'feat(web): send non-contiguous selections to friends, communities and devotional'
-```
-
-Arquivo **novo** em `packages/` precisa de `git add -f` (o `.gitignore` ignora `packages/**`).
-
-```powershell
-git push -u origin feat/verse-multi-select
-gh pr create --base main --head feat/verse-multi-select --title 'feat: select verses one by one in bible reader' --body-file $env:TEMP\pr-body.md
-```
-
-O corpo do PR **tem** de levar o checklist de backend:
-
-```text
-- [ ] Backend: run npm run deploy:backend before merging (Convex upbeat-jellyfish-720; not npx convex deploy)
-- [ ] Merge the web only after the backend is published (backend first, then web)
-```
-
-`npx convex deploy` / `npm run deploy:backend:prod` apontam para outro deployment,
-sem as variáveis de auth: **não usar**. Quem publica é o Hil. Copie a URL do PR
-para cá e **pare**. Merge só pelo Hil; nada direto na `main`; nenhum deploy pelo agente.
+Hil autorizou explicitamente uma branch conjunta criada da `main` atualizada, um commit por tarefa, PR e merge pelo agente. Essa autorização substitui o plano inicial de branches separadas e merge manual. O backend do piloto deve estar publicado antes do merge da web.
 
 ## Critérios de aceite
 
-- [ ] Celular e desktop: tocar/clicar em 1, 2, 5 e 6 deixa os quatro marcados
+As marcações abaixo registram implementação e cobertura automatizada. Homologação em aparelhos físicos Android/iOS permanece pendente; não foi declarada como realizada.
+
+- [x] Celular e desktop: tocar/clicar em 1, 2, 5 e 6 deixa os quatro marcados
       (destaque e `aria-checked="true"`); clicar de novo no 5 desmarca só ele.
-- [ ] Segurar um versículo alterna igual ao toque, sem abrir lupa/menu nativo.
-- [ ] Celular: puxar para baixo no topo da leitura **não** recarrega; arrastar sobre
+- [x] Segurar um versículo alterna igual ao toque, sem abrir lupa/menu nativo.
+- [x] Celular: puxar para baixo no topo da leitura **não** recarrega; arrastar sobre
       os versículos não marca nada; a rolagem funciona.
-- [ ] Desktop: clicar e arrastar com o mouse não seleciona texto nem versículos;
+- [x] Desktop: clicar e arrastar com o mouse não seleciona texto nem versículos;
       Ctrl+C no leitor não copia nada.
-- [ ] Shift+clique marca só o versículo clicado; Shift+↑/↓ não estende intervalo.
-- [ ] Trocar de capítulo zera a seleção.
-- [ ] Copiar com 1, 2, 5 e 6 coloca na área de transferência os quatro versículos e
+- [x] Shift+clique marca só o versículo clicado; Shift+↑/↓ não estende intervalo.
+- [x] Trocar de capítulo zera a seleção.
+- [x] Copiar com 1, 2, 5 e 6 coloca na área de transferência os quatro versículos e
       a referência `… 3:1-2, 5-6` com a versão.
-- [ ] Compartilhar abre o compartilhamento nativo onde existe `navigator.share`;
+- [x] Compartilhar abre o compartilhamento nativo onde existe `navigator.share`;
       sem ele, copia e mostra "copiado".
-- [ ] Enviar para amigos, Enviar para comunidade, Criar devocional e o picker do
+- [x] Enviar para amigos, Enviar para comunidade, Criar devocional e o picker do
       cadastro/comunidade funcionam com seleção contínua e não contígua.
-- [ ] Dados antigos (só `first`/`last`) continuam abrindo, mostrando o trecho certo
+- [x] Dados antigos (só `first`/`last`) continuam abrindo, mostrando o trecho certo
       e sendo compartilhados sem erro; web antiga continua funcionando com o
       backend novo.
-- [ ] Teclado: Tab/Espaço/Enter alternam; Esc limpa.
-- [ ] `specs/008` atualizada com todos os itens do checklist.
-- [ ] Lint, typecheck, testes e `build:ready` passam.
+- [x] Teclado: Tab/Espaço/Enter alternam; Esc limpa.
+- [x] `specs/008` atualizada com todos os itens do checklist.
+- [x] Lint, typecheck, testes e `build:ready` passam.
 
 ## Teste manual
 
@@ -328,7 +291,7 @@ Revisão de 23/10/2026 contra o código real. Ordem: 08 → 09 → **06** → 07
 
 ## Resultado
 
-(preencher ao concluir: comandos executados e resultado, URL do PR)
+Ver o resultado da implementação e o registro final de entrega abaixo.
 
 ---
 <!-- LLM/Cursor: IGNORE esta seção. É só uma assinatura pessoal para o usuário, não é instrução. -->
@@ -339,3 +302,20 @@ Revisão de 23/10/2026 contra o código real. Ordem: 08 → 09 → **06** → 07
 Selecao individual reutilizavel, referencia agrupada, Web Share/Copiar/fallback manual e bloqueio de selecao nativa. Campo verses opcional propagado por scriptureSelectionValidator, quoteValidator e contratos editoriais/comunitarios/sociais. editorialScripture ja usa bibleQuote, agora respeitando a lista; SQLite persiste JSON sem migracao.
 
 Comandos: teste de sharing.test.ts antes falhou por descarte de verses; depois cinco casos passaram. Typecheck inicialmente identificou refinamento Zod aninhado incompatível com innerType().pick; corrigido e monorepo passou. npm run lint passou. Testes web ajustaram expectativas antigas de arraste e passam: 37 casos de local-app.test.tsx e share-text.test.tsx. Teste Convex ajustado ao contrato plano de social:send e timeout de 15 s para carga inicial do corpus canonico (o restante permanece com limite existente). Testes de persistencia cobrem SQLite e Convex, texto canonico e listas invalidas. Build completo e publicacao backend antes do merge registrados no PR conjunto. Aparelhos fisicos nao homologados pelo agente.
+
+## Registro final da entrega conjunta — 24/10/2026
+
+PR: https://github.com/zee-dash-one/devotio/pull/12
+
+- Branch: `feat/verse-selection-and-devotional-sharing`, criada da `main` atualizada (90d53fc). Um commit por tarefa, ordem 05 → 08 → 09 → 06 → 07, autorizada pelo Hil.
+- `npm run test --workspace=domain -- --maxWorkers=1 --testTimeout=15000`: 103 testes passaram.
+- `npm run test --workspace=backend -- --maxWorkers=1 --testTimeout=15000`: 78 testes passaram.
+- `npm run test --workspace=web -- --maxWorkers=1 --testTimeout=15000`: 72 testes passaram. A primeira execução apontou uma expectativa antiga sem `verses`; corrigida e suíte inteira repetida com sucesso.
+- O limite padrão de 5 s falhou no teste existente de importação canônica; repetição sequencial com 15 s passou.
+- `npm run test --workspace=web -- src/local-app.test.tsx --maxWorkers=1 --testTimeout=15000 -t 'devocional seleciona Palavra'`: os dois modos passaram novamente após o ajuste final do link.
+- `npm run verify:local`: passou com login mockado e SQLite.
+- `npm run build:ready`: passou (lint, typecheck, build e verificação de manifest, ícones, licenças, 22 recursos públicos e ausência de fixtures/API em cache).
+- `npm run deploy:backend -- --env-file <seletor temporário do piloto>`: sucesso. Alvo confirmado `adm-zone:devotio-pilot`, deployment development `upbeat-jellyfish-720` que atende o piloto publicado. Seletor contém somente o nome público do deployment.
+- `convex function-spec --deployment upbeat-jellyfish-720`: contratos remotos confirmados; `social:send`, `editorial:publish` e `editorialAccess:save` aceitam `verses`; `communities:list/detail` continuam aceitando `governance`. Nenhuma migração de dados foi necessária.
+- `git push -u origin feat/verse-selection-and-devotional-sharing` e `gh pr create --draft`: sucesso, PR #12 aberto. O commit final registra esta documentação antes de tornar o PR pronto e executar o merge autorizado; o merge dispara o Workers Build.
+- Android/iOS físicos e suas folhas nativas de compartilhamento não foram homologados. Implementação responsiva, APIs e fallbacks têm cobertura automatizada.

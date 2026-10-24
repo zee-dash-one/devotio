@@ -229,3 +229,16 @@ app. Favoritos são estritamente por conta.
 - Se o favorito for feito a partir de uma data da janela e o áudio for opcional:
   confirmar se a ausência de `audioUrl` no snapshot é aceitável (sim, alinhado ao
   item 7).
+
+## Compartilhamento no devocional aberto — aprovado em 23/10/2026
+
+Implementação das decisões da tarefa 07:
+
+- Palavra com seleção estruturada permite alternar versículos por toque, clique, teclado e toque longo; grupos separados, sem arraste/Shift para intervalos. Reutiliza a seleção da spec 008 e seu menu, contraído até 640 px.
+- A referência abre o capítulo e a versão com todos os versos da passagem marcados e rola até o primeiro, nos dois modos. Links aceitam verses ordenado; sem ele, verse mantém seu comportamento.
+- Sem selection, referência é texto e Palavra é somente leitura. O snapshot numerado da publicação fornece os versos; nunca inferir seleção de referência legada.
+- Palavra oferece Compartilhar, Copiar e Enviar para amigos. Meditar e Oração abrem o mesmo menu só ao segurar (ou teclado), cancelando ao mover; nessas variantes só compartilhar/copiar, com referência bíblica no fim.
+- Ícone no topo compartilha texto simples: Devocional de DD/MM/AAAA usando a data do documento; PALAVRA (referência, versão, texto), MEDITAR, ORAÇÃO e Devotio com URL pública. Não há campo de título novo.
+- Web Share quando disponível; fallback para clipboard com aviso e textarea manual em falha. Cancelar o compartilhamento nativo não copia.
+- URL pública configurável por VITE_PUBLIC_APP_URL, padrão https://devotio.zee-dash-one.workers.dev. Não usar a origem local do navegador como URL compartilhada.
+- Seleção nativa e pull-to-refresh desativados na superfície de leitura, preservando rolagem vertical. Cadastro editorial e tema semanal inalterados; Expo continua adiado.

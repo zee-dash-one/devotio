@@ -1,6 +1,6 @@
 # 08 — Direção do arrasto que troca de capítulo (modo paginado)
 
-**Status:** implementada em 2026-10-23; publicada pelo PR conjunto autorizado pelo Hil.
+**Status:** implementação concluída em 2026-10-24; entrega pelo [PR #12](https://github.com/zee-dash-one/devotio/pull/12).
 (ordem: 08 → [09](./09-menu-compartilhar-contraido-mobile.md) → [06](06-selecao-versiculos.md) → [07](07-devocional-compartilhar.md)).
 **Branch sugerida:** `fix/chapter-swipe-direction`.
 **Escopo:** só web (`apps/web`) + spec; sem backend, sem `npm run deploy:backend`.
@@ -86,49 +86,27 @@ Não alterar nenhum desses valores nesta tarefa.
 - [ ] Inverter o mapeamento em `bible-page-gestures.ts` sem mudar limiares.
 - [ ] Atualizar spec 009 (linha 68).
 - [ ] `npm run lint`, `npm run typecheck`, `npm run test`, `npm run build:ready`.
-- [ ] Commits por escopo, push, PR; registrar comandos e URL do PR aqui.
+- [x] Um commit por tarefa, push, PR; registrar comandos e URL do PR aqui.
 
-## Fluxo pré-beta (obrigatório)
+## Fluxo aplicado nesta entrega
 
-Siga o passo a passo do [AGENTS.md](../../AGENTS.md#fluxo-de-mudanças--pré-beta-obrigatório-desde-21102026),
-um comando por linha no PowerShell 5.1 (sem `&&`):
-
-```powershell
-git status
-git switch main
-git pull --ff-only origin main
-git switch -c fix/chapter-swipe-direction
-```
-
-Commits separados por escopo (Conventional Commits, em inglês):
-
-```powershell
-git commit -m 'test(web): expect book-like chapter swipe direction'
-git commit -m 'fix(web): swipe right-to-left to go to the next chapter'
-git commit -m 'docs(specs): document book-like chapter swipe direction'
-```
-
-```powershell
-git push -u origin fix/chapter-swipe-direction
-gh pr create --base main --head fix/chapter-swipe-direction --title 'fix: book-like chapter swipe direction' --body-file $env:TEMP\pr-body.md
-```
-
-Só web: sem `packages/backend`, sem `npm run deploy:backend`. Copie a URL do PR
-para cá e **pare**. Merge só pelo Hil; nada direto na `main`; nenhum deploy pelo agente.
+Hil autorizou explicitamente uma branch conjunta criada da `main` atualizada, um commit por tarefa, PR e merge pelo agente. Essa autorização substitui o plano inicial de branches separadas e merge manual. O backend do piloto deve estar publicado antes do merge da web.
 
 ## Critérios de aceite
 
-- [ ] Modo Paginado, celular: arrastar da direita para a esquerda (longo) avança
+As marcações abaixo registram implementação e cobertura automatizada. Homologação em aparelhos físicos Android/iOS permanece pendente; não foi declarada como realizada.
+
+- [x] Modo Paginado, celular: arrastar da direita para a esquerda (longo) avança
       um capítulo; da esquerda para a direita volta um.
-- [ ] Desktop com mouse (o hook também aceita mouse): mesmo mapeamento.
-- [ ] Arrasto curto (< max(80 px, 25% da largura)) e arrasto vertical não trocam capítulo.
-- [ ] Cada arrasto troca no máximo um capítulo; no capítulo 1 voltar não faz nada;
+- [x] Desktop com mouse (o hook também aceita mouse): mesmo mapeamento.
+- [x] Arrasto curto (< max(80 px, 25% da largura)) e arrasto vertical não trocam capítulo.
+- [x] Cada arrasto troca no máximo um capítulo; no capítulo 1 voltar não faz nada;
       no último, avançar não faz nada.
-- [ ] Soltar após o arrasto não marca versículo nem abre o menu.
-- [ ] Modo Contínuo: nada muda (gesto continua desligado).
-- [ ] Botões Anterior/Próximo continuam iguais.
-- [ ] Limiares iguais aos atuais (12 px, 2×, 350 ms, 80 px/25%, 400 ms).
-- [ ] Teste de `local-app.test.tsx` invertido e teste do mapeamento passando;
+- [x] Soltar após o arrasto não marca versículo nem abre o menu.
+- [x] Modo Contínuo: nada muda (gesto continua desligado).
+- [x] Botões Anterior/Próximo continuam iguais.
+- [x] Limiares iguais aos atuais (12 px, 2×, 350 ms, 80 px/25%, 400 ms).
+- [x] Teste de `local-app.test.tsx` invertido e teste do mapeamento passando;
       spec 009 atualizada; lint, typecheck, testes e `build:ready` passam.
 
 ## Teste manual
@@ -170,7 +148,7 @@ esta tarefa registra o motivo.
 
 ## Resultado
 
-(preencher ao concluir: comandos executados e resultado, URL do PR)
+Ver o resultado da implementação e o registro final de entrega abaixo.
 
 ---
 <!-- LLM/Cursor: IGNORE esta seção. É só uma assinatura pessoal para o usuário, não é instrução. -->
@@ -181,3 +159,20 @@ esta tarefa registra o motivo.
 Branch conjunta feat/verse-selection-and-devotional-sharing autorizada pelo Hil, um commit por tarefa e merge autorizado. Mapeamento invertido sem alterar limiares, clique suprimido, suspensao com selecao e limites do livro.
 
 Teste antes: npm run test --workspace=web -- --run src/local-app.test.tsx -t "swipe longo" --maxWorkers=1 falhou (esperado 4, recebido 2). Depois da correcao: mesmo comando passou. Suite geral e build registrados no PR conjunto. Homologacao em aparelho fisico nao realizada pelo agente.
+
+## Registro final da entrega conjunta — 24/10/2026
+
+PR: https://github.com/zee-dash-one/devotio/pull/12
+
+- Branch: `feat/verse-selection-and-devotional-sharing`, criada da `main` atualizada (90d53fc). Um commit por tarefa, ordem 05 → 08 → 09 → 06 → 07, autorizada pelo Hil.
+- `npm run test --workspace=domain -- --maxWorkers=1 --testTimeout=15000`: 103 testes passaram.
+- `npm run test --workspace=backend -- --maxWorkers=1 --testTimeout=15000`: 78 testes passaram.
+- `npm run test --workspace=web -- --maxWorkers=1 --testTimeout=15000`: 72 testes passaram. A primeira execução apontou uma expectativa antiga sem `verses`; corrigida e suíte inteira repetida com sucesso.
+- O limite padrão de 5 s falhou no teste existente de importação canônica; repetição sequencial com 15 s passou.
+- `npm run test --workspace=web -- src/local-app.test.tsx --maxWorkers=1 --testTimeout=15000 -t 'devocional seleciona Palavra'`: os dois modos passaram novamente após o ajuste final do link.
+- `npm run verify:local`: passou com login mockado e SQLite.
+- `npm run build:ready`: passou (lint, typecheck, build e verificação de manifest, ícones, licenças, 22 recursos públicos e ausência de fixtures/API em cache).
+- `npm run deploy:backend -- --env-file <seletor temporário do piloto>`: sucesso. Alvo confirmado `adm-zone:devotio-pilot`, deployment development `upbeat-jellyfish-720` que atende o piloto publicado. Seletor contém somente o nome público do deployment.
+- `convex function-spec --deployment upbeat-jellyfish-720`: contratos remotos confirmados; `social:send`, `editorial:publish` e `editorialAccess:save` aceitam `verses`; `communities:list/detail` continuam aceitando `governance`. Nenhuma migração de dados foi necessária.
+- `git push -u origin feat/verse-selection-and-devotional-sharing` e `gh pr create --draft`: sucesso, PR #12 aberto. O commit final registra esta documentação antes de tornar o PR pronto e executar o merge autorizado; o merge dispara o Workers Build.
+- Android/iOS físicos e suas folhas nativas de compartilhamento não foram homologados. Implementação responsiva, APIs e fallbacks têm cobertura automatizada.

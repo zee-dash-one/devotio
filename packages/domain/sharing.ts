@@ -37,7 +37,7 @@ export function bibleQuote(chapter: BibleChapter, selection: BibleSelection): Bi
   return { ...selection, text: verses.map(verse => `${verse!.number} - ${verse!.text}`).join("\n"), reference: `${chapter.book.name} ${selection.chapter}:${verseGroups(numbers)}`, versionName: bibleVersionNames[selection.version] };
 }
 export function quoteText(quote: BibleQuote) { return `${quote.text}\n\n${quote.reference}\n${quote.versionName}`; }
-export function bibleQuotePath(quote: BibleSelection) { return `/biblia?book=${quote.book}&chapter=${quote.chapter}&verse=${quote.first}&version=${quote.version}`; }
+export function bibleQuotePath(quote: BibleSelection) { return `/biblia?book=${quote.book}&chapter=${quote.chapter}&verse=${quote.first}&verses=${selectionVerses(quote).join(",")}&version=${quote.version}`; }
 export function notificationDate(at: number) { return new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", year: "numeric" }).format(at); }
 export type NotificationSummary = z.infer<typeof notificationSummarySchema>;
 export type NotificationKind = "friendShare" | "communityAccepted" | "communityRemoved" | "communityPost" | "system";
