@@ -10,6 +10,19 @@ function setup() {
   return db;
 }
 const input = { action: "sendQuote" as const, id: "esperanca", selection: { book: "jo", chapter: 1, first: 1, last: 3, version: "aa" as const }, comment: "", requestId: "3537e982-5116-45df-95d9-c2c9f7f1cbbf" };
+it("SQLite preserva versos separados no rascunho, mural e editorial", () => {
+  const db = setup(), admin = db.profile("daniel");
+  const selection = { ...input.selection, verses: [1, 3] };
+  const [draft] = db.command(admin, { action: "saveQuoteDrafts", ids: ["esperanca"], selection, requestId: input.requestId }) as CommunityQuoteDraft[];
+  expect(draft.quote.text).toBe("1 - Texto canônico 1\n3 - Texto canônico 3");
+  db.command(admin, { action: "publishQuoteDraft", id: "esperanca", draftId: draft.id, selection, comment: "" });
+  const detail = db.query(db.profile("marina"), { query: "community", id: "esperanca", cursor: null }) as CommunityDetail;
+  expect(detail.messages.at(-1)?.quote?.verses).toEqual([1, 3]);
+  db.command(db.profile("ester"), { action: "schedule", input: { mode: "create", date: "2099-12-31", selection, scripture: "Ignorado", reference: "Ignorada", reflection: "Meditar", prayerSuggestion: "Orar", licenseEvidence: "Fixture" } });
+  const data = JSON.parse(db.get<{ data: string }>("SELECT data FROM devotionals WHERE date='2099-12-31'")!.data) as Devotional;
+  expect(data.selection?.verses).toEqual([1, 3]);
+  expect(data.scripture).toBe(draft.quote.text);
+});
 describe("trechos e avisos locais", () => {
   it("reconstrói ALM1911 no servidor, identifica a edição e mantém permissões", () => {
     const db = setup();

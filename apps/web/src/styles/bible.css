@@ -319,3 +319,12 @@
 [data-reading-mode="continuous"] > section {
   padding-bottom: 32px;
 }
+.verse-selection-surface,
+.verse-selection-surface body {
+  overscroll-behavior-y: contain;
+}
+.bible-verses {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}

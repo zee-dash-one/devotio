@@ -9,13 +9,32 @@ import type { notificationTargetSchema } from "./validators/sharing";
 export type BibleSelection = z.infer<typeof bibleSelectionSchema>;
 export interface BibleQuote extends BibleSelection { text: string; reference: string; versionName: string }
 export function selectionRange(anchor: number, end: number) { return { first: Math.min(anchor, end), last: Math.max(anchor, end) }; }
+export function selectionVerses(selection: BibleSelection): number[] {
+  const valid = bibleSelectionSchema.parse(selection);
+  return valid.verses ?? Array.from({ length: valid.last - valid.first + 1 }, (_, i) => valid.first + i);
+}
+export function toggleVerse(selection: BibleSelection | null, context: Pick<BibleSelection, "book" | "chapter" | "version">, number: number): BibleSelection | null {
+  const current = selection && selection.book === context.book && selection.chapter === context.chapter && selection.version === context.version ? selectionVerses(selection) : [];
+  const verses = current.includes(number) ? current.filter(n => n !== number) : [...current, number].sort((a, b) => a - b);
+  return verses.length ? bibleSelectionSchema.parse({ ...context, first: verses[0], last: verses.at(-1), verses }) : null;
+}
+export function verseGroups(verses: readonly number[]): string {
+  const groups: string[] = [];
+  for (let i = 0; i < verses.length; i++) {
+    const first = verses[i];
+    while (i + 1 < verses.length && verses[i + 1] === verses[i] + 1) i++;
+    groups.push(first === verses[i] ? String(first) : `${first}–${verses[i]}`);
+  }
+  return groups.join(", ");
+}
 export function bibleQuote(chapter: BibleChapter, selection: BibleSelection): BibleQuote {
   bibleSelectionSchema.parse(selection);
   if (selection.book !== chapter.book.abbrev || selection.chapter !== chapter.chapter) throw new Error("A seleção pertence a outro capítulo.");
   if ((chapter.version ?? "aa") !== selection.version) throw new Error("A seleção pertence a outra versão.");
-  const verses = chapter.verses.filter(verse => verse.number >= selection.first && verse.number <= selection.last);
-  if (verses.length !== selection.last - selection.first + 1) throw new Error("Versículos não encontrados.");
-  return { ...selection, text: verses.map(verse => `${verse.number} - ${verse.text}`).join("\n"), reference: `${chapter.book.name} ${selection.chapter}:${selection.first}${selection.last === selection.first ? "" : "–" + selection.last}`, versionName: bibleVersionNames[selection.version] };
+  const numbers = selectionVerses(selection);
+  const verses = numbers.map(number => chapter.verses.find(verse => verse.number === number));
+  if (verses.some(verse => !verse)) throw new Error("Versículos não encontrados.");
+  return { ...selection, text: verses.map(verse => `${verse!.number} - ${verse!.text}`).join("\n"), reference: `${chapter.book.name} ${selection.chapter}:${verseGroups(numbers)}`, versionName: bibleVersionNames[selection.version] };
 }
 export function quoteText(quote: BibleQuote) { return `${quote.text}\n\n${quote.reference}\n${quote.versionName}`; }
 export function bibleQuotePath(quote: BibleSelection) { return `/biblia?book=${quote.book}&chapter=${quote.chapter}&verse=${quote.first}&version=${quote.version}`; }

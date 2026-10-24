@@ -2,6 +2,7 @@ import { IconButton, Button } from "../ui/button";
 import { useMemo, useRef, useState } from "react";
 import {
   Share2,
+  Copy,
   Users,
   PenLine,
   X,
@@ -25,6 +26,7 @@ import { useApp, useWriting } from "../context";
 import { useSelectionDrawerGestures } from "../selection-drawer-gestures";
 import { ShareToFriends } from "../social";
 import { isMobileViewport } from "../media";
+import { copyText, shareText } from "../share-text";
 
 export function SelectionMenu({
   quote,
@@ -52,6 +54,14 @@ export function SelectionMenu({
   const [friendsOpen, setFriendsOpen] = useState(false);
   const panel = useRef<HTMLElement>(null);
   useSelectionDrawerGestures(panel, collapsed, setCollapsed, onSwipe);
+  async function transfer(copyOnly = false) {
+    setMessage(""); setManualCopy(false); setSharing(true);
+    try {
+      const result = await (copyOnly ? copyText(payload) : shareText(payload));
+      if (result === "copied") setMessage("Trecho copiado para compartilhar.");
+      if (result === "manual") { setCollapsed(false); setManualCopy(true); setMessage("Copie o texto abaixo para compartilhar."); }
+    } finally { setSharing(false); }
+  }
   return (
     <aside
       ref={panel}
@@ -93,33 +103,13 @@ export function SelectionMenu({
         aria-label="Compartilhar"
         title={collapsed ? "Compartilhar" : undefined}
         disabled={sharing}
-        onClick={async () => {
-          setMessage("");
-          setSharing(true);
-          try {
-            if (navigator.clipboard?.writeText) {
-              await navigator.clipboard.writeText(payload);
-              setMessage("Trecho copiado para compartilhar.");
-            } else {
-              setCollapsed(false);
-              setManualCopy(true);
-              setMessage("Copie o texto abaixo para compartilhar.");
-            }
-          } catch (error) {
-            if (!(
-              error instanceof DOMException && error.name === "AbortError"
-            )) {
-              setCollapsed(false);
-              setManualCopy(true);
-              setMessage("Copie o trecho abaixo para compartilhar.");
-            }
-          } finally {
-            setSharing(false);
-          }
-        }}
+        onClick={() => void transfer()}
       >
         <Share2 size={20} />
         <span hidden={collapsed}>Compartilhar</span>
+      </Button>
+      <Button variant="ghost" className="selection-action" aria-label="Copiar" disabled={sharing} onClick={() => void transfer(true)}>
+        <Copy size={20} /><span hidden={collapsed}>Copiar</span>
       </Button>
       {managed.length > 0 && repo.sharing && (
         <Button
@@ -138,7 +128,7 @@ export function SelectionMenu({
         </Button>
       )}
       {repo.social && <Button variant="ghost" className="selection-action" aria-label="Enviar para amigos" onClick={() => setFriendsOpen(true)}><Send size={20} /><span hidden={collapsed}>Enviar para amigos</span></Button>}
-      {friendsOpen && repo.social && <ShareToFriends key={`${quote.version}:${quote.book}:${quote.chapter}:${quote.first}:${quote.last}`} social={repo.social} quote={quote} onClose={() => setFriendsOpen(false)} />}
+      {friendsOpen && repo.social && <ShareToFriends key={payload} social={repo.social} quote={quote} onClose={() => setFriendsOpen(false)} />}
       {choosing && (
         <div className="selection-destinations" hidden={collapsed}>
           <fieldset>

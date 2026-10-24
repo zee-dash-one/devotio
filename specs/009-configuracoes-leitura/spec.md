@@ -73,7 +73,7 @@ Exibir o valor escolhido; permitir operação por teclado. O texto de leitura e 
 4. Mudar o modo aplica na hora, mantendo capítulo/versículo visível, seleção e contexto de retorno ao formulário. Contínuo não mantém uma lista crescente de capítulos fora de leitura.
 5. Scroll para cima/baixo apenas rola o texto. Arraste curto não muda capítulo. Cada gesto aceito muda no máximo um capítulo.
 6. Arrastar o menu lateral nunca seleciona versos nem troca capítulo. Expandir/recolher o menu pela leitura consome o gesto.
-7. Long-press e arraste deliberado preservam seleção contígua da spec 008. Com seleção ativa, swipe de capítulo fica suspenso; botões continuam disponíveis e limpam a seleção se mudarem o capítulo.
+7. Toque/segurar alternam versos individualmente, inclusive grupos separados (spec 008); arraste não seleciona. Com seleção ativa, swipe de capítulo fica suspenso; botões continuam disponíveis e limpam a seleção se mudarem o capítulo.
 8. Seleção não atravessa capítulos no modo Contínuo. Ao selecionar para devocional/comunidade, mantém-se o fluxo contextual com botão flutuante e retorno ao formulário, sem menu lateral normal.
 
 ## 5. Requisitos não-funcionais

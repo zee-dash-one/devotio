@@ -344,3 +344,7 @@ offline e sem áudio baixado. Falha de armazenamento usa memória e mostra aviso
 Não houve alteração de tabelas nesta revisão de cache.
 
 Expo reutilizará regras/contratos/tokens com apresentação própria. OAuth, áudio, instalação e atualização precisam de testes físicos antes do piloto. Listas e membros ainda carregam o grupo inteiro: manter o piloto pequeno.
+
+### Seleção bíblica — 23/10/2026
+
+O contrato compartilhado BibleSelection admite verses opcional, ordenado e sem repetição, mantendo first/last como limites. Dados legados sem verses representam intervalo contínuo. Convex reutiliza scriptureSelectionValidator em citações sociais, comunidades e devocionais; texto é reconstruído da fonte canônica pelo domínio. SQLite persiste a seleção em JSON, sem alteração de tabelas ou migração. Marcadores sociais continuam agrupados pelo primeiro verso. Publicar o backend antes da web.
