@@ -15,10 +15,9 @@ import {
   bibleQuote,
   chapterWindow,
   devotionalSelectionSchema,
-  selectionRange,
+  selectionVerses,
   validationMessage,
   type BibleChapter,
-  type BibleSelection,
   type BibleReaderRepository,
   type BibleVersion,
   resolveBibleVersion,
@@ -28,6 +27,7 @@ import { usePreferences } from "../preferences";
 import { useBiblePageGestures } from "../bible-page-gestures";
 import { Dropdown } from "../dropdown";
 import { useWriting } from "../context";
+import { useVerseSelection, useReadingSurface } from "../verse-selection";
 import { SelectionMenu } from "./selection-menu";
 import { Empty, ErrorMessage, Loading } from "../components";
 import { ChapterMarks, VerseMarks } from "../social";
@@ -72,21 +72,10 @@ function BibleReader({ reading, version }: { reading: BibleReaderRepository; ver
   const [returning, setReturning] = useState(false),
     [returnError, setReturnError] = useState("");
   const versesElement = useRef<HTMLDivElement>(null);
-  const [storedSelection, setSelected] = useState<BibleSelection | null>(
-    picker?.selection ?? null,
-  );
+  const selection = useVerseSelection(picker?.selection ?? null);
+  const { selection: storedSelection, setSelection: setSelected, cancel: cancelGesture } = selection;
   const selected = storedSelection?.version === version ? storedSelection : null;
-  const anchor = useRef(picker?.selection?.first ?? 1);
-  const gesture = useRef<{
-    chapter: BibleChapter;
-    anchor: number;
-    x: number;
-    y: number;
-    active: boolean;
-    type: string;
-    timer?: ReturnType<typeof setTimeout>;
-  } | null>(null);
-  const suppressClick = useRef(false);
+  useReadingSurface();
   const catalog = useWatch(useMemo(() => reading.watchBible(), [reading]));
   const scrollAnchor = useRef<{ id: string; top: number } | null>(null);
   const captureAnchor = () => {
@@ -157,7 +146,7 @@ function BibleReader({ reading, version }: { reading: BibleReaderRepository; ver
     }
   });
   useEffect(() => {
-    if (preferences.mode !== "continuous" || selected || !current) return;
+    if (preferences.mode !== "continuous" || !current) return;
     let frame = 0;
     const scroll = () => {
       if (frame) return;
@@ -194,7 +183,7 @@ function BibleReader({ reading, version }: { reading: BibleReaderRepository; ver
           );
         void navigate({
           to: "/biblia",
-          search: { ...params, chapter: number, verse: undefined },
+          search: { ...params, chapter: number, verse: undefined, verses: undefined },
           replace: true,
           resetScroll: false,
         });
@@ -218,7 +207,7 @@ function BibleReader({ reading, version }: { reading: BibleReaderRepository; ver
         if (number && number !== params.chapter)
           void navigate({
             to: "/biblia",
-            search: { ...params, chapter: number, verse: undefined },
+            search: { ...params, chapter: number, verse: undefined, verses: undefined },
             replace: true,
             resetScroll: false,
           });
@@ -255,15 +244,6 @@ function BibleReader({ reading, version }: { reading: BibleReaderRepository; ver
   );
   const quote =
     selected && selectedData ? bibleQuote(selectedData, selected) : null;
-  function select(first: number, last = first, data = current) {
-    if (data)
-      setSelected({
-        book: data.book.abbrev,
-        chapter: data.chapter,
-        ...selectionRange(first, last),
-        version,
-      });
-  }
   function clearSelection() {
     const selection = selected;
     setSelected(null);
@@ -273,84 +253,25 @@ function BibleReader({ reading, version }: { reading: BibleReaderRepository; ver
         .getElementById(`verse-${selection.chapter}-${selection.first}`)
         ?.focus({ preventScroll: true });
   }
-  function cancelGesture() {
-    if (gesture.current?.timer) clearTimeout(gesture.current.timer);
-    gesture.current = null;
-  }
+  const previousLocation = useRef({ book: params.book, chapter: params.chapter });
   useEffect(() => {
-    setSelected((current) =>
-      current && current.book !== params.book ? null : current,
-    );
-    const update = () => {
-      const selection = window.getSelection(),
-        container = versesElement.current;
-      if (
-        !selection ||
-        selection.isCollapsed ||
-        !selection.rangeCount ||
-        !container ||
-        gesture.current?.active
-      )
-        return;
-      const range = selection.getRangeAt(0);
-      if (
-        !container.contains(range.startContainer) ||
-        !container.contains(range.endContainer)
-      )
-        return;
-      const pieces: { number: number; chapter: number; text: string }[] = [];
-      container
-        .querySelectorAll<HTMLParagraphElement>("p[data-verse]")
-        .forEach((element) => {
-          if (!range.intersectsNode(element)) return;
-          const clipped = document.createRange();
-          clipped.selectNodeContents(element);
-          if (clipped.compareBoundaryPoints(Range.START_TO_START, range) < 0)
-            clipped.setStart(range.startContainer, range.startOffset);
-          if (clipped.compareBoundaryPoints(Range.END_TO_END, range) > 0)
-            clipped.setEnd(range.endContainer, range.endOffset);
-          const content = clipped.cloneContents();
-          content.querySelectorAll("a").forEach((link) => link.remove());
-          const text = content.textContent?.trim();
-          if (text)
-            pieces.push({
-              number: Number(element.dataset.verse),
-              chapter: Number(element.dataset.chapter),
-              text,
-            });
-        });
-      if (!pieces.length) {
-        setSelected(null);
-        return;
-      }
-      if (pieces.some((piece) => piece.chapter !== pieces[0].chapter)) return;
-      const first = pieces[0].number,
-        last = pieces.at(-1)!.number;
-      anchor.current = first;
-      setSelected({
-        book: params.book,
-        chapter: pieces[0].chapter,
-        first,
-        last,
-        version,
-      });
-    };
-    document.addEventListener("selectionchange", update);
-    document.addEventListener("pointerup", cancelGesture);
-    document.addEventListener("pointercancel", cancelGesture);
-    const preventScroll = (event: TouchEvent) => {
-      if (gesture.current?.active) event.preventDefault();
-    };
-    const element = versesElement.current;
-    element?.addEventListener("touchmove", preventScroll, { passive: false });
-    return () => {
-      cancelGesture();
-      document.removeEventListener("selectionchange", update);
-      document.removeEventListener("pointerup", cancelGesture);
-      document.removeEventListener("pointercancel", cancelGesture);
-      element?.removeEventListener("touchmove", preventScroll);
-    };
-  }, [chapter.data, params.book, version]);
+    if (previousLocation.current.book !== params.book || previousLocation.current.chapter !== params.chapter) {
+      cancelGesture(); setSelected(null);
+      previousLocation.current = { book: params.book, chapter: params.chapter };
+    }
+  }, [params.book, params.chapter]);
+  const incomingLink = useRef("");
+  useEffect(() => {
+    if (!current || (params.version && params.version !== version)) return;
+    const key = `${params.book}:${params.chapter}:${params.version ?? ""}:${params.verses ?? ""}`;
+    if (incomingLink.current === key) return;
+    incomingLink.current = key;
+    if (!params.verses) return;
+    const verses = params.verses.split(",").map(Number);
+    if (!verses.every(number => current.verses.some(verse => verse.number === number))) return;
+    setSelected({ book: params.book, chapter: params.chapter, version, first: verses[0], last: verses[verses.length - 1], verses });
+    document.getElementById(`verse-${params.chapter}-${verses[0]}`)?.scrollIntoView({ block: "center" });
+  }, [current, params.book, params.chapter, params.version, params.verses, version]);
   const targetKey =
     picker?.target.kind === "devotional"
       ? picker.target.key
@@ -624,54 +545,7 @@ function BibleReader({ reading, version }: { reading: BibleReaderRepository; ver
                     <article
                       className="bible-verses"
                       aria-label={`${data.book.name}, capítulo ${data.chapter}`}
-                      onPointerMove={(event) => {
-                        const current = gesture.current;
-                        if (!current) return;
-                        const distance = Math.hypot(
-                          event.clientX - current.x,
-                          event.clientY - current.y,
-                        );
-                        if (
-                          !current.active &&
-                          current.type === "touch" &&
-                          distance > 10
-                        ) {
-                          cancelGesture();
-                          return;
-                        }
-                        if (
-                          !current.active &&
-                          current.type === "mouse" &&
-                          event.buttons === 1 &&
-                          distance > 6
-                        ) {
-                          current.active = true;
-                          suppressClick.current = true;
-                          anchor.current = current.anchor;
-                          if (current.timer) clearTimeout(current.timer);
-                        }
-                        if (!current.active) return;
-                        event.preventDefault();
-                        const element = (
-                          document.elementFromPoint?.(
-                            event.clientX,
-                            event.clientY,
-                          ) ?? (event.target as Element)
-                        ).closest<HTMLElement>("[data-verse]");
-                        if (
-                          element &&
-                          Number(element.dataset.chapter) ===
-                            current.chapter.chapter &&
-                          versesElement.current?.contains(element)
-                        )
-                          select(
-                            current.anchor,
-                            Number(element.dataset.verse),
-                            current.chapter,
-                          );
-                      }}
-                      onPointerUp={() => cancelGesture()}
-                      onPointerCancel={() => cancelGesture()}
+                      onCopy={(event) => event.preventDefault()}
                     >
                       {data.verses.map((verse) => (
                         <div className="bible-verse-row" key={verse.number}>
@@ -685,104 +559,19 @@ function BibleReader({ reading, version }: { reading: BibleReaderRepository; ver
                           aria-checked={
                             !!quote &&
                             quote.chapter === data.chapter &&
-                            verse.number >= quote.first &&
-                            verse.number <= quote.last
+                            selectionVerses(quote).includes(verse.number)
                           }
                           aria-label={`Versículo ${verse.number}: ${verse.text}`}
                           className={
                             (quote &&
                               quote.chapter === data.chapter &&
-                              verse.number >= quote.first &&
-                              verse.number <= quote.last) ||
-                            (params.chapter === data.chapter &&
+                              selectionVerses(quote).includes(verse.number)) ||
+                            (!params.verses && params.chapter === data.chapter &&
                               params.verse === verse.number)
                               ? "selected-verse"
                               : ""
                           }
-                          onPointerDown={(event) => {
-                            if (event.button > 0) return;
-                            cancelGesture();
-                            suppressClick.current = false;
-                            const current = {
-                              chapter: data,
-                              anchor: verse.number,
-                              x: event.clientX,
-                              y: event.clientY,
-                              active: false,
-                              type: event.pointerType || "mouse",
-                              timer: undefined as
-                                ReturnType<typeof setTimeout> | undefined,
-                            };
-                            current.timer = setTimeout(() => {
-                              current.active = true;
-                              suppressClick.current = true;
-                              anchor.current = verse.number;
-                              select(verse.number, verse.number, data);
-                            }, 350);
-                            gesture.current = current;
-                          }}
-                          onClick={(event) => {
-                            if (suppressClick.current) {
-                              suppressClick.current = false;
-                              event.preventDefault();
-                              return;
-                            }
-                            if (!window.getSelection()?.isCollapsed) return;
-                            if (
-                              event.shiftKey &&
-                              selected?.chapter === data.chapter
-                            )
-                              select(anchor.current, verse.number, data);
-                            else if (
-                              quote?.chapter === data.chapter &&
-                              quote.first === verse.number &&
-                              quote.last === verse.number
-                            )
-                              clearSelection();
-                            else {
-                              anchor.current = verse.number;
-                              select(verse.number, verse.number, data);
-                            }
-                          }}
-                          onContextMenu={(event) => {
-                            if (gesture.current?.active) event.preventDefault();
-                          }}
-                          onKeyDown={(event) => {
-                            if (event.key === "Escape") {
-                              clearSelection();
-                              return;
-                            }
-                            if (event.key === " " || event.key === "Enter") {
-                              event.preventDefault();
-                              anchor.current = verse.number;
-                              select(verse.number, verse.number, data);
-                            }
-                            if (
-                              event.shiftKey &&
-                              (event.key === "ArrowDown" ||
-                                event.key === "ArrowUp")
-                            ) {
-                              event.preventDefault();
-                              const end = Math.max(
-                                1,
-                                Math.min(
-                                  data.verses.length,
-                                  verse.number +
-                                    (event.key === "ArrowDown" ? 1 : -1),
-                                ),
-                              );
-                              select(
-                                selected?.chapter === data.chapter
-                                  ? anchor.current
-                                  : verse.number,
-                                end,
-                                data,
-                              );
-                              document
-                                .getElementById(`verse-${data.chapter}-${end}`)
-                                ?.focus();
-                            }
-                          }}
+                          {...selection.bind({ book: data.book.abbrev, chapter: data.chapter, version }, verse.number)}
                         >
                           <Link
                             to="/biblia"
@@ -790,6 +579,7 @@ function BibleReader({ reading, version }: { reading: BibleReaderRepository; ver
                               ...params,
                               chapter: data.chapter,
                               verse: verse.number,
+                              verses: undefined,
                             }}
                             aria-label={`Versículo ${verse.number}, link direto`}
                           >

@@ -2,6 +2,7 @@ import { IconButton, Button } from "../ui/button";
 import { useMemo, useRef, useState } from "react";
 import {
   Share2,
+  Copy,
   Users,
   PenLine,
   X,
@@ -20,17 +21,29 @@ import {
   quoteText,
   validationMessage,
   type BibleQuote,
+  type Community,
+  type Watch,
 } from "domain/core";
 import { useApp, useWriting } from "../context";
 import { useSelectionDrawerGestures } from "../selection-drawer-gestures";
 import { ShareToFriends } from "../social";
+import { isMobileViewport } from "../media";
+import { copyText, shareText } from "../share-text";
 
 export function SelectionMenu({
   quote,
+  text,
+  label,
+  scope = "all",
+  initialManualCopy = false,
   onClear,
   onSwipe,
 }: {
-  quote: BibleQuote;
+  quote?: BibleQuote;
+  text?: string;
+  label?: string;
+  scope?: "all" | "friends" | "text";
+  initialManualCopy?: boolean;
   onClear: () => void;
   onSwipe: () => void;
 }) {
@@ -38,25 +51,33 @@ export function SelectionMenu({
     app = useApp(),
     navigate = useNavigate();
   const { setEditor, setPicker } = useWriting();
-  const groups = useWatch(useMemo(() => repo.watchCommunities(), [repo]));
+  const groups = useWatch(useMemo<Watch<Community[]>>(() => scope === "all" ? repo.watchCommunities() : (next) => { next([]); return () => {}; }, [repo, scope]));
   const managed = groups.data?.filter((group) => canManage(group.role)) ?? [];
   const [choosing, setChoosing] = useState(false),
     [groupIds, setGroupIds] = useState<string[]>([]);
   const request = useRef<{ payload: string; id: string } | null>(null);
   const [message, setMessage] = useState(""),
-    [manualCopy, setManualCopy] = useState(false),
+    [manualCopy, setManualCopy] = useState(initialManualCopy),
     [sharing, setSharing] = useState(false);
-  const payload = quoteText(quote);
-  const [collapsed, setCollapsed] = useState(false);
+  const payload = quote ? quoteText(quote) : text ?? "";
+  const [collapsed, setCollapsed] = useState(() => !initialManualCopy && isMobileViewport());
   const [friendsOpen, setFriendsOpen] = useState(false);
   const panel = useRef<HTMLElement>(null);
   useSelectionDrawerGestures(panel, collapsed, setCollapsed, onSwipe);
+  async function transfer(copyOnly = false) {
+    setMessage(""); setManualCopy(false); setSharing(true);
+    try {
+      const result = await (copyOnly ? copyText(payload) : shareText(payload));
+      if (result === "copied") setMessage("Trecho copiado para compartilhar.");
+      if (result === "manual") { setCollapsed(false); setManualCopy(true); setMessage("Copie o texto abaixo para compartilhar."); }
+    } finally { setSharing(false); }
+  }
   return (
     <aside
       ref={panel}
       className={`selection-menu${collapsed ? " selection-menu-collapsed" : ""}`}
       data-state={collapsed ? "collapsed" : "expanded"}
-      aria-label="Ações dos versículos selecionados"
+      aria-label={quote ? "Ações dos versículos selecionados" : `Compartilhar ${label}`}
       onMouseDown={(event) => {
         if (!(event.target as Element).closest("dialog") && (event.target as Element).closest("button")) event.preventDefault();
       }}
@@ -83,8 +104,8 @@ export function SelectionMenu({
         </IconButton>
       </div>
       <div className="selection-menu-heading" hidden={collapsed}>
-        <p>{quote.reference}</p>
-        <p className="caption">{quote.versionName}</p>
+        <p>{quote?.reference ?? label}</p>
+        {quote && <p className="caption">{quote.versionName}</p>}
       </div>
       <Button
         variant="ghost"
@@ -92,35 +113,15 @@ export function SelectionMenu({
         aria-label="Compartilhar"
         title={collapsed ? "Compartilhar" : undefined}
         disabled={sharing}
-        onClick={async () => {
-          setMessage("");
-          setSharing(true);
-          try {
-            if (navigator.clipboard?.writeText) {
-              await navigator.clipboard.writeText(payload);
-              setMessage("Trecho copiado para compartilhar.");
-            } else {
-              setCollapsed(false);
-              setManualCopy(true);
-              setMessage("Copie o texto abaixo para compartilhar.");
-            }
-          } catch (error) {
-            if (!(
-              error instanceof DOMException && error.name === "AbortError"
-            )) {
-              setCollapsed(false);
-              setManualCopy(true);
-              setMessage("Copie o trecho abaixo para compartilhar.");
-            }
-          } finally {
-            setSharing(false);
-          }
-        }}
+        onClick={() => void transfer()}
       >
         <Share2 size={20} />
         <span hidden={collapsed}>Compartilhar</span>
       </Button>
-      {managed.length > 0 && repo.sharing && (
+      <Button variant="ghost" className="selection-action" aria-label="Copiar" disabled={sharing} onClick={() => void transfer(true)}>
+        <Copy size={20} /><span hidden={collapsed}>Copiar</span>
+      </Button>
+      {quote && scope === "all" && managed.length > 0 && repo.sharing && (
         <Button
           variant="ghost"
           className="selection-action"
@@ -136,9 +137,9 @@ export function SelectionMenu({
           <span hidden={collapsed}>Enviar para comunidade</span>
         </Button>
       )}
-      {repo.social && <Button variant="ghost" className="selection-action" aria-label="Enviar para amigos" onClick={() => setFriendsOpen(true)}><Send size={20} /><span hidden={collapsed}>Enviar para amigos</span></Button>}
-      {friendsOpen && repo.social && <ShareToFriends key={`${quote.version}:${quote.book}:${quote.chapter}:${quote.first}:${quote.last}`} social={repo.social} quote={quote} onClose={() => setFriendsOpen(false)} />}
-      {choosing && (
+      {quote && scope !== "text" && repo.social && <Button variant="ghost" className="selection-action" aria-label="Enviar para amigos" onClick={() => setFriendsOpen(true)}><Send size={20} /><span hidden={collapsed}>Enviar para amigos</span></Button>}
+      {quote && friendsOpen && repo.social && <ShareToFriends key={payload} social={repo.social} quote={quote} onClose={() => setFriendsOpen(false)} />}
+      {quote && choosing && (
         <div className="selection-destinations" hidden={collapsed}>
           <fieldset>
             <legend>Comunidades administradas</legend>
@@ -189,7 +190,7 @@ export function SelectionMenu({
           </Button>
         </div>
       )}
-      {(canPublish(app.localProfile?.editorial) || app.pilotAccess?.editorial) && (
+      {quote && scope === "all" && (canPublish(app.localProfile?.editorial) || app.pilotAccess?.editorial) && (
         <Button
           variant="ghost"
           className="selection-action"

@@ -26,7 +26,7 @@ export function useBiblePageGestures(container: RefObject<HTMLElement | null>, e
       if (!current || current.id !== event.pointerId || !current.dragging) return;
       suppressUntil = performance.now() + 400;
       event.preventDefault(); event.stopPropagation();
-      if (Math.abs(current.delta) >= Math.max(80, current.width * .25)) callbacks.current.navigateChapter(current.delta > 0 ? 1 : -1);
+      if (Math.abs(current.delta) >= Math.max(80, current.width * .25)) callbacks.current.navigateChapter(current.delta < 0 ? 1 : -1);
     };
     const cancel = () => { gesture = null; };
     const click = (event: MouseEvent) => { if (event.detail && performance.now() < suppressUntil) { event.preventDefault(); event.stopPropagation(); } };

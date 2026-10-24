@@ -46,18 +46,12 @@ bíblicas, das orações ou dos comentários pessoais.
 
 ### Seleção de versículos
 
-1. Tocar/clicar um versículo seleciona seu texto completo. Tocar novamente o único
-   versículo selecionado limpa a seleção; tocar outro inicia uma nova seleção simples.
-2. Manter pressionado e arrastar define uma âncora e o final de um intervalo
-   contíguo. Funciona em ambas as direções e inclui os versos entre as extremidades.
-3. O gesto de seleção não deve impedir a rolagem normal por toque; o arraste de
-   seleção começa após manter pressionado. Não selecionar partes de palavras.
-4. Destacar de forma discreta os versos selecionados e mostrar sua referência.
-   Disponibilizar Limpar seleção. Permitir alterar as extremidades sem gerar lacunas.
-5. Oferecer equivalente acessível por teclado, incluindo seleção simples e extensão
-   de intervalo; no computador, Shift + clique também estende a seleção.
-6. Ao mudar de livro/capítulo, limpar a seleção anterior. Seleções não atravessam capítulos.
-   Abrir um link para um verso mantém a navegação direta e o foco/realce do destino.
+1. Tocar/clicar ou segurar alterna somente o versículo inteiro escolhido e acumula a seleção, inclusive grupos separados no mesmo capítulo.
+2. Arrastar não seleciona versos ou texto. Movimento cancela o toque/segurar; rolagem vertical e swipe de capítulo continuam disponíveis conforme a spec 009.
+3. Não há seleção nativa nem Ctrl+C no leitor; busca e área de cópia manual continuam selecionáveis. Impedir pull-to-refresh sem impedir rolagem.
+4. Destacar somente os versos selecionados e oferecer Limpar seleção e X para limpar todos.
+5. Espaço/Enter alternam o verso focado; Escape limpa. Shift+clique equivale a clique comum; Shift+setas não estende intervalos.
+6. Trocar livro, capítulo (inclusive por rolagem contínua ou link) ou versão limpa a seleção. Não atravessar capítulos.
 7. Reutilizar a seleção para Enviar para devocional, exclusivo do Gestor do sistema,
    preenchendo Palavra, referência e versão. A revisão 007 acrescenta busca e
    controles de escolha da Palavra às ações Programar/Cancelar/Auxílio.
@@ -167,7 +161,7 @@ anotações ou orações pessoais. Não publicar automaticamente ao escolher o g
 - Avisos promocionais, gamificação, e-mail, push, sons e notificações do navegador.
 - Painel completo de criação de campanhas/mensagens do sistema.
 - Aplicativo Expo, deployment Convex ou publicação pública.
-- Seleções descontínuas ou que atravessem livros/capítulos; edição colaborativa.
+- Seleções entre capítulos ou que atravessem livros/capítulos; edição colaborativa.
 
 ## 8. Dados envolvidos
 
@@ -234,3 +228,11 @@ notificações, por ação no modal; atualização delegada para mínima intera�
   notificações, paginação, persistência e orçamento de rede; revisão visual/gestos.
 - Condições públicas de licença e conteúdo das specs 004/005 permanecem aplicáveis
   ao planejamento de publicação; esta spec não autoriza antecipar esse lançamento.
+
+### Menu no celular — revisao aprovada em 23/10/2026
+
+No celular (ate 640 px), o menu inicia contraido; acima de 640 px, expandido. A escolha inicial ocorre somente na montagem: resize/rotacao nao alteram o estado escolhido. Setas, arraste no menu, swipe rapido na leitura e expansao para destinos/copia manual permanecem. Trocar capitulo remonta o menu.
+
+### Contrato de seleção — aprovado em 23/10/2026
+
+`verses?: number[]` guarda a lista ordenada, sem repetição e com limites iguais a first/last. Sem a lista, registros antigos representam first..last. O servidor reconstrói texto apenas dos versos escolhidos. Referência agrupa sequências com travessão e separa grupos por vírgula (João 3:1–2, 5–6); texto mantém N - texto. Compartilhar usa Web Share, com fallback para cópia e aviso; cancelar não copia. Copiar é uma ação independente. Falha de clipboard oferece textarea manual. Amigos, comunidades, editorial e picker preservam a lista. Backend compatível é publicado antes da web; não há migração destrutiva.

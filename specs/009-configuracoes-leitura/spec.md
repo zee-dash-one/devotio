@@ -65,7 +65,7 @@ Exibir o valor escolhido; permitir operação por teclado. O texto de leitura e 
 | Modo | Exibição | Navegação |
 |---|---|---|
 | Contínuo | Capítulos um abaixo do outro, separados por título; carregamento progressivo antecipado (lazy loading) | Rolagem vertical, sem troca horizontal de capítulo |
-| Paginado | Um capítulo visível e botões Anterior/Próximo ao final | Arraste longo para esquerda volta; para direita avança. Botões fazem o equivalente |
+| Paginado | Um capítulo visível e botões Anterior/Próximo ao final | Arraste longo para a esquerda (direita → esquerda) avança; para a direita volta, como virar página de livro. Botões fazem o equivalente |
 
 1. Proposta de padrão: **Paginado**, compatível com a apresentação atual.
 2. Ambos preparam atual, anterior e próximo antes de a pessoa precisar deles, reutilizando conteúdo disponível. Nos limites do livro, preparar somente os vizinhos existentes; não atravessar livros automaticamente nesta entrega.
@@ -73,7 +73,7 @@ Exibir o valor escolhido; permitir operação por teclado. O texto de leitura e 
 4. Mudar o modo aplica na hora, mantendo capítulo/versículo visível, seleção e contexto de retorno ao formulário. Contínuo não mantém uma lista crescente de capítulos fora de leitura.
 5. Scroll para cima/baixo apenas rola o texto. Arraste curto não muda capítulo. Cada gesto aceito muda no máximo um capítulo.
 6. Arrastar o menu lateral nunca seleciona versos nem troca capítulo. Expandir/recolher o menu pela leitura consome o gesto.
-7. Long-press e arraste deliberado preservam seleção contígua da spec 008. Com seleção ativa, swipe de capítulo fica suspenso; botões continuam disponíveis e limpam a seleção se mudarem o capítulo.
+7. Toque/segurar alternam versos individualmente, inclusive grupos separados (spec 008); arraste não seleciona. Com seleção ativa, swipe de capítulo fica suspenso; botões continuam disponíveis e limpam a seleção se mudarem o capítulo.
 8. Seleção não atravessa capítulos no modo Contínuo. Ao selecionar para devocional/comunidade, mantém-se o fluxo contextual com botão flutuante e retorno ao formulário, sem menu lateral normal.
 
 ## 5. Requisitos não-funcionais

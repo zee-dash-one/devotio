@@ -122,7 +122,7 @@ describe("cadastro editorial publicado", () => {
     fireEvent.click(screen.getByRole("button", { name: "Salvar publicação" }));
     await screen.findByRole("heading", { name: "Gestão editorial" });
     expect(editorial.save).toHaveBeenCalledWith({ date, reflection: "Reflexão preservada", prayerSuggestion: "Oração preservada", mode: "create", reason: undefined,
-      selection: { book: "jo", chapter: 1, first: 1, last: 1, version: "alm1911" } });
+      selection: { book: "jo", chapter: 1, first: 1, last: 1, verses: [1], version: "alm1911" } });
   });
   it("impede texto acima de 512 e preserva campos quando a gravação falha", async () => {
     const editorial = service(); await openNew(editorial);

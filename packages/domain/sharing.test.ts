@@ -1,16 +1,35 @@
 import { describe, expect, it } from "vitest";
-import { bibleQuote, bibleQuotePath, quoteText, selectionRange, bibleSelectionSchema, notificationDate } from "./sharing";
+import { bibleQuote, bibleQuotePath, quoteText, selectionRange, bibleSelectionSchema, notificationDate, selectionVerses, toggleVerse, verseGroups } from "./sharing";
 import { localCommandSchema, localQuerySchema } from "./validators/local";
 const chapter = { book: { abbrev: "jo", name: "João", chapters: 21, testament: "NT" as const, order: 43 }, chapter: 1, verses: [1, 2, 3].map(number => ({ abbrev: "jo", bookName: "João", chapter: 1, number, text: `Verso ${number}` })) };
 const selection = { book: "jo", chapter: 1, first: 1, last: 3, version: "aa" as const };
 describe("seleção e compartilhamento", () => {
+  it("alterna versos, agrupa referências e lê intervalos legados", () => {
+    expect(selectionVerses(selection)).toEqual([1, 2, 3]);
+    let state = toggleVerse(null, selection, 1);
+    for (const n of [2, 5, 6]) state = toggleVerse(state, selection, n);
+    expect(state?.verses).toEqual([1, 2, 5, 6]);
+    expect(verseGroups(state!.verses!)).toBe("1–2, 5–6");
+    expect(toggleVerse(state, selection, 5)?.verses).toEqual([1, 2, 6]);
+    expect(toggleVerse(state, { ...selection, chapter: 2 }, 3)?.verses).toEqual([3]);
+    expect(toggleVerse(toggleVerse(null, selection, 1), selection, 1)).toBeNull();
+  });
+  it("preserva somente os versos escolhidos e rejeita listas inconsistentes", () => {
+    const chosen = { ...selection, verses: [1, 3] };
+    expect(bibleSelectionSchema.parse(chosen)).toEqual(chosen);
+    expect(bibleQuote(chapter, chosen).text).toBe("1 - Verso 1\n3 - Verso 3");
+    expect(bibleQuote(chapter, chosen).reference).toBe("João 1:1, 3");
+    for (const verses of [[], [3, 1], [1, 1, 3], [1, 4], [2], [1.5, 3]]) {
+      expect(bibleSelectionSchema.safeParse({ ...selection, verses }).success).toBe(false);
+    }
+  });
   it("normaliza arraste invertido e constrói trecho completo, referência, versão e primeiro verso", () => {
     expect(selectionRange(3, 1)).toEqual({ first: 1, last: 3 });
     const quote = bibleQuote(chapter, selection);
     expect(quote.text).toBe("1 - Verso 1\n2 - Verso 2\n3 - Verso 3");
     expect(quote.reference).toBe("João 1:1–3");
     expect(quoteText(quote)).toBe("1 - Verso 1\n2 - Verso 2\n3 - Verso 3\n\nJoão 1:1–3\nAlmeida Atualizada (AA)");
-    expect(bibleQuotePath(quote)).toBe("/biblia?book=jo&chapter=1&verse=1&version=aa");
+    expect(bibleQuotePath(quote)).toBe("/biblia?book=jo&chapter=1&verse=1&verses=1,2,3&version=aa");
     expect(bibleQuote(chapter, { ...selection, first: 2, last: 2 }).reference).toBe("João 1:2");
   });
   it("rejeita lacunas, capítulo errado, outra versão e intervalos inválidos", () => {

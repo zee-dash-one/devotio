@@ -1,0 +1,21 @@
+import { afterEach, expect, it, vi } from "vitest";
+import { copyText, shareText } from "./share-text";
+afterEach(() => vi.unstubAllGlobals());
+it("compartilha nativamente, copia sem API e não copia após cancelar", async () => {
+  const share = vi.fn().mockResolvedValue(undefined), writeText = vi.fn().mockResolvedValue(undefined);
+  vi.stubGlobal("navigator", { share, clipboard: { writeText } });
+  expect(await shareText("Trecho")).toBe("shared");
+  expect(share).toHaveBeenCalledWith({ text: "Trecho" });
+  expect(writeText).not.toHaveBeenCalled();
+  share.mockRejectedValue(Object.assign(new Error("Cancelado"), { name: "AbortError" }));
+  expect(await shareText("Trecho")).toBe("cancelled");
+  expect(writeText).not.toHaveBeenCalled();
+  share.mockRejectedValue(new Error("Indisponível"));
+  expect(await shareText("Trecho")).toBe("copied");
+  vi.stubGlobal("navigator", { clipboard: { writeText } });
+  expect(await shareText("Trecho")).toBe("copied");
+  writeText.mockRejectedValue(new Error("Negado"));
+  expect(await copyText("Trecho")).toBe("manual");
+  vi.stubGlobal("navigator", {});
+  expect(await shareText("Trecho")).toBe("manual");
+});

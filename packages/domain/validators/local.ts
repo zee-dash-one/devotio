@@ -14,6 +14,10 @@ export const bibleParamsSchema = z.object({
   book: z.string().regex(/^[a-z0-9]{1,6}$/).catch("jo"),
   chapter: z.coerce.number().int().min(1).max(150).catch(1),
   verse: z.coerce.number().int().min(1).max(176).optional().catch(undefined),
+  verses: z.coerce.string().max(704).regex(/^\d+(,\d+)*$/).refine(value => {
+    const numbers = value.split(",").map(Number);
+    return numbers.length <= 176 && numbers.every((n, i) => n >= 1 && n <= 176 && (i === 0 || n > numbers[i - 1]));
+  }).optional().catch(undefined),
   pick: z.enum(["devotional", "community"]).optional().catch(undefined),
   q: z.string().max(100).optional().catch(undefined),
   version: bibleVersionSchema.optional().catch(undefined),

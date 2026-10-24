@@ -65,6 +65,16 @@ async function connect(
   return link.id;
 }
 describe("Convex: amizade consentida e partilha privada", () => {
+  it("preserva seleção descontínua e rejeita listas adulteradas", async () => {
+    const { users, ids } = await setup();
+    await connect(users, 1);
+    const chosen = { ...selection, last: 5, verses: [1, 2, 5] };
+    await users[0].mutation(send, { selection: chosen, recipientIds: [ids[1]], message: "Leia", requestId: crypto.randomUUID() });
+    const received = await users[1].query(shares, { cursor: null });
+    expect(received.items[0].quote.verses).toEqual([1, 2, 5]);
+    expect(received.items[0].quote.text.split("\n").map(line => Number(line.split(" - ")[0]))).toEqual([1, 2, 5]);
+    await expect(users[0].mutation(send, { selection: { ...chosen, verses: [1, 5, 2] }, recipientIds: [ids[1]], message: "Leia", requestId: crypto.randomUUID() })).rejects.toThrow();
+  }, 15000); // The first canonical scripture request loads the complete Bible corpus.
   it.each(["pending", "disabled"] as const)("recusa todas as leituras privadas e envio da conta %s", async status => {
     const { t, users, ids } = await setup();
     await connect(users, 1);
