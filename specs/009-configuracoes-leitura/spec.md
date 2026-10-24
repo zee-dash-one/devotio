@@ -65,7 +65,7 @@ Exibir o valor escolhido; permitir operação por teclado. O texto de leitura e 
 | Modo | Exibição | Navegação |
 |---|---|---|
 | Contínuo | Capítulos um abaixo do outro, separados por título; carregamento progressivo antecipado (lazy loading) | Rolagem vertical, sem troca horizontal de capítulo |
-| Paginado | Um capítulo visível e botões Anterior/Próximo ao final | Arraste longo para esquerda volta; para direita avança. Botões fazem o equivalente |
+| Paginado | Um capítulo visível e botões Anterior/Próximo ao final | Arraste longo para a esquerda (direita → esquerda) avança; para a direita volta, como virar página de livro. Botões fazem o equivalente |
 
 1. Proposta de padrão: **Paginado**, compatível com a apresentação atual.
 2. Ambos preparam atual, anterior e próximo antes de a pessoa precisar deles, reutilizando conteúdo disponível. Nos limites do livro, preparar somente os vizinhos existentes; não atravessar livros automaticamente nesta entrega.

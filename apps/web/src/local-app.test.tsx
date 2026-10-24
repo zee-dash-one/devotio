@@ -294,7 +294,7 @@ describe("entrada local integrada", () => {
     pointer(verse, "pointerdown", 450, 100); pointer(verse, "pointermove", 449, 350); pointer(verse, "pointerup", 449, 350);
     expect(new URL(window.location.href).searchParams.get("chapter")).toBe("3");
     pointer(verse, "pointerdown", 450, 100); pointer(verse, "pointermove", 100, 102); pointer(verse, "pointerup", 100, 102);
-    await waitFor(() => expect(new URL(window.location.href).searchParams.get("chapter")).toBe("2"));
+    await waitFor(() => expect(new URL(window.location.href).searchParams.get("chapter")).toBe("4"));
     verse = await screen.findByRole("checkbox", { name: /^Versículo 1:/ });
     pointer(verse, "pointerdown", 100, 100); pointer(verse, "pointermove", 450, 102); pointer(verse, "pointerup", 450, 102);
     await waitFor(() => expect(new URL(window.location.href).searchParams.get("chapter")).toBe("3"));
