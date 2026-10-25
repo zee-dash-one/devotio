@@ -79,6 +79,7 @@ A publicação e o merge da implementação dependem de autorização do Hil. A 
 - `git ls-remote origin refs/heads/main`: base remota confirmada em `3f1c854`.
 - `git switch -c docs/devotional-image-sharing-plan`: sucesso, preservando os três documentos locais indicados pelo Hil.
 - Revisão documental; testes de aplicação e consulta a dados de produção não foram executados.
-- PR da revisão: a registrar antes da entrega.
+- PR documental em rascunho: https://github.com/zee-dash-one/devotio/pull/13.
 
 - Verificação documental: todos os links locais dos três arquivos resolvem; `git diff --check` passou. Código e infraestrutura não foram alterados.
+- `git commit` da revisão, `git push -u origin docs/devotional-image-sharing-plan` e `gh pr create --draft`: concluídos; PR #13 aberto para revisão do plano.
