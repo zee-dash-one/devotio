@@ -7,7 +7,10 @@ da tarefa, movido para [`.done/`](./.done/).
 ## Tarefas
 
 
-Nenhuma tarefa executável aberta. Tarefas 05–09 arquivadas em [.done/](./.done/).
+- [ ] [10 — Referência do devocional abre a Bíblia](10-referencia-abre-biblia.md): plano revisto; corrigir seleção omitida em home.get e tornar o link visível; recorte de legado/múltiplos capítulos proposto, backend antes da web.
+- [ ] [11 — Artes compartilháveis do devocional](11-compartilhar-devocional-imagem.md): plano revisto; geração única por revisão/variante no servidor, catálogo proposto de três tamanhos e duas artes; provar renderer, aprovar exemplos e retenção. Estudo/backend independem da 10; integrar a tela em sequência.
+
+Tarefas 05–09 concluídas e arquivadas em [.done/](./.done/).
 
 ## Decisões pendentes do Hil
 
