@@ -165,6 +165,7 @@ Checklist do PR de implementação:
 - Inspeção de `editorial.publish/release/withdraw`, `home.get`, `watchHome`, tela de leitura, tipos e `shareText`: concluída. Nenhuma alteração de código.
 - Leitura da versão instalada e de `node_modules/convex/src/server/storage.ts`: APIs de store/getUrl/delete disponíveis. Não equivale a validar o renderizador.
 - Documentação oficial consultada; endpoints Markdown de serve-files e scheduled-functions indisponíveis pela ferramenta, páginas HTML acessíveis.
-- Validação documental e PR: a registrar antes da entrega. Nenhum teste de aplicação, consulta de dados do piloto, instalação ou deploy realizado nesta revisão.
+- PR documental em rascunho: https://github.com/zee-dash-one/devotio/pull/13. Nenhum teste de aplicação, consulta de dados do piloto, instalação ou deploy realizado nesta revisão.
 
 - Verificação documental: todos os links locais dos três arquivos resolvem; `git diff --check` passou. Código e infraestrutura não foram alterados.
+- `git commit` da revisão, `git push -u origin docs/devotional-image-sharing-plan` e `gh pr create --draft`: concluídos; PR #13 aberto para revisão do plano.
