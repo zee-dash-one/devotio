@@ -33,6 +33,8 @@
 - `npm run test --workspace=domain -- --maxWorkers=1 --testTimeout=15000`: repetição completa passou (104 testes).
 - `npm run test --workspace=web -- --maxWorkers=1 --testTimeout=15000`: repetição completa passou (75 testes).
 - `git diff --check`: passou.
+- `git push -u origin feat/recent-devotionals-favorites`: passou; quatro commits por escopo enviados.
+- `gh pr create --repo zee-dash-one/devotio --base main --head feat/recent-devotionals-favorites`: passou; PR #15 aberto.
 
 ## Resultado e publicação
 
@@ -40,4 +42,4 @@
 - O novo schema do Convex é aditivo. Não há migração SQLite; a tabela local de favoritos existente é reutilizada.
 - Publicar o backend do piloto (`npm run deploy:backend`, deployment `upbeat-jellyfish-720`) antes de fazer merge do PR, que publica a web pela main. Não executar `deploy:backend:prod` neste piloto.
 - Validar em produção após a publicação: recentes com lacunas de data, favorito no limite, item antigo preservado, navegação pelo perfil e compartilhamento do selecionado.
-- **PR:** a registrar após criação.
+- **PR:** https://github.com/zee-dash-one/devotio/pull/15
