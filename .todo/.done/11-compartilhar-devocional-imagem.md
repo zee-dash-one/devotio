@@ -198,3 +198,9 @@ O renderer final usa fontkit + resvg nativo, com fonte incorporada e licença OF
 
 - npm install --save-dev --save-exact esbuild@0.27.0: sucesso; dependência dos scripts declarada explicitamente, sem mudar a versão instalada.
 - Commits separados: 4eca879 (referências), b9d309b (domínio/backend/local), e9b415b (web).
+
+## PR de implementação
+
+- PR: https://github.com/zee-dash-one/devotio/pull/14.
+- git push -u origin feat/devotional-share-images e gh pr create --base main: sucesso em 26/10/2026.
+- Conferência dos links locais: sucesso. Deploy e merge não executados; passos de release no PR e no manual operacional.
