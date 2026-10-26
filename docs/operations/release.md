@@ -283,3 +283,7 @@ Em 23/10/2026, Hil confirmou o carregamento da Comunidade em produção após a 
 Tarefas 05–09 executadas em branch conjunta por autorização explícita do Hil, com um commit por tarefa e merge autorizado. Publicar `npm run deploy:backend` no piloto `upbeat-jellyfish-720` antes de integrar a web: a mudança adiciona `verses` opcional ao contrato bíblico, sem migrar ou apagar registros. `first`/`last` antigos continuam válidos. O novo compartilhamento completo usa `VITE_PUBLIC_APP_URL` (pública), com padrão `https://devotio.zee-dash-one.workers.dev`; nenhuma configuração adicional é necessária no Cloudflare para manter essa URL.
 
 Em 24/10/2026, `npm run build:ready` e 253 testes passaram. Backend publicado no piloto `upbeat-jellyfish-720` antes do merge; `function-spec` confirmou os contratos opcionais de seleção e a governança existente. Entrega: [PR #12](https://github.com/zee-dash-one/devotio/pull/12). Sem migração de registros ou nova variável obrigatória no Cloudflare.
+
+## Release de imagens do devocional
+
+As tarefas 10/11 exigem backend compatível antes do merge e preparação das imagens do dia. Siga [o procedimento específico](devotional-images.md); inclui renderer nativo, fila e duas tabelas novas. O merge continua sendo a etapa que publica a web.

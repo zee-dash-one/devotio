@@ -1,8 +1,8 @@
 # 10 — Referência do devocional abre a Bíblia
 
-**Status:** aberta; plano revisto em 25/10/2026 a pedido do Hil. Não implementada nesta revisão.
-**Origem:** reforço da [07](./.done/07-devocional-compartilhar.md), integrada no PR #12.
-**Branch de implementação sugerida:** `fix/devotional-reference-link`.
+**Status:** implementação concluída em 2026-10-26; release e homologação em dispositivos pendentes.
+**Origem:** reforço da [07](./07-devocional-compartilhar.md), integrada no PR #12.
+**Branch de implementação:** `feat/devotional-share-images` (tarefas 10 e 11 juntas, a pedido do Hil).
 **Escopo proposto:** corrigir o contrato de leitura Convex e a apresentação do link; manter a seleção dentro de um capítulo.
 
 ## Objetivo
@@ -53,20 +53,20 @@ Trechos entre capítulos precisam de modelo próprio e aceite separado. Não abr
 
 A renderização de imagens depende da data, referência, Meditar e Oração, não de `BibleSelection`. O estudo do renderizador e o backend da [11](./11-compartilhar-devocional-imagem.md) podem avançar antes do merge da 10. Integrar as alterações de `devotional.tsx` em sequência para reduzir conflitos. Esta ordem não autoriza agentes paralelos nem publicação.
 
-## Checklist de implementação
+## Checklist do plano original (resultado consolidado abaixo)
 
-- [ ] Confirmar o recorte de legado e múltiplos capítulos proposto acima.
-- [ ] Atualizar a spec 001 com os requisitos aprovados.
-- [ ] Teste de regressão no contrato real `home.get`, incluindo seleção opcional e permissões existentes.
-- [ ] Corrigir retorno do backend e conferir paridade local.
-- [ ] Melhorar link e cobrir navegação, grupos, faixa, ausência de seleção e números inválidos.
-- [ ] Lint, typecheck, testes pertinentes, `build:ready` e conferência de links documentais.
+- [x] Confirmar o recorte de legado e múltiplos capítulos proposto acima.
+- [x] Atualizar a spec 001 com os requisitos aprovados.
+- [x] Teste de regressão no contrato real `home.get`, incluindo seleção opcional e permissões existentes.
+- [x] Corrigir retorno do backend e conferir paridade local.
+- [x] Melhorar link e cobrir navegação, grupos, faixa, ausência de seleção e números inválidos.
+- [x] Lint, typecheck, testes pertinentes, `build:ready` e conferência de links documentais.
 - [ ] PR próprio; backend compatível publicado no piloto antes do merge da web.
 - [ ] Registrar comandos, resultado e URL do PR; arquivar apenas após a implementação concluída.
 
 ## Entrega
 
-Seguir o fluxo do [AGENTS.md](../AGENTS.md). Esta tarefa agora prevê alteração de backend mesmo sem backfill. O PR de implementação deve incluir:
+Seguir o fluxo do [AGENTS.md](../../AGENTS.md). Esta tarefa agora prevê alteração de backend mesmo sem backfill. O PR de implementação deve incluir:
 
 - [ ] Backend: run npm run deploy:backend before merging (pilot upbeat-jellyfish-720).
 
@@ -83,3 +83,32 @@ A publicação e o merge da implementação dependem de autorização do Hil. A 
 
 - Verificação documental: todos os links locais dos três arquivos resolvem; `git diff --check` passou. Código e infraestrutura não foram alterados.
 - `git commit` da revisão, `git push -u origin docs/devotional-image-sharing-plan` e `gh pr create --draft`: concluídos; PR #13 aberto para revisão do plano.
+
+## Implementação — 25/10/2026
+
+Hil autorizou implementar as duas tarefas na branch `feat/devotional-share-images`, com arte básica substituível agora. Adotados os recortes e padrões do plano; acabamento da arte será posterior.
+
+- `git fetch origin main`, `git switch main`, `git pull --ff-only origin main`: sucesso, base atualizada.
+- `git switch -c feat/devotional-share-images`; `git cherry-pick 91d6a86 0219414`: sucesso, plano preservado.
+- Leitura de regras, planos, contratos e fontes: concluída.
+- Instalação de Workpool, resvg e fontkit: sucesso. Uma tentativa posterior parou por limite do serviço de revisão automática; retomada a pedido do Hil.
+
+## Resultado da implementação — 26/10/2026
+
+Implementação concluída na branch feat/devotional-share-images. Publicação do backend, preparação das imagens no piloto e homologação física continuam pendentes do Hil, conforme o [procedimento de release](../../docs/operations/devotional-images.md). O PR reúne as duas tarefas conforme autorização explícita do Hil.
+
+- npm run test --workspace=domain -- --maxWorkers=1 --testTimeout=15000: sucesso, 105 testes.
+- npm run test --workspace=backend -- --maxWorkers=1 --testTimeout=30000: sucesso, 87 testes.
+- npm run test --workspace=web -- --maxWorkers=1 --testTimeout=15000: sucesso, 78 testes.
+- npm run build:ready: sucesso, lint, typecheck, build e conferência do pacote público.
+- npm run verify:local e node scripts/verify-devotional-images.mjs: sucesso, incluindo autenticação, seis variantes e reutilização dos mesmos bytes PNG.
+- node scripts/preview-devotional-images.mjs: sucesso; oito PNGs nas seis variantes, 965970 bytes, 2719 ms no exemplo local. Conferência visual detectou e corrigiu um título órfão antes da paginação.
+- npx convex dev --once --debug-bundle-path .data/convex-image-bundle --typecheck disable --env-file <seletor público temporário>: sucesso; empacotamento diagnóstico encerrou antes de qualquer push. Não comprova execução remota.
+- Falhas intermediárias corrigidas: versão inicial de Workpool incompatível com APIs disponíveis nos testes; isolamento de componentes no convex-test antigo; dependência nativa do resvg não externalizada na raiz; fixtures/tipos e showModal ausentes nos testes. Todas as suítes acima passaram após as correções.
+- Primeiro verify:local encontrou o modo conectado; reinício do Vite com variáveis apenas do processo selecionou o modo SQLite e a verificação passou. Nenhum arquivo de ambiente foi alterado.
+- git diff --check: sucesso. Arquivos gerados, bancos e imagens de exemplo permanecem locais e ignorados.
+
+O renderer final usa fontkit + resvg nativo, com fonte incorporada e licença OFL; substitui a hipótese inicial de Satori/WASM. Artes básicas substituíveis, três tamanhos e dois estilos; revisão por hash, fila serial, recuperação e retenção de 30 dias. Compartilhamento nativo depende do suporte do navegador; download permanece disponível.
+
+- npm install --save-dev --save-exact esbuild@0.27.0: sucesso; dependência dos scripts declarada explicitamente, sem mudar a versão instalada.
+- Commits separados: 4eca879 (referências), b9d309b (domínio/backend/local), e9b415b (web).

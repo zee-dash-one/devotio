@@ -563,3 +563,7 @@ novas capacidades para Convex, publicação e mobile continuam pendentes.
 5. Completar o [checklist de release](../operations/release.md).
 
 Código anterior preservado no Git e em .legacy local ignorado. Nenhum banco externo foi alterado. Veja as [tasks](../../specs/004-fundacao-lancamento/tasks.md).
+
+## Referências e imagens do devocional — 26/10/2026
+
+Implementadas na branch feat/devotional-share-images: seleção estruturada em home.get, navegação bíblica com tratamento de referências inválidas e imagens persistidas por revisão em Convex/SQLite. Renderer local e bundle diagnóstico validados; 270 testes e build:ready passaram. Publicação do backend, preparo do dia e homologação física não realizados. Ver [release](../operations/devotional-images.md).

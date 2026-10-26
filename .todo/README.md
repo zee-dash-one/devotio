@@ -7,10 +7,12 @@ da tarefa, movido para [`.done/`](./.done/).
 ## Tarefas
 
 
-- [ ] [10 — Referência do devocional abre a Bíblia](10-referencia-abre-biblia.md): plano revisto; corrigir seleção omitida em home.get e tornar o link visível; recorte de legado/múltiplos capítulos proposto, backend antes da web.
-- [ ] [11 — Artes compartilháveis do devocional](11-compartilhar-devocional-imagem.md): plano revisto; geração única por revisão/variante no servidor, catálogo proposto de três tamanhos e duas artes; provar renderer, aprovar exemplos e retenção. Estudo/backend independem da 10; integrar a tela em sequência.
 
-Tarefas 05–09 concluídas e arquivadas em [.done/](./.done/).
+Tarefas 05–11 implementadas e registradas e arquivadas em [.done/](./.done/).
+
+## Release pendente do Hil
+
+- [ ] Tarefas 10–11: publicar backend no piloto, preparar imagens do dia, homologar compartilhamento em dispositivos e revisar/mergear o PR. Consulte o [passo a passo](../docs/operations/devotional-images.md) e os registros em [.done/](./.done/). Nenhum deploy foi executado pelo agente.
 
 ## Decisões pendentes do Hil
 

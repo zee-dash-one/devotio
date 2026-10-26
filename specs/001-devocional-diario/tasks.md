@@ -84,3 +84,14 @@
 T1/T2/T4/T-W1/T-W2 permanecem abertas quanto à integração real. T6–T8 e
 T-W4/T-W5 são requisitos novos de 04/10/2026 e começam abertos. Evidências
 anteriores de testes de domínio não cobrem janela nem favoritos.
+
+## Tarefas 10 e 11 — 25/10/2026
+
+- [x] Corrigir seleção estruturada em home.get e tornar a referência acessível.
+- [x] Gerar PNGs no servidor, por revisão, em seis variantes com paginação.
+- [x] Fila, storage, controle de revisão, retirada, tentativas e limpeza no Convex.
+- [x] Renderer e armazenamento SQLite local com transporte SSE.
+- [x] Menu Texto/Imagem, prévia, arquivos prontos e download por página na web.
+- [ ] Homologação em aparelhos físicos e publicação do backend/merge pelo Hil.
+
+Detalhes e evidências nas tarefas 10/11 de .todo; diferenças operacionais em docs/operations/devotional-images.md. Mobile nativo permanece adiado.

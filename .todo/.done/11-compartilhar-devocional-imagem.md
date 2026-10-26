@@ -1,7 +1,7 @@
 # 11 — Artes compartilháveis do devocional, geradas uma vez no servidor
 
-**Status:** aberta; plano refeito em 25/10/2026 a pedido do Hil. Documento de proposta, sem implementação ou aprovação automática dos padrões recomendados.
-**Branch de implementação sugerida:** `feat/devotional-share-image`.
+**Status:** implementação concluída em 2026-10-26; release e homologação em dispositivos pendentes.
+**Branch de implementação:** `feat/devotional-share-images` (tarefas 10 e 11 juntas, a pedido do Hil).
 **Escopo:** domínio, renderização Node, armazenamento Convex, adaptador SQLite e web/PWA. Backend antes da web.
 **Relação com a [10](./10-referencia-abre-biblia.md):** estudo e backend independentes; integrar a tela após a correção do link para reduzir conflitos.
 
@@ -124,20 +124,20 @@ Só avaliar CDN/R2 ou novo codec se as medições justificarem. Retenção e nú
 
 - [ ] Aprovar catálogo visual, marca/URL, paginação e retenção; atualizar spec 001 sem declarar aprovada uma recomendação apenas por estar neste plano.
 - [ ] Provar renderer/fontes/WASM no runtime e versão reais, com conteúdo curto, longo e acentos. Registrar métricas e artefatos.
-- [ ] Salvar sem mudança e salvar concorrentemente reaproveitam a mesma revisão; abrir/compartilhar nunca gera novos arquivos.
-- [ ] Editar durante render, retirar durante render, falhar após upload e recuperar execução interrompida não publicam revisão errada nem deixam jobs presos.
-- [ ] Nenhuma URL futura vaza; horário de liberação atualiza a web; exclusão de arquivo invalida a URL de origem.
-- [ ] As seis variantes usam o mesmo conteúdo e cada página mantém ordem, data, referência e legibilidade. Sem corte silencioso.
-- [ ] Downloads limitados à escolha; sem buscar seis imagens grandes a cada leitura; memória e object URLs liberadas ao sair/trocar.
-- [ ] Compartilhamento exige arquivo pronto, ação do usuário e HTTPS; cancelamento não baixa arquivo. Fallback explícito funciona por página e com erro de rede.
+- [x] Salvar sem mudança e salvar concorrentemente reaproveitam a mesma revisão; abrir/compartilhar nunca gera novos arquivos.
+- [x] Editar durante render, retirar durante render, falhar após upload e recuperar execução interrompida não publicam revisão errada nem deixam jobs presos.
+- [x] Nenhuma URL futura vaza; horário de liberação atualiza a web; exclusão de arquivo invalida a URL de origem.
+- [x] As seis variantes usam o mesmo conteúdo e cada página mantém ordem, data, referência e legibilidade. Sem corte silencioso.
+- [x] Downloads limitados à escolha; sem buscar seis imagens grandes a cada leitura; memória e object URLs liberadas ao sair/trocar.
+- [x] Compartilhamento exige arquivo pronto, ação do usuário e HTTPS; cancelamento não baixa arquivo. Fallback explícito funciona por página e com erro de rede.
 - [ ] iPhone Safari/PWA e Android Chrome/PWA: confirmar envio real para WhatsApp, destinos disponíveis e salvar. Desktop: compartilhar quando suportado ou download. Não considerar jsdom homologação do sistema operacional.
-- [ ] SQLite local usa contrato e renderização de servidor equivalentes; favoritos não recebem por engano imagem de revisão diferente.
-- [ ] Testes significativos de domínio/backend/web, lint, typecheck, `verify:local` e `build:ready` passam.
+- [x] SQLite local usa contrato e renderização de servidor equivalentes; favoritos não recebem por engano imagem de revisão diferente.
+- [x] Testes significativos de domínio/backend/web, lint, typecheck, `verify:local` e `build:ready` passam.
 - [ ] Medir custo projetado e obter acordo sobre retenção antes de habilitar geração automática.
 
 ## Release e recuperação
 
-PRs de implementação por escopo/tarefa, a partir da main atualizada, conforme [AGENTS.md](../AGENTS.md). Previews de branch usam o backend do piloto: não são ambiente isolado para ensaios destrutivos. Prova local primeiro; deployment de teste isolado quando necessário e autorizado.
+PRs de implementação por escopo/tarefa, a partir da main atualizada, conforme [AGENTS.md](../../AGENTS.md). Previews de branch usam o backend do piloto: não são ambiente isolado para ensaios destrutivos. Prova local primeiro; deployment de teste isolado quando necessário e autorizado.
 
 1. Publicar backend compatível no piloto `upbeat-jellyfish-720` mediante autorização; não usar `deploy:backend:prod` nem `npx convex deploy` para esse piloto.
 2. Executar ação interna idempotente para garantir as imagens do dia e dos agendamentos abrangidos pela política, com simulação/listagem de IDs antes do lote. **Preferir essa ação a salvar editorialmente de novo**, evitando auditorias/publicações falsas só para gerar imagens.
@@ -169,3 +169,32 @@ Checklist do PR de implementação:
 
 - Verificação documental: todos os links locais dos três arquivos resolvem; `git diff --check` passou. Código e infraestrutura não foram alterados.
 - `git commit` da revisão, `git push -u origin docs/devotional-image-sharing-plan` e `gh pr create --draft`: concluídos; PR #13 aberto para revisão do plano.
+
+## Implementação — 25/10/2026
+
+Hil autorizou implementar as duas tarefas na branch `feat/devotional-share-images`, com arte básica substituível agora. Adotados os recortes e padrões do plano; acabamento da arte será posterior.
+
+- `git fetch origin main`, `git switch main`, `git pull --ff-only origin main`: sucesso, base atualizada.
+- `git switch -c feat/devotional-share-images`; `git cherry-pick 91d6a86 0219414`: sucesso, plano preservado.
+- Leitura de regras, planos, contratos e fontes: concluída.
+- Instalação de Workpool, resvg e fontkit: sucesso. Uma tentativa posterior parou por limite do serviço de revisão automática; retomada a pedido do Hil.
+
+## Resultado da implementação — 26/10/2026
+
+Implementação concluída na branch feat/devotional-share-images. Publicação do backend, preparação das imagens no piloto e homologação física continuam pendentes do Hil, conforme o [procedimento de release](../../docs/operations/devotional-images.md). O PR reúne as duas tarefas conforme autorização explícita do Hil.
+
+- npm run test --workspace=domain -- --maxWorkers=1 --testTimeout=15000: sucesso, 105 testes.
+- npm run test --workspace=backend -- --maxWorkers=1 --testTimeout=30000: sucesso, 87 testes.
+- npm run test --workspace=web -- --maxWorkers=1 --testTimeout=15000: sucesso, 78 testes.
+- npm run build:ready: sucesso, lint, typecheck, build e conferência do pacote público.
+- npm run verify:local e node scripts/verify-devotional-images.mjs: sucesso, incluindo autenticação, seis variantes e reutilização dos mesmos bytes PNG.
+- node scripts/preview-devotional-images.mjs: sucesso; oito PNGs nas seis variantes, 965970 bytes, 2719 ms no exemplo local. Conferência visual detectou e corrigiu um título órfão antes da paginação.
+- npx convex dev --once --debug-bundle-path .data/convex-image-bundle --typecheck disable --env-file <seletor público temporário>: sucesso; empacotamento diagnóstico encerrou antes de qualquer push. Não comprova execução remota.
+- Falhas intermediárias corrigidas: versão inicial de Workpool incompatível com APIs disponíveis nos testes; isolamento de componentes no convex-test antigo; dependência nativa do resvg não externalizada na raiz; fixtures/tipos e showModal ausentes nos testes. Todas as suítes acima passaram após as correções.
+- Primeiro verify:local encontrou o modo conectado; reinício do Vite com variáveis apenas do processo selecionou o modo SQLite e a verificação passou. Nenhum arquivo de ambiente foi alterado.
+- git diff --check: sucesso. Arquivos gerados, bancos e imagens de exemplo permanecem locais e ignorados.
+
+O renderer final usa fontkit + resvg nativo, com fonte incorporada e licença OFL; substitui a hipótese inicial de Satori/WASM. Artes básicas substituíveis, três tamanhos e dois estilos; revisão por hash, fila serial, recuperação e retenção de 30 dias. Compartilhamento nativo depende do suporte do navegador; download permanece disponível.
+
+- npm install --save-dev --save-exact esbuild@0.27.0: sucesso; dependência dos scripts declarada explicitamente, sem mudar a versão instalada.
+- Commits separados: 4eca879 (referências), b9d309b (domínio/backend/local), e9b415b (web).
