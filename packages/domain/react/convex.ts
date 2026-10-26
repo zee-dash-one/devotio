@@ -103,6 +103,8 @@ export function createConvexRepository(client: ConvexReactClient): Repository {
       setFavorite: (date, saved) => safe(client.mutation(refs.favorite, { date, saved })),
       restoreFavorite: async token => { await safe(client.mutation(refs.restoreFavorite, { token })); },
     },
+    watchDevotionalImages: (id, revision) => (next, error) => subscribe(client.watchQuery(makeFunctionReference<"query", { id: string; revision: string }, import("../devotional-images").DevotionalImageManifest>("devotionalImages:get"), { id, revision }), next, error),
+    retryDevotionalImages: async id => { await safe(client.mutation(makeFunctionReference<"mutation">("devotionalImages:retry"), { id })); },
     social: createSocialRepository(client),
     governance: createGovernanceRepository(client),
     notifications: createNotificationsRepository(client),

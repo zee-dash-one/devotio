@@ -9,6 +9,15 @@ Backend novo precisa ser publicado no piloto antes da web; não há deploy
 nem homologação física nesta branch. A cópia pessoal continua disponível após
 edição ou retirada editorial. Registro: [tarefa 12](../../.todo/.done/12-recent-devotionals-favorites.md).
 
+## Referências e imagens do devocional — 26/10/2026
+
+Implementadas inicialmente em `feat/devotional-share-images` e integradas ao PR
+consolidado #15: seleção estruturada em `home.get`, navegação bíblica com
+tratamento de referências inválidas e imagens persistidas por revisão em
+Convex/SQLite. Renderer local e bundle diagnóstico validados; 270 testes e
+`build:ready` passaram no PR original. Publicação do backend, preparo do dia e
+homologação física não realizados. Ver [release](../operations/devotional-images.md).
+
 
 ## Graphify local — 22/10/2026
 

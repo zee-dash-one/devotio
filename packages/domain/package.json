@@ -18,8 +18,9 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "zod": "^3.24.2",
-    "convex": "^1.45.0"
+    "@noble/hashes": "^2.4.0",
+    "convex": "^1.45.0",
+    "zod": "^3.24.2"
   },
   "peerDependencies": {
     "react": ">=19.0.0"

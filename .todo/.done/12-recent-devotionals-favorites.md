@@ -43,3 +43,12 @@
 - Publicar o backend do piloto (`npm run deploy:backend`, deployment `upbeat-jellyfish-720`) antes de fazer merge do PR, que publica a web pela main. Não executar `deploy:backend:prod` neste piloto.
 - Validar em produção após a publicação: recentes com lacunas de data, favorito no limite, item antigo preservado, navegação pelo perfil e compartilhamento do selecionado.
 - **PR:** https://github.com/zee-dash-one/devotio/pull/15
+
+## Consolidação dos PRs — 26/10/2026
+
+- A pedido do Hil, o PR #15 passou a reunir também as tarefas 10 e 11 do PR #14. O plano do PR #13 está contido no #14; o registro comunitário do PR #11 já estava na `main` pelo PR #12.
+- `gh pr list --state all`, `git fetch origin`, `git diff` dos PRs: sucesso; quatro PRs abertos e o #12 já integrado.
+- `git merge --no-ff --no-commit origin/feat/devotional-share-images`: encontrou dois conflitos textuais em `.todo/README.md` e `packages/domain/react/convex.ts`; resolvidos preservando tarefas arquivadas, favoritos e imagens.
+- `npm run typecheck`: passou nos quatro workspaces após a resolução.
+- `npm run build:ready`: passou após a integração (lint, typecheck, build PWA e verificação do pacote público). As suítes de testes já tinham passado isoladamente nos PRs #14 e #15; não foram repetidas nesta consolidação.
+- O merge desta seção é entre branches locais; publicação e merge na `main` continuam pendentes do Hil.

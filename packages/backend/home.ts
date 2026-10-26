@@ -27,6 +27,7 @@ export const get = query({
         doc && isPublished(doc.publishedAt, doc.withdrawn, Date.now())
           ? {
               id: doc._id,
+              selection: doc.selection,
               date: doc.date,
               reference: doc.reference,
               translation: doc.translation,

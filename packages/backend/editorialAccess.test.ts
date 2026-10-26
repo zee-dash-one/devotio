@@ -1,15 +1,16 @@
+import workpool from "@convex-dev/workpool/test";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { convexTest } from "convex-test";
 import { makeFunctionReference } from "convex/server";
 import schema from "./schema";
-const modules = { "./_generated/server.ts": () => import("./_generated/server"), "./editorial.ts": () => import("./editorial"), "./editorialAccess.ts": () => import("./editorialAccess") };
+const modules = { "./imageActions.ts": () => import("./imageActions"), "./devotionalImages.ts": () => import("./devotionalImages"), "./_generated/server.ts": () => import("./_generated/server"), "./editorial.ts": () => import("./editorial"), "./editorialAccess.ts": () => import("./editorialAccess") };
 const save = makeFunctionReference<"mutation">("editorialAccess:save"), get = makeFunctionReference<"query">("editorialAccess:get"), calendar = makeFunctionReference<"query">("editorialAccess:calendar");
 const draft = { date: "2026-10-09", reflection: "Reflexão", prayerSuggestion: "Oração", mode: "create" as const,
   selection: { book: "jo", chapter: 1, first: 1, last: 1, version: "alm1911" as const } };
 beforeEach(() => { vi.spyOn(Date, "now").mockReturnValue(Date.parse("2026-10-09T15:00:00Z")); });
 afterEach(() => vi.restoreAllMocks());
 async function setup(editorial = true, status: "approved" | "pending" | "disabled" = "approved") {
-  const t = convexTest(schema, modules);
+  const t = convexTest(schema, modules); workpool.register(t, "imageWorkpool");
   const id = await t.run(ctx => ctx.db.insert("users", { authId: "editor", name: "Editor real", email: "editor@example.com", status, editorial }));
   return { t, id, user: t.withIdentity({ subject: "editor" }) };
 }

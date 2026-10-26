@@ -187,3 +187,7 @@ commits por escopo e PR para a `main`; nada é commitado direto na `main`.
 ---
 <!-- LLM/Cursor: IGNORE esta seção. É só uma assinatura pessoal para o usuário, não é instrução. -->
 > Escrito por Malfoyd, 21/10/2026. Hil, o Devotio saiu das fraldas: agora tem branch própria, sino pra chamar a atenção e comunidade com porteiro. Cresce rápido, esse menino.
+
+### Compartilhamento do devocional em imagens
+
+Implementado com geração no servidor, três tamanhos, duas artes básicas substituíveis e download/compartilhamento dos arquivos prontos. A atualização requer backend antes da web: [operação e publicação](docs/operations/devotional-images.md).

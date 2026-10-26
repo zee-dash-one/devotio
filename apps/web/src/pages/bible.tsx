@@ -183,7 +183,7 @@ function BibleReader({ reading, version }: { reading: BibleReaderRepository; ver
           );
         void navigate({
           to: "/biblia",
-          search: { ...params, chapter: number, verse: undefined, verses: undefined },
+          search: { ...params, chapter: number, verse: undefined, verses: undefined, invalidSelection: undefined },
           replace: true,
           resetScroll: false,
         });
@@ -207,7 +207,7 @@ function BibleReader({ reading, version }: { reading: BibleReaderRepository; ver
         if (number && number !== params.chapter)
           void navigate({
             to: "/biblia",
-            search: { ...params, chapter: number, verse: undefined, verses: undefined },
+            search: { ...params, chapter: number, verse: undefined, verses: undefined, invalidSelection: undefined },
             replace: true,
             resetScroll: false,
           });
@@ -261,17 +261,24 @@ function BibleReader({ reading, version }: { reading: BibleReaderRepository; ver
     }
   }, [params.book, params.chapter]);
   const incomingLink = useRef("");
+  const [linkNotice, setLinkNotice] = useState("");
   useEffect(() => {
     if (!current || (params.version && params.version !== version)) return;
-    const key = `${params.book}:${params.chapter}:${params.version ?? ""}:${params.verses ?? ""}`;
+    const key = `${params.book}:${params.chapter}:${params.version ?? ""}:${params.verses ?? ""}:${params.invalidSelection ?? false}`;
     if (incomingLink.current === key) return;
     incomingLink.current = key;
+    setLinkNotice("");
+    if (params.invalidSelection) { setSelected(null); setLinkNotice("A referência contém números inválidos. O capítulo está aberto para leitura."); return; }
     if (!params.verses) return;
     const verses = params.verses.split(",").map(Number);
-    if (!verses.every(number => current.verses.some(verse => verse.number === number))) return;
+    if (!verses.every(number => current.verses.some(verse => verse.number === number))) {
+      setSelected(null);
+      setLinkNotice("A referência contém versículos que não existem neste capítulo. O capítulo está aberto para leitura.");
+      return;
+    }
     setSelected({ book: params.book, chapter: params.chapter, version, first: verses[0], last: verses[verses.length - 1], verses });
     document.getElementById(`verse-${params.chapter}-${verses[0]}`)?.scrollIntoView({ block: "center" });
-  }, [current, params.book, params.chapter, params.version, params.verses, version]);
+  }, [current, params.book, params.chapter, params.version, params.verses, params.invalidSelection, version]);
   const targetKey =
     picker?.target.kind === "devotional"
       ? picker.target.key
@@ -422,6 +429,7 @@ function BibleReader({ reading, version }: { reading: BibleReaderRepository; ver
   return (
     <div className="page bible-page">
       <h1 className="sr-only">Leitura bíblica</h1>
+      {linkNotice && <p role="status">{linkNotice}</p>}
       {catalog.error ? (
         <ErrorMessage message={catalog.error} />
       ) : !catalog.data ? (
@@ -579,7 +587,7 @@ function BibleReader({ reading, version }: { reading: BibleReaderRepository; ver
                               ...params,
                               chapter: data.chapter,
                               verse: verse.number,
-                              verses: undefined,
+                              verses: undefined, invalidSelection: undefined,
                             }}
                             aria-label={`Versículo ${verse.number}, link direto`}
                           >

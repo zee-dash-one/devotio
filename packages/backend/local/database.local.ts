@@ -38,7 +38,7 @@ export class LocalDatabase {
   private listeners = new Map<string, Set<(summary: NotificationSummary) => void>>();
   private changedNotifications = new Set<string>();
   private removedFavorites = new Map<string, { token: string; favorite: Favorite }>();
-  constructor(path: string, bibleDirectory?: string, readonly now = () => Date.now()) {
+  constructor(readonly path: string, bibleDirectory?: string, readonly now = () => Date.now()) {
     if (path !== ":memory:") mkdirSync(dirname(path), { recursive: true });
     this.db = new DatabaseSync(path);
     this.db.exec(`PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000;

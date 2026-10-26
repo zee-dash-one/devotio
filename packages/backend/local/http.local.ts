@@ -4,6 +4,8 @@ import { ZodError } from "zod";
 import { LocalDatabase, LocalError, profiles } from "./database.local";
 import { LOCAL_SESSION_SECONDS } from "../../domain/local-cache";
 
+import { LocalImages } from "./images.local";
+import { imageRequestSchema, canManageEditorial } from "../../domain/index";
 const cookieName = "devotio_local_session";
 function token(req: IncomingMessage) {
   return req.headers.cookie?.split(";").map(v => v.trim()).find(v => v.startsWith(cookieName + "="))?.slice(cookieName.length + 1);
@@ -19,7 +21,7 @@ async function body(req: IncomingMessage): Promise<unknown> {
   }
   try { return JSON.parse(content); } catch { throw new LocalError("Requisição inválida."); }
 }
-export function createLocalHandler(database: LocalDatabase) {
+export function createLocalHandler(database: LocalDatabase, images?: LocalImages) {
   return async (req: IncomingMessage, res: ServerResponse) => {
     const send = (status: number, data: unknown) => {
       res.statusCode = status;
@@ -36,6 +38,30 @@ export function createLocalHandler(database: LocalDatabase) {
       const url = new URL(req.url ?? "/", `http://${host}`);
       const path = url.pathname.replace(/^\/__local/, "");
       const sessionToken = token(req);
+      if (images && ["/images", "/image-file", "/image-retry"].includes(path)) {
+        const user = database.session(sessionToken);
+        if (!user) throw new LocalError("Sua sessão mudou. Entre novamente.", 401);
+        if (path === "/images" && req.method === "GET") {
+          if (url.searchParams.get("profile") !== user.id) throw new LocalError("Sua sessão mudou.", 401);
+          const input = imageRequestSchema.parse({ id: url.searchParams.get("id"), revision: url.searchParams.get("revision") });
+          res.writeHead(200, { "Content-Type": "text/event-stream", "Cache-Control": "no-store", "Connection": "keep-alive" }); res.flushHeaders();
+          const write = () => { if (!database.session(sessionToken)) { res.end(); return; } res.write("data: " + JSON.stringify(images.manifest(input.id, input.revision)) + "\n\n"); };
+          const stop = images.subscribe(write); write();
+          const midnight = setTimeout(write, Math.max(1, Math.min(2147483647, Date.parse(input.id + "T03:00:00Z")+86400000-database.now())));
+          const heartbeat = setInterval(() => res.write(": keepalive\n\n"), 25000);
+          const expiry = setTimeout(() => res.end(), Math.min(2147483647, (database.sessionExpiresAt(sessionToken) ?? Date.now())-Date.now()));
+          res.on("close", () => { stop(); clearInterval(heartbeat); clearTimeout(expiry); clearTimeout(midnight); }); return;
+        }
+        if (path === "/image-file" && req.method === "GET") {
+          const bytes = images.file(url.searchParams.get("date") ?? "", url.searchParams.get("revision") ?? "", url.searchParams.get("variant") ?? "", Number(url.searchParams.get("page")));
+          if (!bytes) throw new LocalError("Imagem indisponível.", 404);
+          res.writeHead(200, { "Content-Type": "image/png", "Content-Length": bytes.length, "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff" }); res.end(bytes); return;
+        }
+        if (path === "/image-retry" && req.method === "POST") {
+          if (req.headers.origin !== "http://" + host || req.headers["x-devotio-profile"] !== user.id || !canManageEditorial(user)) throw new LocalError("Acesso exclusivo da gestão editorial.", 403);
+          const input = imageRequestSchema.parse(await body(req)); images.refresh(input.id, true); return send(200, null);
+        }
+      }
       if (req.method === "GET" && path === "/session") return send(200, { profile: database.session(sessionToken), profiles, expiresAt: database.sessionExpiresAt(sessionToken) });
       if (req.method === "GET" && path === "/events") {
         const user = database.session(sessionToken), expiresAt = database.sessionExpiresAt(sessionToken);
@@ -76,7 +102,10 @@ export function createLocalHandler(database: LocalDatabase) {
       }
       const user = database.session(sessionToken);
       if (!user || req.headers["x-devotio-profile"] !== user.id) throw new LocalError("Sua sessão mudou. Entre novamente.", 401);
-      return send(200, database.command(user, input));
+      const result = database.command(user, input);
+      if (images && (input.action === "publish" || input.action === "schedule")) images.refresh(input.input.date);
+      if (images && input.action === "withdraw") images.refresh(input.date);
+      return send(200, result);
     } catch (error) {
       const status = error instanceof LocalError ? error.status : error instanceof ZodError ? 400 : 500;
       if (status === 500) console.error("Falha no backend local:", error);

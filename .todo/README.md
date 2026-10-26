@@ -8,6 +8,10 @@ da tarefa, movido para [`.done/`](./.done/).
 
 Nenhuma tarefa executável aberta. Tarefas concluídas arquivadas em [.done/](./.done/).
 
+## Release pendente do Hil
+
+- [ ] Tarefas 10–12: publicar o backend no piloto, preparar as imagens do dia, homologar compartilhamento e favoritos em dispositivos e revisar o PR consolidado #15 antes do merge. Consulte o [passo a passo das imagens](../docs/operations/devotional-images.md) e os registros em [.done/](./.done/). Nenhum deploy foi executado nesta integração.
+
 ## Decisões pendentes do Hil
 
 - [ ] `specs/` x `.todo/`: nas features novas, a tarefa do `.todo/` substitui `plan.md`/`tasks.md` e a spec fica só com requisitos? (ver [AGENTS.md §2](../AGENTS.md#2-fluxo-de-trabalho-spec--plan--tasks--code))

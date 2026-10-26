@@ -41,6 +41,11 @@ Membros não recebem emails ou autores dos ticks. Contagens pequenas podem permi
 
 ## Modelo de Dados
 
+### Artes do devocional (25/10/2026)
+
+`devotionals.imageSetId` e `imageRevision` são opcionais. A tabela `devotionalImageSets` guarda snapshot renderizável, revisão, geração/tentativas, estado, expiração e manifesto de arquivos; índices por devocional/revisão, estado/atualização e expiração. `devotionalImageUploads` registra hash antes do upload, arquivo registrado e expiração; índices por hash, storageId e expiração permitem limpar órfãos sem tocar arquivos de outros recursos. Workpool é componente isolado, com paralelismo 1 e três tentativas. Renderer Node com fonte empacotada/fontkit/resvg, compartilhado pelo SQLite. O navegador consulta o manifesto autenticado e baixa apenas a escolha. Operação e limites em [imagens do devocional](operations/devotional-images.md).
+
+
 ### Notificações pessoais (spec 016 — 21/10/2026)
 
 `Repository.notifications` existe nos dois ambientes; Convex usa subscriptions

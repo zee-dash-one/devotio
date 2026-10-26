@@ -236,3 +236,9 @@ Implementação das decisões da tarefa 07:
 - Web Share quando disponível; fallback para clipboard com aviso e textarea manual em falha. Cancelar o compartilhamento nativo não copia.
 - URL pública configurável por VITE_PUBLIC_APP_URL, padrão https://devotio.zee-dash-one.workers.dev. Não usar a origem local do navegador como URL compartilhada.
 - Seleção nativa e pull-to-refresh desativados na superfície de leitura, preservando rolagem vertical. Cadastro editorial e tema semanal inalterados; Expo continua adiado.
+
+## Revisão aprovada — 25/10/2026, tarefas 10 e 11
+
+Hil autorizou implementar o plano revisado em uma branch conjunta. A referência estruturada abre os versículos exatos; legado sem seleção permanece texto, sem inferir passagens nem ampliar para vários capítulos.
+
+O servidor gera uma vez por revisão as artes do devocional publicado do dia: data, referência, Meditar e Oração, sem corpo bíblico. Três tamanhos (1080×1920, 1080×1350 e 1080×1080), duas paletas básicas e PNG. A arte inicial é simples e substituível por configuração versionada; refinamento visual fica para depois. Texto integral, fonte legível e páginas numeradas (máximo dez por variante). Retenção de 30 dias, limpeza de revisões substituídas. Compartilhar usa arquivos preparados, com download por página e cancelamento sem ação automática. Favoritos pessoais não recebem uma imagem divergente por coincidência de data. SQLite usa o mesmo renderizador no servidor. App nativo continua adiado.

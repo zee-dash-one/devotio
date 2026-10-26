@@ -15,3 +15,5 @@ export * from "./bible";
 export * from "./editorial";
 export * from "./social";
 export * from "./community-governance";
+
+export * from "./devotional-images";
