@@ -51,4 +51,8 @@
 - `git merge --no-ff --no-commit origin/feat/devotional-share-images`: encontrou dois conflitos textuais em `.todo/README.md` e `packages/domain/react/convex.ts`; resolvidos preservando tarefas arquivadas, favoritos e imagens.
 - `npm run typecheck`: passou nos quatro workspaces após a resolução.
 - `npm run build:ready`: passou após a integração (lint, typecheck, build PWA e verificação do pacote público). As suítes de testes já tinham passado isoladamente nos PRs #14 e #15; não foram repetidas nesta consolidação.
+- `git diff --check`, `git ls-files -u`: passaram; nenhum marcador ou entrada de conflito remanescente.
+- `git commit -m 'chore(integration): consolidate devotional pull requests'`, `git push`: passaram; o PR #15 contém todos os commits do #14.
+- `gh pr edit 15`: passou; título, escopo e ordem de release atualizados. GitHub indicou `CLEAN` e `MERGEABLE` para o PR #15.
+- `gh pr close 14`, `gh pr close 13`, `gh pr close 11`: passaram. O #12 já tinha estado `MERGED`; resta somente o #15 aberto.
 - O merge desta seção é entre branches locais; publicação e merge na `main` continuam pendentes do Hil.
