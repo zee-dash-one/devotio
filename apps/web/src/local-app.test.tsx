@@ -114,6 +114,33 @@ function isQuery(path: string, name: string) {
   return input ? (JSON.parse(input) as { query?: string }).query === name : false;
 }
 describe("entrada local integrada", () => {
+  it.each(["paged", "continuous"])("abre Colossenses 1:3–23 inteiro no modo %s", async mode => {
+    localStorage.setItem("devotio:preferences:v1:marina", JSON.stringify({ theme: "day", fontSize: 20, mode }));
+    const original = server(true, profile, false, false, true);
+    const book = { abbrev: "cl", name: "Colossenses", chapters: 4, testament: "NT", order: 51 };
+    vi.stubGlobal("fetch", async (path: string, options?: RequestInit) => {
+      const response = await original(path, options);
+      if (isQuery(path,"devotionals")) {
+        const homes = await response.json();
+        for (const home of Object.values(homes) as { devotional: { reference: string; selection: BibleSelection } }[]) { home.devotional.reference = "Colossenses 1:3–23"; home.devotional.selection = { book: "cl", chapter: 1, first: 3, last: 23, version: "aa" }; }
+        return new Response(JSON.stringify(homes));
+      }
+      if (isQuery(path,"bible")) { const data = await response.json(); return new Response(JSON.stringify({ ...data, books: [book] })); }
+      if (isQuery(path,"chapter")) return new Response(JSON.stringify({ book, chapter: 1, verses: Array.from({ length: 29 }, (_, i) => ({ abbrev: "cl", bookName: "Colossenses", chapter: 1, number: i+1, text: "Versículo " + (i+1) })) }));
+      return response;
+    });
+    render(<StrictMode><LocalApp /></StrictMode>);
+    fireEvent.click(await screen.findByRole("link", { name: "Abrir Colossenses 1:3–23 na Bíblia" }));
+    await waitFor(() => expect(document.getElementById("verse-1-23")?.getAttribute("aria-checked")).toBe("true"));
+    for (let verse = 3; verse <= 23; verse++) expect(document.getElementById("verse-1-"+verse)?.getAttribute("aria-checked")).toBe("true");
+    expect(document.getElementById("verse-1-2")?.getAttribute("aria-checked")).toBe("false");
+  });
+  it.each(["1,177", "1,7"])("explica uma seleção inválida na URL (%s)", async verses => {
+    window.history.replaceState(null, "", "/biblia?book=jo&chapter=1&verses="+verses); server(true);
+    render(<StrictMode><LocalApp /></StrictMode>);
+    await screen.findByText(/A referência contém/);
+    expect(document.getElementById("verse-1-1")?.getAttribute("aria-checked")).toBe("false");
+  });
   it.each(["paged", "continuous"])("devocional seleciona Palavra e abre passagem marcada no modo %s", async (mode) => {
     localStorage.setItem("devotio:preferences:v1:marina", JSON.stringify({ theme: "day", fontSize: 20, mode }));
     server(true, profile, false, false, true);
@@ -127,7 +154,7 @@ describe("entrada local integrada", () => {
     expect(screen.getByRole("button", { name: "Enviar para amigos" })).toBeDefined();
     fireEvent.click(screen.getByRole("button", { name: "Copiar" }));
     await waitFor(() => expect(writeText).toHaveBeenCalledWith("1 - Um\n5 - Cinco\n\nJoão 1:1, 5\nAA"));
-    fireEvent.click(screen.getByRole("link", { name: "João 1:1–2, 5–6" }));
+    fireEvent.click(screen.getByRole("link", { name: "Abrir João 1:1–2, 5–6 na Bíblia" }));
     await waitFor(() => expect(window.location.pathname).toBe("/biblia"));
     for (const n of [1, 2, 5, 6]) await waitFor(() => expect(document.getElementById(`verse-1-${n}`)?.getAttribute("aria-checked")).toBe("true"));
     expect(document.getElementById("verse-1-3")?.getAttribute("aria-checked")).toBe("false");
@@ -145,6 +172,7 @@ describe("entrada local integrada", () => {
     expect(screen.queryByRole("link", { name: "Salmos 23:1" })).toBeNull();
     expect(screen.queryByRole("checkbox")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Compartilhar devocional" }));
+    fireEvent.click(screen.getByRole("button", { name: "Texto" }));
     await waitFor(() => expect(share).toHaveBeenCalledWith({ text: expect.stringContaining("PALAVRA\nSalmos 23:1 — AA") }));
     expect(share.mock.calls[0][0].text).toContain("Devotio — https://devotio.zee-dash-one.workers.dev");
     Object.defineProperty(navigator, "share", { configurable: true, value: undefined });
@@ -178,6 +206,7 @@ describe("entrada local integrada", () => {
     Object.defineProperty(navigator, "clipboard", { configurable: true, value: undefined });
     render(<StrictMode><LocalApp /></StrictMode>);
     fireEvent.click(await screen.findByRole("button", { name: "Compartilhar devocional" }));
+    fireEvent.click(screen.getByRole("button", { name: "Texto" }));
     const area = await screen.findByLabelText("Texto para compartilhar") as HTMLTextAreaElement;
     expect(area.value).toContain("MEDITAR\n\nReflexão de teste\n\nORAÇÃO\n\nOração de teste");
     expect(screen.queryByRole("button", { name: "Enviar para amigos" })).toBeNull();
