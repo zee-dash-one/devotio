@@ -4,7 +4,12 @@ import { dateSchema, type publicationSchema, type scheduleSchema } from "./valid
 
 export interface LocalProfile { id: string; name: string; label: string; description: string; editorial: boolean }
 export interface Favorite { devotional: Devotional; favoritedAt: number }
-export interface ReadingData { dates: string[]; favorites: Favorite[]; offline?: boolean; storageWarning?: string }
+export const MAX_FAVORITE_DEVOTIONALS = 3;
+export const RECENT_DEVOTIONALS_LIMIT = 7;
+export function favoriteLimitMessage(limit = MAX_FAVORITE_DEVOTIONALS) {
+  return `Você pode guardar até ${limit} devocionais favoritos. Remova um favorito para adicionar outro.`;
+}
+export interface ReadingData { dates: string[]; recent: Devotional[]; favorites: Favorite[]; offline?: boolean; storageWarning?: string }
 export interface BibleBook { abbrev: string; name: string; chapters: number; testament: "VT" | "NT"; order: number }
 export interface BibleVerse { abbrev: string; bookName: string; chapter: number; number: number; text: string }
 export interface BibleChapter { version?: import("./validators/bible").BibleVersion; book: BibleBook; chapter: number; verses: BibleVerse[] }

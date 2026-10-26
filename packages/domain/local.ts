@@ -78,7 +78,7 @@ export function createLocalRepository(storage: LocalCacheStorage, onExpired: () 
       if (!dates.includes(date)) { delete cache.homes[date]; dirtyDates.delete(date); }
       else if (changed && !cache.homes[date].devotional) dirtyDates.add(date);
     }
-    if (changed) { revision++; persist(); }
+    if (changed) { reading = undefined; revision++; persist(); }
     return changed;
   }
   reconcileDay();
@@ -108,13 +108,16 @@ export function createLocalRepository(storage: LocalCacheStorage, onExpired: () 
   }
   async function readFavorites(): Promise<ReadingData> {
     reconcileDay();
-    if (reading) return { ...reading, dates: recentDates(today()), storageWarning };
+    if (reading) return { ...reading, storageWarning };
     if (!favoritesRequest) {
       favoritesRequest = query<ReadingData>({ query: "reading", timeZone }).then(data => {
-        if (!disposed) { cache.favorites = data.favorites; persist(); reading = data; }
+        if (!disposed) { cache.favorites = data.favorites; cache.recent = data.recent; persist(); reading = data; }
         return { ...data, storageWarning };
       }).catch(error => {
-        if (!disposed && !(error as { status?: number })?.status) return { dates: recentDates(today()), favorites: cache.favorites, offline: true, storageWarning };
+        if (!disposed && !(error as { status?: number })?.status) {
+          const recent = (cache.recent ?? []).filter(item => item.date <= today());
+          return { dates: recent.map(item => item.date), recent, favorites: cache.favorites, offline: true, storageWarning };
+        }
         throw error;
       }).finally(() => { favoritesRequest = undefined; });
     }
@@ -172,7 +175,8 @@ export function createLocalRepository(storage: LocalCacheStorage, onExpired: () 
       case "publish": case "schedule": case "withdraw": {
         const date = input.action === "withdraw" ? input.date : input.input.date;
         revision++; delete cache.homes[date]; dirtyDates.add(date); persist();
-        await invalidate(key => key === "editorial" || key === "home:" + date); break;
+        reading = undefined;
+        await invalidate(key => key === "editorial" || key === "reading" || key === "home:" + date); break;
       }
       case "setFavorite": case "restoreFavorite": reading = undefined; await favoritesRequest; reading = undefined; await invalidate(key => key === "reading"); break;
       case "createCommunity": case "joinCommunity":

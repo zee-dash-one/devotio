@@ -77,6 +77,7 @@ export interface Repository {
   mode: "preview" | "live" | "local";
   social?: import("./social").SocialRepository;
   reading?: import("./reading").ReadingRepository;
+  devotionalReading?: Pick<import("./reading").ReadingRepository, "watchReading" | "setFavorite" | "restoreFavorite">;
   bible?: import("./reading").BibleRepository;
   notifications?: import("./sharing").NotificationsRepository;
   sharing?: import("./sharing").SharingRepository;
