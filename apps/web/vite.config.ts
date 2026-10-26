@@ -13,8 +13,11 @@ export default defineConfig(({ command, mode }) => {
       const { createLocalHandler } = await import("../../packages/backend/local/http.local");
       const root = resolve(import.meta.dirname, "../..");
       const database = new LocalDatabase(resolve(root, ".data/devotio.sqlite"), resolve(root, ".data/bible"));
-      server.middlewares.use("/__local", createLocalHandler(database));
-      server.httpServer?.once("close", () => database.close());
+      const { LocalImages } = await import("../../packages/backend/local/images.local");
+      const images = new LocalImages(database);
+      images.start();
+      server.middlewares.use("/__local", createLocalHandler(database, images));
+      server.httpServer?.once("close", () => { images.close(); database.close(); });
     },
   };
   return {

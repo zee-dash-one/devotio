@@ -7,6 +7,7 @@ import {
 import { makeFunctionReference } from "convex/server";
 import { internalMutation } from "./server";
 import { scriptureSelectionValidator } from "./scriptureValidators";
+import { queueImageSet, obsoleteImageSet } from "./imageQueue";
 export const publish = internalMutation({
   args: {
     selection: v.optional(scriptureSelectionValidator),
@@ -48,6 +49,7 @@ export const publish = internalMutation({
         makeFunctionReference<"mutation">("editorial:release"),
         { id },
       );
+    await queueImageSet(ctx, id);
     return id;
   },
 });
@@ -55,6 +57,8 @@ export const withdraw = internalMutation({
   args: { id: v.id("devotionals"), actor: v.string(), reason: v.string() },
   handler: async (ctx, args) => {
     const audit = editorialAuditSchema.parse(args);
+    const doc = await ctx.db.get(args.id);
+    if (doc?.imageSetId) await obsoleteImageSet(ctx, doc.imageSetId);
     await ctx.db.patch(args.id, { withdrawn: true, updatedAt: Date.now() });
     await ctx.db.insert("editorialEvents", {
       devotionalId: args.id,

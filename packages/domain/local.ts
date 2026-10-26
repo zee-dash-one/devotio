@@ -242,6 +242,13 @@ export function createLocalRepository(storage: LocalCacheStorage, onExpired: () 
   }
   const repository: Repository = {
     mode: "local",
+    retryDevotionalImages: async (id, revision) => { await localRequest("image-retry", { id, revision }, profileId); },
+    watchDevotionalImages: (id, revision) => (next, error) => {
+      const stream = new EventSource("/__local/images?" + new URLSearchParams({ id, revision, profile: profileId }));
+      stream.onmessage = event => { try { next(JSON.parse(event.data) as import("./devotional-images").DevotionalImageManifest); } catch { error(new Error("Não foi possível ler as imagens.")); } };
+      stream.onerror = () => error(new Error("Não foi possível carregar as imagens. Verifique sua conexão."));
+      return () => stream.close();
+    },
     social: {
       watchMarkers: chapter => watch("social:markers:" + JSON.stringify(chapter), () => query<ShareMarker[]>({ query: "socialMarkers", chapter })),
       watchFriends: () => watch("social:friends", () => query<FriendsData>({ query: "socialFriends" })),

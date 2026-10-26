@@ -3,7 +3,16 @@ import { v } from "convex/values";
 import { scriptureSelectionValidator } from "./scriptureValidators";
 import { quoteValidator, recipientValidator, directionValidator } from "./socialValidators";
 import { notificationKindValidator, notificationTargetValidator } from "./notificationValidators";
+import { imageContentValidator, imageFileValidator, imageStateValidator } from "./imageValidators";
 export default defineSchema({
+  devotionalImageSets: defineTable({
+    devotionalId: v.id("devotionals"), revision: v.string(), content: imageContentValidator, status: imageStateValidator,
+    generation: v.number(), attempts: v.number(), updatedAt: v.number(), expiresAt: v.number(), workId: v.optional(v.string()),
+    files: v.array(imageFileValidator), error: v.optional(v.string()),
+  }).index("by_devotional_revision", ["devotionalId", "revision"]).index("by_status_updatedAt", ["status", "updatedAt"]).index("by_expiresAt", ["expiresAt"]),
+  devotionalImageUploads: defineTable({
+    setId: v.id("devotionalImageSets"), sha256: v.string(), storageId: v.optional(v.id("_storage")), expiresAt: v.number(),
+  }).index("by_sha256", ["sha256"]).index("by_storageId", ["storageId"]).index("by_expiresAt", ["expiresAt"]),
   notifications: defineTable({
     userId: v.id("users"), kind: notificationKindValidator, sourceKey: v.string(),
     actorName: v.optional(v.string()), communityId: v.optional(v.id("communities")), communityName: v.optional(v.string()),
@@ -75,6 +84,8 @@ export default defineSchema({
     at: v.number(),
   }).index("by_target", ["target"]),
   devotionals: defineTable({
+    imageSetId: v.optional(v.id("devotionalImageSets")),
+    imageRevision: v.optional(v.string()),
     selection: v.optional(scriptureSelectionValidator),
     date: v.string(),
     reference: v.string(),

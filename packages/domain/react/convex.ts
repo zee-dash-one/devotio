@@ -93,6 +93,8 @@ export function createConvexRepository(client: ConvexReactClient): Repository {
   }
   return {
     mode: "live",
+    watchDevotionalImages: (id, revision) => (next, error) => subscribe(client.watchQuery(makeFunctionReference<"query", { id: string; revision: string }, import("../devotional-images").DevotionalImageManifest>("devotionalImages:get"), { id, revision }), next, error),
+    retryDevotionalImages: async id => { await safe(client.mutation(makeFunctionReference<"mutation">("devotionalImages:retry"), { id })); },
     social: createSocialRepository(client),
     governance: createGovernanceRepository(client),
     notifications: createNotificationsRepository(client),

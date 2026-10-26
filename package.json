@@ -26,13 +26,17 @@
     "deploy:pilot": "npm run build:ready && npm run deploy:backend && npm run deploy:web:built"
   },
   "devDependencies": {
-    "convex": "^1.46.0",
-    "wrangler": "^4.42.0",
     "@eslint/js": "^9.39.0",
+    "convex": "^1.46.0",
+    "esbuild": "0.27.0",
     "eslint": "^9.39.0",
-    "typescript-eslint": "^8.48.0",
     "globals": "^16.5.0",
     "turbo": "^2.4.4",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.48.0",
+    "wrangler": "^4.42.0"
+  },
+  "dependencies": {
+    "@resvg/resvg-js": "2.6.2"
   }
 }
