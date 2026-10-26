@@ -90,6 +90,19 @@ export default defineSchema({
     withdrawn: v.boolean(),
     updatedAt: v.number(),
   }).index("by_date", ["date"]),
+  devotionalFavorites: defineTable({
+    userId: v.id("users"),
+    date: v.string(),
+    snapshot: v.string(),
+    favoritedAt: v.number(),
+  }).index("by_userId_and_date", ["userId", "date"])
+    .index("by_userId", ["userId"]),
+  favoriteRestoreReceipts: defineTable({
+    userId: v.id("users"),
+    token: v.string(),
+    snapshot: v.string(),
+  }).index("by_userId", ["userId"])
+    .index("by_token", ["token"]),
   editorialEvents: defineTable({
     devotionalId: v.id("devotionals"),
     actor: v.string(),
