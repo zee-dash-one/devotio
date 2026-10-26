@@ -10,7 +10,7 @@ export const timeZoneSchema = z.string().max(100).refine(value => {
   try { new Intl.DateTimeFormat("en", { timeZone: value }); return true; } catch { return false; }
 }, "Fuso horário inválido.");
 const id = z.string().min(1).max(100);
-export const bibleParamsSchema = z.object({
+const bibleParamsBaseSchema = z.object({
   book: z.string().regex(/^[a-z0-9]{1,6}$/).catch("jo"),
   chapter: z.coerce.number().int().min(1).max(150).catch(1),
   verse: z.coerce.number().int().min(1).max(176).optional().catch(undefined),
@@ -22,6 +22,12 @@ export const bibleParamsSchema = z.object({
   q: z.string().max(100).optional().catch(undefined),
   version: bibleVersionSchema.optional().catch(undefined),
 });
+export const bibleParamsSchema = z.preprocess(value => {
+  if (!value || typeof value !== "object") return value;
+  const input = value as Record<string, unknown>;
+  const invalid = (input.verses !== undefined && bibleParamsBaseSchema.shape.verses.parse(input.verses) === undefined) || (input.verse !== undefined && bibleParamsBaseSchema.shape.verse.parse(input.verse) === undefined);
+  return { ...input, invalidSelection: invalid || input.invalidSelection === true ? true : undefined };
+}, bibleParamsBaseSchema.extend({ invalidSelection: z.boolean().optional().catch(undefined) }));
 export const bibleDatasetSchema = z.array(z.object({
   abbrev: z.string().min(1), name: z.string().min(1),
   chapters: z.array(z.array(z.string().min(1)).min(1)).min(1),
