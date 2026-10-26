@@ -1,5 +1,15 @@
 # Estado real do projeto
 
+## Devocionais recentes e favoritos — branch de 26/10/2026
+
+Implementados em `feat/recent-devotionals-favorites`: seletor dos sete
+devocionais publicados mais recentes, modo Favoritos na mesma tela acessível
+pelo menu do perfil, limite de três snapshots privados no Convex e SQLite.
+Backend novo precisa ser publicado no piloto antes da web; não há deploy
+nem homologação física nesta branch. A cópia pessoal continua disponível após
+edição ou retirada editorial. Registro: [tarefa 12](../../.todo/.done/12-recent-devotionals-favorites.md).
+
+
 ## Graphify local — 22/10/2026
 
 Graphify 0.9.94 instalado em `.tools/graphify`, com Python 3.12.10 e integração

@@ -81,7 +81,7 @@ Inventário conferido em **03/10/2026** nos manifests, configurações e [packag
 | Zod | 3.25.76 | Validação compartilhada de formulários, entradas, ambiente e destinos de login |
 | SQLite + `node:sqlite` | Incluídos no Node 24 | Banco local persistente, transações, constraints e busca FTS5; exclusivo de desenvolvimento |
 | HTTP + cookie HttpOnly/SameSite | APIs Node/navegador | Sessão mock revogável e autorização no servidor local, com checagem de origem e conta |
-| localStorage + cache do domínio | API nativa / implementação interna | Oito devocionais com carga diária incremental; catálogo AA, seis capítulos LRU e favoritos por conta; sem polling HTTP |
+| localStorage + cache do domínio | API nativa / implementação interna | Cache editorial de oito datas para uso local; seletor com sete publicações recentes, catálogo AA, seis capítulos LRU e favoritos por conta; sem polling HTTP |
 | ABíbliaDigital — AA | Corpus fixado por commit/hash | 66 livros e 31.104 versículos importados do provedor para SQLite; sem API externa na leitura |
 
 Os pacotes internos são `backend`, `domain` e `ui-kit`. O backend concentra identidade, autorização e transações. O domínio expõe `domain/core` (contratos, regras e validadores), `domain/react` (hooks), `domain/convex` (integração real) e `domain/local` (adaptador HTTP do modo local). `domain/preview` é a prévia antiga em memória, não usada na entrada atual. O `ui-kit` compartilha tokens de cor, espaçamento e tipografia.

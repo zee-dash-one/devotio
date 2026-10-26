@@ -1,5 +1,16 @@
 # Tasks: Devocional Diário
 
+## Revisão de 26/10/2026 — recentes e favoritos
+
+- [x] Domínio: contrato de sete publicações, limite de três favoritos e mensagem parametrizada.
+- [x] Backend Convex: consulta privada, snapshots por usuário/data, limite atômico e recibo de restauração.
+- [x] Backend SQLite: seleção de sete publicações, limite e permanência dos favoritos antigos.
+- [x] Web: mesma tela em recentes/favoritos, entrada pelo menu do perfil, coração e compartilhamento da seleção.
+- [x] Testes de domínio, backend e web, typecheck, lint e build.
+- [ ] Publicar backend no piloto antes do merge; verificar navegação e compartilhamento em navegador real.
+
+O histórico abaixo contém itens antigos da janela de oito datas; esta revisão a substitui.
+
 ## Revisão web — 08/10/2026
 
 - [x] W8 — Rodapé compacto no fim da tela, favorito sempre visível e desfazer remoção do último snapshot por recibo privado. Passaram 31 testes web, 78 domain e 12 SQLite (incluindo snapshot retirado/antigo, isolamento e consumo único), lint/typecheck do monorepo e build/PWA. Primeira execução web teve timeout no carregamento inicial; repetição completa passou. Homologação visual e mobile nativo pendentes.

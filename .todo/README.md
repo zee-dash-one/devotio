@@ -6,8 +6,7 @@ da tarefa, movido para [`.done/`](./.done/).
 
 ## Tarefas
 
-
-Nenhuma tarefa executável aberta. Tarefas 05–09 arquivadas em [.done/](./.done/).
+Nenhuma tarefa executável aberta. Tarefas concluídas arquivadas em [.done/](./.done/).
 
 ## Decisões pendentes do Hil
 
