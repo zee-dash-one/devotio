@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import {
   ChevronDown,
   HelpCircle,
+  Heart,
   LogOut,
   PenLine,
   RefreshCw,
@@ -90,6 +91,7 @@ export function AccountMenu({ name = "Minha conta" }: { name?: string }) {
         >
           <p className="caption">{name}</p>
           {app.repository?.social && <Link className={linkAppearance} to="/perfil"><UserRound size={16} />Meu perfil e amigos</Link>}
+          {(app.repository?.devotionalReading || app.repository?.reading) && <Link className={linkAppearance} to="/devocional/favoritos"><Heart size={16} />Favoritos</Link>}
           {app.localProfile && (
             <p className="caption">{app.localProfile.label}</p>
           )}

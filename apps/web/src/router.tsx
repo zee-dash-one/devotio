@@ -28,6 +28,7 @@ import { ProfilePage } from "./social";
 
 const pageTitles: Record<string, string> = {
   "/devocional": "Devocional",
+  "/devocional/favoritos": "Devocionais Favoritos",
   "/biblia": "Bíblia",
   "/perfil": "Meu perfil",
   "/editorial": "Gestão de devocionais",
@@ -105,6 +106,11 @@ const readerRoute = createRoute({
 const devotionalRoute = createRoute({
   getParentRoute: () => readerRoute,
   path: "/devocional",
+  component: ReadingPage,
+});
+const favoriteDevotionalsRoute = createRoute({
+  getParentRoute: () => readerRoute,
+  path: "/devocional/favoritos",
   component: ReadingPage,
 });
 const bibleRoute = createRoute({
@@ -189,6 +195,7 @@ const routeTree = rootRoute.addChildren([
   readerRoute.addChildren([
     profileRoute,
     devotionalRoute,
+    favoriteDevotionalsRoute,
     bibleRoute,
     editorialRoute,
     communitiesRoute,
