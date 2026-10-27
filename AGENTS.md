@@ -90,7 +90,7 @@ typecheck. Formato `tipo(escopo): resumo no imperativo`. Escopos usuais:
 ```powershell
 git add packages/domain/rules.ts packages/domain/rules.test.ts
 git commit -m 'feat(domain): add community creation rules'
-git add packages/backend/schema.ts packages/backend/communities.ts
+git add packages/backend/convex/schema.ts packages/backend/convex/communities.ts
 git commit -m 'feat(backend): require join approval for communities'
 git add apps/web/src/pages/community.tsx
 git commit -m 'feat(web): show pending join requests to managers'
@@ -234,7 +234,7 @@ npm run lint && npm run typecheck      # requisito antes de commit; lint configu
   engajamento" da constituição.
 - Tornar um comentário de `bibleMarkings` visível além do escopo definido em
   `visibility` sem uma spec explícita autorizando.
-- Criar tabela nova no schema do Convex sem atualizar `packages/backend/schema.ts`
+- Criar tabela nova no schema do Convex sem atualizar `packages/backend/convex/schema.ts`
   E documentar a decisão em `docs/architecture.md § Modelo de Dados`.
 - Duplicar uma regra de negócio em `apps/web` e `apps/mobile` "pra ir mais rápido".
   Sempre subir a regra para `packages/domain` primeiro.
@@ -267,7 +267,7 @@ specs; registrar checks indisponíveis sem alterar código para maquiar a verifi
 This project uses [Convex](https://convex.dev) as its backend.
 
 When working on Convex code, **always read
-`packages/backend/_generated/ai/guidelines.md` first** for important guidelines on
+`packages/backend/convex/_generated/ai/guidelines.md` first** for important guidelines on
 how to correctly use Convex APIs and patterns. The file contains rules that
 override what you may have learned about Convex from training data.
 

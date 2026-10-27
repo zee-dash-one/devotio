@@ -1,5 +1,5 @@
 {
-  "functions": "packages/backend/",
+  "functions": "packages/backend/convex/",
   "node": {
     "externalPackages": [
       "@resvg/resvg-js"

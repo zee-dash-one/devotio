@@ -1,11 +1,11 @@
-import type { Id } from "./server";
+import type { Id } from "./convex/server";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { convexTest } from "convex-test";
 import { makeFunctionReference } from "convex/server";
 import workpool from "@convex-dev/workpool/test";
 import { imageRevision } from "domain/core";
-import schema from "./schema";
-const modules = { "./_generated/server.ts": () => import("./server"), "./devotionalImages.ts": () => import("./devotionalImages"), "./editorial.ts": () => import("./editorial"), "./imageActions.ts": () => import("./imageActions") };
+import schema from "./convex/schema";
+const modules = { "./convex/_generated/server.ts": () => import("./convex/server"), "./convex/devotionalImages.ts": () => import("./convex/devotionalImages"), "./convex/editorial.ts": () => import("./convex/editorial"), "./convex/imageActions.ts": () => import("./convex/imageActions") };
 const ref = (name: string) => makeFunctionReference<"mutation">("devotionalImages:"+name);
 const publish = makeFunctionReference<"mutation">("editorial:publish"), get = makeFunctionReference<"query">("devotionalImages:get");
 const input = { date: "2026-10-25", reference: "João 1:1", translation: "ARC1911", scripture: "Texto", reflection: "Reflexão com esperança.", prayerSuggestion: "Senhor, guia-nos. Amém.", credit: "Equipe", licenseEvidence: "Autorizada", reviewedBy: "Editor", publishedAt: Date.parse("2026-10-25T03:00:00Z"), reason: "Teste" };
