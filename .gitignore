@@ -24,6 +24,7 @@ packages/**
 !packages/domain/bible.test.ts
 !packages/domain/editorial.ts
 !packages/domain/editorial.test.ts
+!packages/backend/convex/tsconfig.json
 !packages/backend/convex/scriptures.ts
 !packages/backend/convex/scriptureValidators.ts
 !packages/backend/editorialAccess.test.ts
