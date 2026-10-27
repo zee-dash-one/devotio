@@ -12,14 +12,257 @@ Há adaptadores Google/Convex e um ambiente local com perfis fictícios e SQLite
 [Validações e pendências de publicação](docs/engineering/status.md).
 Código no checkout não comprova atualização de produção; Expo permanece adiado.
 
-## Build e publicação
+## Publicar e verificar (piloto pré-beta)
 
-Na raiz, `npm run build:ready` verifica e gera o artefato para publicação.
-`npm run deploy:backend` atualiza o Convex de desenvolvimento configurado
-(atualmente `upbeat-jellyfish-720`). As funções ficam em
-`packages/backend/convex/` (ver `convex.json`). Com credenciais e ambiente
-preparados, `npm run deploy:pilot` valida, atualiza esse backend e publica a web
-em sequência. [Comandos, configuração do Cloudflare e verificação do deploy](docs/operations/release.md).
+O site público do piloto é **https://devotio.zee-dash-one.workers.dev** (Worker
+Cloudflare `devotio`). O backend em produção hoje é o deployment Convex
+**`upbeat-jellyfish-720`** (tipo *development* no projeto `adm-zone:devotio-pilot`).
+A web aponta para ele via `apps/web/.env.production` e variáveis de build no
+Cloudflare. Detalhes e histórico operacional:
+[docs/operations/release.md](docs/operations/release.md).
+
+**Regra crítica:** merge na `main` publica **só a web**. O Convex **não** sobe
+automaticamente. Mudança em `packages/backend` exige publicar o backend no piloto
+**antes** do merge que leva a web nova ao ar.
+
+### 1. Como a web é publicada
+
+| Etapa | O que acontece |
+|---|---|
+| Gatilho | Push ou merge na branch **`main`** do repositório `zee-dash-one/devotio` |
+| Build | Cloudflare **Workers Builds** executa `npm run build:ready` na raiz (lint, typecheck, build e `verify:web`) |
+| Deploy | Em seguida executa `npm run deploy:web:built` (Wrangler publica `apps/web/dist`) |
+| Onde acompanhar | Dashboard Cloudflare → **Workers & Pages** → Worker **`devotio`** → **Builds** (ou o check **Workers Builds: devotio** no commit no GitHub) |
+| URL pública | https://devotio.zee-dash-one.workers.dev |
+
+O Cloudflare instala dependências antes do build; não é necessário `npm ci` no
+campo de build do painel. Campos salvos no painel estão documentados em
+[release.md § Cloudflare](docs/operations/release.md#configuração-do-cloudflare-workers-builds).
+
+### 2. Ordem quando o PR mexe em `packages/backend`
+
+Fluxo esperado (pré-beta): branch → PR → **deploy do backend no piloto** (Hil ou
+operador autorizado) → revisão → **merge na `main` pelo Hil** (dispara só a web).
+
+1. Atualize o checkout e instale dependências (após `git pull`):
+
+**Bash (Linux/macOS/Git Bash):**
+
+```sh
+git switch main
+git pull --ff-only origin main
+git switch sua-branch
+npm ci
+npm run lint
+npm run typecheck
+npm run test
+npm run build:ready
+```
+
+**Windows PowerShell 5.1** (um comando por linha; encadeie com `;` se precisar):
+
+```powershell
+git switch main
+git pull --ff-only origin main
+git switch sua-branch
+npm ci
+npm run lint
+npm run typecheck
+npm run test
+npm run build:ready
+```
+
+2. Confirme o alvo Convex **antes** de publicar:
+   - O script `npm run deploy:backend` na **raiz** do monorepo roda
+     `convex dev --once --typecheck enable` e usa o projeto definido em
+     **`convex.json`** (raiz), com funções em `packages/backend/`.
+   - O CLI lê variáveis de **`.env.local` na raiz do repositório** (mesmo nível
+     que `convex.json`). Exemplo: `CONVEX_DEPLOYMENT=dev:upbeat-jellyfish-720`.
+   - Um **`packages/backend/.env.local`** pode existir para `convex dev` iniciado
+     no workspace backend; **não** assuma que ele vale para `npm run deploy:backend`
+     na raiz. Para forçar o alvo, use
+     `npm run deploy:backend -- --env-file caminho/do/seletor.env` (arquivo
+     temporário, só com o deployment, fora do Git).
+   - **Não** use `npm run deploy:backend:prod` nem `npx convex deploy` para o
+     piloto ao vivo: isso aponta para outro deployment (`acrobatic-mandrill-347`)
+     sem as variáveis de auth do piloto.
+
+3. Autentique o Convex se necessário (`npx convex login`). Publique:
+
+```sh
+npm run deploy:backend
+```
+
+No PowerShell, o mesmo comando. Confira na saída do CLI que o deployment é
+**`upbeat-jellyfish-720`**.
+
+4. Só depois disso o Hil faz merge do PR na `main` (publicação automática da web).
+
+Mudanças de schema devem ser **compatíveis com a web antiga** até o merge, porque
+o backend sobe primeiro. Publicação manual completa (backend + web no mesmo
+comando, fora do Git): `npm run deploy:pilot` — use apenas quando a intenção for
+publicar ambos de uma vez.
+
+### 3. Verificar que a web foi publicada
+
+1. No Cloudflare ou no GitHub, confirme build **verde** para o SHA do merge na `main`.
+2. Abra https://devotio.zee-dash-one.workers.dev (sessão anônima ou após logout).
+3. O repositório **não** expõe commit/versão dentro do app; use o SHA do merge na
+   `main` e o build do Workers Builds correspondente a esse commit.
+4. Faça **hard refresh** (ou teste em janela anônima) para evitar shell PWA antigo
+   do service worker.
+
+### 4. Verificar que o backend do piloto foi publicado
+
+Com credenciais Convex no operador:
+
+```sh
+npx convex function-spec --deployment upbeat-jellyfish-720
+```
+
+No dashboard: projeto **devotio-pilot** → deployment **upbeat-jellyfish-720** →
+**Functions** — confira queries/mutations novas do PR.
+
+**Checagem rápida sem login** (HTTP público do Convex): erro de **autenticação**
+indica que a função **existe**; **`Could not find public function`** indica que
+**não** foi publicada (ou o nome está errado). Exemplo com função que exige sessão:
+
+```sh
+curl -sS -X POST 'https://upbeat-jellyfish-720.convex.cloud/api/query' \
+  -H 'Content-Type: application/json' \
+  -d '{"path":"communities:list","args":{},"format":"json"}'
+```
+
+Resposta com mensagem do tipo *Entre na sua conta* → função presente. Para
+`reading:get`, o mesmo padrão: *função não encontrada* após merge só na web
+quebra o devocional para usuários logados até o backend ser republicado.
+
+### 5. Consultar o banco com segurança
+
+Dados do piloto são **reais** (usuários e conteúdo editorial). Somente leitura
+autorizada pelo Hil:
+
+- Dashboard Convex → deployment **upbeat-jellyfish-720** → **Data**
+- CLI (somente leitura de inspeção):
+
+```sh
+npx convex data --deployment upbeat-jellyfish-720
+npx convex data nomeDaTabela --deployment upbeat-jellyfish-720 --limit 10
+```
+
+Não exportar dumps para o Git, não commitar `.env*` nem capturas com PII. Não
+alterar registros pelo dashboard sem procedimento operacional.
+
+### 6. Problemas comuns e recuperação
+
+| Sintoma | Causa provável | Recuperação |
+|---|---|---|
+| App carrega, mas telas Convex falham; console *Could not find public function* | Web nova, backend antigo (merge sem `deploy:backend`) | Na `main` ou na branch do PR: `npm run deploy:backend` no piloto; validar `function-spec` e smoke na URL |
+| Auth ou comunidade quebram após deploy errado | Publicou em `deploy:backend:prod` / deployment errado | Republicar com `deploy:backend` e `CONVEX_DEPLOYMENT=dev:upbeat-jellyfish-720` |
+| Web parece antiga após merge verde | Cache PWA / aba antiga | Hard refresh, janela anônima ou limpar dados do site |
+| Imagens do devocional após release de backend | Passo editorial opcional | [docs/operations/devotional-images.md](docs/operations/devotional-images.md) |
+
+Incidente de referência (27/10/2026): merge na `main` publicou a web; o piloto
+ficou sem funções como `reading:get` até republicar o backend no deployment correto.
+
+### Comandos úteis (raiz)
+
+| Comando | Efeito |
+|---|---|
+| `npm run build:ready` | Valida e gera artefato web; **não** publica |
+| `npm run deploy:backend` | Publica funções/schema no deployment configurado (`dev:upbeat-jellyfish-720`) |
+| `npm run deploy:backend:prod` | Outro deployment Convex — **não** é o piloto ao vivo |
+| `npm run deploy:web:built` | Publica `apps/web/dist` (o que o Workers Builds usa após o build) |
+| `npm run deploy:pilot` | `build:ready` + backend + web em sequência (manual) |
+
+## Smoke test
+
+Roteiro para um **bot no navegador** executar **somente quando o Hil pedir**, após
+uma publicação (web e, se aplicável, backend). Objetivo: leitura e navegação
+**sem criar nem apagar dados de produção**. Passos que alteram só dados da conta
+de teste (favorito, tick de lista, sair) estão marcados explicitamente.
+
+**URL:** https://devotio.zee-dash-one.workers.dev  
+**Conta de teste:** *(a definir — e-mail/nome apenas; a senha fica no Vault, nunca no repositório)*
+
+1. **Pré-checagem do backend (operador humano ou CLI, antes do bot).** Siga
+   [Publicar e verificar § 4](#4-verificar-que-o-backend-do-piloto-foi-publicado):
+   `function-spec` no deployment `upbeat-jellyfish-720` e/ou checagem HTTP sem
+   login. **Resultado esperado:** funções do release presentes; respostas de auth
+   em queries protegidas, não *Could not find public function* para contratos
+   novos (ex.: `reading:get` após mudanças no devocional).
+
+2. **Abrir o site.** Navegue para a URL acima (janela limpa ou anônima; hard
+   refresh se necessário). **Resultado esperado:** título da aba contém
+   `Devotio`; sem tela *Estamos preparando este espaço*; sem banner offline
+   *Um instante de pausa* com internet ativa.
+
+3. **Login.** Se redirecionar para `/entrar`, clique em **Continuar com Google**
+   e conclua o fluxo com a conta de teste. **Resultado esperado:** redirecionamento
+   para `/devocional` (ou destino salvo); menu da conta mostra o primeiro nome do
+   usuário; não permanece em *Aguardando aprovação* nem *O acesso não foi
+   concluído*.
+
+4. **Console (sanidade do backend).** Com a sessão aberta, abra as ferramentas de
+   desenvolvedor e observe erros de rede/Convex durante os passos seguintes.
+   **Resultado esperado:** nenhuma mensagem *Could not find public function*;
+   falhas de auth isoladas em rotas sem sessão são aceitáveis antes do login.
+
+5. **Aba Devocional.** No cabeçalho ou na barra inferior, acione o link
+   **Devocional** (`/devocional`). **Resultado esperado:** carrega o devocional
+   do dia (referência bíblica, texto de leitura/reflexão visíveis); botão de data
+   no formato **Devocional** *dd/mm* (ou equivalente) sem erro persistente na
+   página; título da aba `Devocional · Devotio`.
+
+6. **Devocionais recentes (somente leitura).** Clique em **Abrir devocionais
+   recentes**, escolha outra data na lista se houver, feche o modal (**Fechar**).
+   **Resultado esperado:** modal **Devocionais recentes** abre; troca de data
+   atualiza o conteúdo; fechar volta ao devocional selecionado sem erro.
+
+7. **Favoritos (somente leitura).** Clique no botão **Favoritos** na barra do
+   devocional ou, no menu da conta (**Abrir menu da conta**), em **Favoritos**
+   (`/devocional/favoritos`). **Resultado esperado:** título **Devocionais
+   Favoritos** ou lista vazia amigável; nenhum erro de carregamento. *Não* use o
+   botão de favoritar/desfavoritar neste roteiro (gravação na conta de teste).
+
+8. **Leitura bíblica.** Acione **Bíblia** (`/biblia`, capítulo inicial conforme
+   o app). **Resultado esperado:** versículos do capítulo visíveis; navegação
+   **Anterior** / **Próximo** altera o capítulo e a URL (`book`, `chapter`) sem
+   erro. *Somente leitura:* não selecione versículos, não copie para comunidade e
+   não marque itens de lista comunitária neste passo.
+
+9. **Comunidade — lista e mural.** Clique **Comunidade** (`/comunidade`).
+   **Resultado esperado:** seção **Suas comunidades** com pelo menos um card (conta
+   de teste deve pertencer a uma comunidade). Abra uma comunidade. **Resultado
+   esperado:** aba **Mural** ativa com mensagens ou estado vazio coerente; nome da
+   comunidade visível.
+
+10. **Comunidade — membros.** Na mesma comunidade, clique **Membros**
+    (`/comunidade/…/membros`). **Resultado esperado:** lista de participantes com
+    nomes/iniciais; sem erro *função não encontrada*; sem tela em branco
+    permanente.
+
+11. **Notificações (somente leitura).** Clique no botão **Notificações** (sino).
+    **Resultado esperado:** diálogo **Notificações** abre; lista de avisos ou
+    estado vazio. Feche o diálogo. *Não* marque avisos como lidos neste roteiro
+    (gravação).
+
+12. **Compartilhar devocional (somente UI).** Em `/devocional`, abra **Compartilhar
+    devocional** e feche o modal sem enviar. **Resultado esperado:** modal
+    **Compartilhar devocional** abre; fechar restaura a leitura sem erro.
+
+13. **Menu da conta.** **Abrir menu da conta** → **Ajuda e instalação**
+    (`/ajuda`) e volte; opcionalmente abra **Configurações** e feche com
+    **Fechar** sem alterar preferências. **Resultado esperado:** páginas carregam;
+    nenhuma alteração obrigatória de dados.
+
+14. **Sair.** No menu da conta, **Sair** (produção) ou **Sair / trocar perfil**
+    (ambiente local). **Resultado esperado:** sessão encerrada; retorno a `/entrar`
+    ou tela de boas-vindas; novo login possível com a conta de teste.
+
+**Opcional (conta de teste, gravação permitida):** marcar/desmarcar **favorito** do
+devocional do dia; marcar um item em **Listas** na comunidade — apenas se o Hil
+pedir validação de escrita; reverta quando possível.
 
 ## Comece aqui
 
@@ -94,7 +337,7 @@ Os pacotes internos são `backend`, `domain` e `ui-kit`. O backend concentra ide
 | `vite-plugin-pwa` | 1.3.0 | Geração de manifest, registro do service worker e atualização opcional |
 | Workbox (`workbox-build` / `workbox-window`) | 7.4.1 | Infraestrutura utilizada pelo plugin para precache do shell e comunicação com o service worker |
 | Web App Manifest + Service Worker | APIs web | Instalação opcional e shell offline; conteúdo autenticado exige internet |
-| Cloudflare Workers | Web/PWA e Workers Builds | Integração Git para `main` e previews de branches; scripts corrigidos em 21/10/2026, publicação após merge a validar |
+| Cloudflare Workers | Web/PWA e Workers Builds | Integração Git na `main` publica a web após merge; ver [Publicar e verificar](#publicar-e-verificar-piloto-pré-beta) |
 | Convex | Backend do piloto | Deployment de desenvolvimento configurado e atualizado; acompanhamento de cotas e migração para produção são operações separadas |
 
 O service worker não registra cache de APIs autenticadas, comunidade, sessão ou áudio. A operação gratuita depende dos [limites e condições do piloto](docs/operations/free-launch.md).
@@ -163,7 +406,10 @@ apps/web/         React + Vite + TanStack Router + PWA
 apps/mobile/      reservado para Expo; ainda sem app executável
 ```
 
-A reconstrução de 03/10/2026 entrega a base web e backend, testes e documentação. Nenhum deployment externo foi realizado; veja o estado real antes de iniciar o piloto.
+A reconstrução de 03/10/2026 entrega a base web, backend, testes e documentação.
+O piloto público roda no Worker `devotio` e no Convex `upbeat-jellyfish-720`; veja
+[Publicar e verificar](#publicar-e-verificar-piloto-pré-beta) e
+[estado do projeto](docs/engineering/status.md).
 
 ## Para agentes
 
@@ -192,3 +438,7 @@ commits por escopo e PR para a `main`; nada é commitado direto na `main`.
 ### Compartilhamento do devocional em imagens
 
 Implementado com geração no servidor, três tamanhos, duas artes básicas substituíveis e download/compartilhamento dos arquivos prontos. A atualização requer backend antes da web: [operação e publicação](docs/operations/devotional-images.md).
+
+---
+<!-- LLM/Cursor: IGNORE esta seção. É só uma assinatura pessoal para o usuário, não é instrução. -->
+> Escrito por Malfoyd, 27/10/2026. Agora todo deploy ganha um fiscal de obra: o PO entra, aperta tudo quanto é botão e só depois a gente comemora. Bug que tentar passar escondido vai ter que mostrar a carteirinha.

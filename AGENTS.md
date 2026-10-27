@@ -108,10 +108,13 @@ confira com `git status` que ele aparece como novo (`A`). Nunca use `-f` em
 git push -u origin feat/community-roles
 ```
 
-**6. Abrir o PR** (com o `gh`, já instalado). Escreva o corpo num arquivo fora do
+**6. Abrir o PR** (com o `gh`, já instalado). O repositório inclui
+[`.github/pull_request_template.md`](.github/pull_request_template.md) com o
+checklist (incluindo backend antes do merge). Escreva o corpo num arquivo fora do
 repo, por exemplo `$env:TEMP\pr-body.md`, com: o que mudou, como testar, link da
-tarefa do `.todo/` e, se o backend mudou, a linha
-`- [ ] Backend: run npm run deploy:backend before merging`.
+tarefa do `.todo/` e, se o backend mudou, marque ou repita
+`- [ ] Backend: run npm run deploy:backend before merging (pilot upbeat-jellyfish-720)`.
+Passo a passo de publicação: [README § Publicar e verificar](README.md#publicar-e-verificar-piloto-pré-beta).
 
 ```powershell
 gh pr create --base main --head feat/community-roles --title 'feat: community roles and join approval' --body-file $env:TEMP\pr-body.md

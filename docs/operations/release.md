@@ -1,5 +1,21 @@
 # Publicação e operação do piloto
 
+Guia passo a passo para quem pega o projeto (web automática na `main`, backend
+manual, verificação e banco): [README § Publicar e verificar](../../README.md#publicar-e-verificar-piloto-pré-beta).
+
+**Alvo do piloto ao vivo:** deployment **`upbeat-jellyfish-720`**
+(`CONVEX_DEPLOYMENT=dev:upbeat-jellyfish-720`). **`npm run deploy:backend`**
+(roda na **raiz** do monorepo) usa `convex dev --once` e lê **`.env.local` na
+raiz** (junto de `convex.json`). `packages/backend/.env.local` pode apontar para
+outro deployment quando alguém roda `convex dev` só no workspace backend — não
+confundir com o deploy do piloto; use `--env-file` se precisar forçar o alvo.
+
+**Incidente 27/10/2026:** merge na `main` (ex.: PR #15) publicou a web via Workers
+Builds; sem `npm run deploy:backend` no piloto, funções novas (ex. `reading:get`)
+retornaram *Could not find public function* e o devocional quebrou para usuários
+logados. Recuperação: republicar o backend no `upbeat-jellyfish-720` e validar
+contratos antes de considerar o release fechado.
+
 ## Scripts de build e publicação — correção de 21/10/2026
 
 Execute os comandos abaixo na raiz do monorepo. Instale as dependências com
@@ -78,7 +94,21 @@ No Cloudflare, configure esse mesmo par VITE nas variáveis de build. O build
 normal de um PR/merge não executa `deploy:backend` nem `deploy:pilot`, e não
 precisa de token Convex. Quando houver alteração no backend, publique-o antes
 do merge que colocará a interface dependente dele no ar. O merge na `main`
-dispara a publicação da web pela integração Git; confira o SHA no histórico.
+dispara a publicação da web pela integração Git; confira o SHA no histórico. URL
+pública do Worker: **https://devotio.zee-dash-one.workers.dev**.
+
+### Verificar web, backend e banco (resumo)
+
+1. **Web:** build verde no Workers Builds para o SHA do merge; abrir a URL acima;
+   hard refresh se o shell PWA parecer antigo (o app não mostra commit embutido).
+2. **Backend:** `npx convex function-spec --deployment upbeat-jellyfish-720`;
+   checagem HTTP sem login — auth error ⇒ função existe; *Could not find public
+   function* ⇒ não publicada. Ver exemplos no README.
+3. **Banco (somente leitura autorizada):** dashboard **Data** ou
+   `npx convex data --deployment upbeat-jellyfish-720`; dados reais do piloto —
+   não exportar para o Git nem commitar segredos.
+4. **Imagens do devocional:** após backend compatível, passos opcionais em
+   [devotional-images.md](devotional-images.md).
 
 Se mover o checkout de pasta e o bundler não resolver `domain/core`, confira os
 links de npm workspaces em `node_modules`; eles podem apontar à pasta anterior.
