@@ -3,7 +3,7 @@ import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import { randomUUID } from "node:crypto";
 import { imageContent, imageRevision, imageAvailableToday, isPublished, IMAGE_RETENTION_DAYS, type Devotional, type DevotionalImageManifest } from "../../domain/index";
-import { renderImages } from "../rendering/images.node";
+import { renderImages } from "../convex/rendering/images.node";
 import { LocalDatabase } from "./database.local";
 type Row = { date: string; data: string; publishedAt: number; withdrawn: number };
 type Stored = { revision: string; date: string; manifest: string; expiresAt: number };

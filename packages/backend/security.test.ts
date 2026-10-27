@@ -3,17 +3,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { convexTest, type TestConvex } from "convex-test";
 import { makeFunctionReference } from "convex/server";
 import { refs } from "domain/convex";
-import schema from "./schema";
-import type { Id } from "./server";
+import schema from "./convex/schema";
+import type { Id } from "./convex/server";
 // convex-test requires a _generated path to discover its root. This test-only
 // mapping points to the real official builder bindings; no runtime stub is used.
-const modules = { "./imageActions.ts": () => import("./imageActions"), "./devotionalImages.ts": () => import("./devotionalImages"),
-  "./_generated/server.ts": () => import("./server"),
-  "./communities.ts": () => import("./communities"),
-  "./communityGovernance.ts": () => import("./communityGovernance"),
-  "./notifications.ts": () => import("./notifications"),
-  "./home.ts": () => import("./home"),
-  "./editorial.ts": () => import("./editorial"),
+const modules = { "./convex/imageActions.ts": () => import("./convex/imageActions"), "./convex/devotionalImages.ts": () => import("./convex/devotionalImages"),
+  "./convex/_generated/server.ts": () => import("./convex/server"),
+  "./convex/communities.ts": () => import("./convex/communities"),
+  "./convex/communityGovernance.ts": () => import("./convex/communityGovernance"),
+  "./convex/notifications.ts": () => import("./convex/notifications"),
+  "./convex/home.ts": () => import("./convex/home"),
+  "./convex/editorial.ts": () => import("./convex/editorial"),
 };
 const stores: TestConvex<typeof schema>[] = [];
 const setup = () => { const t = convexTest(schema, modules); workpool.register(t, "imageWorkpool"); stores.push(t); return t; };

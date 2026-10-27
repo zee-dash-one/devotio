@@ -2,8 +2,8 @@ import workpool from "@convex-dev/workpool/test";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { convexTest } from "convex-test";
 import { makeFunctionReference } from "convex/server";
-import schema from "./schema";
-const modules = { "./imageActions.ts": () => import("./imageActions"), "./devotionalImages.ts": () => import("./devotionalImages"), "./_generated/server.ts": () => import("./_generated/server"), "./editorial.ts": () => import("./editorial"), "./editorialAccess.ts": () => import("./editorialAccess") };
+import schema from "./convex/schema";
+const modules = { "./convex/imageActions.ts": () => import("./convex/imageActions"), "./convex/devotionalImages.ts": () => import("./convex/devotionalImages"), "./convex/_generated/server.ts": () => import("./convex/_generated/server"), "./convex/editorial.ts": () => import("./convex/editorial"), "./convex/editorialAccess.ts": () => import("./convex/editorialAccess") };
 const save = makeFunctionReference<"mutation">("editorialAccess:save"), get = makeFunctionReference<"query">("editorialAccess:get"), calendar = makeFunctionReference<"query">("editorialAccess:calendar");
 const draft = { date: "2026-10-09", reflection: "Reflexão", prayerSuggestion: "Oração", mode: "create" as const,
   selection: { book: "jo", chapter: 1, first: 1, last: 1, version: "alm1911" as const } };

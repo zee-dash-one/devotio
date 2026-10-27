@@ -3,16 +3,16 @@ import { convexTest } from "convex-test";
 import { makeFunctionReference } from "convex/server";
 import { refs } from "domain/convex";
 import type { NotificationPage, NotificationSummary } from "domain/core";
-import schema from "./schema";
-import type { Id } from "./server";
-import { addMember } from "./communityGovernance";
-import { notify } from "./notifications";
+import schema from "./convex/schema";
+import type { Id } from "./convex/server";
+import { addMember } from "./convex/communityGovernance";
+import { notify } from "./convex/notifications";
 const modules = {
-  "./_generated/server.ts": () => import("./_generated/server"),
-  "./communities.ts": () => import("./communities"),
-  "./communityGovernance.ts": () => import("./communityGovernance"),
-  "./notifications.ts": () => import("./notifications"),
-  "./social.ts": () => import("./social"),
+  "./convex/_generated/server.ts": () => import("./convex/_generated/server"),
+  "./convex/communities.ts": () => import("./convex/communities"),
+  "./convex/communityGovernance.ts": () => import("./convex/communityGovernance"),
+  "./convex/notifications.ts": () => import("./convex/notifications"),
+  "./convex/social.ts": () => import("./convex/social"),
 };
 const m = (name: string) => makeFunctionReference<"mutation">(name);
 const page = makeFunctionReference<"query", { cursor: string | null }, NotificationPage>("notifications:page");

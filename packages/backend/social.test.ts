@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { convexTest } from "convex-test";
 import { makeFunctionReference } from "convex/server";
-import schema from "./schema";
+import schema from "./convex/schema";
 import type { FriendsData, SharePage, ShareMarker } from "domain/core";
 const modules = {
-  "./_generated/server.ts": () => import("./_generated/server"),
-  "./social.ts": () => import("./social"),
+  "./convex/_generated/server.ts": () => import("./convex/_generated/server"),
+  "./convex/social.ts": () => import("./convex/social"),
 };
 const friends = makeFunctionReference<
   "query",

@@ -1,8 +1,8 @@
 import { expect, it } from "vitest";
 import { convexTest } from "convex-test";
 import { makeFunctionReference } from "convex/server";
-import schema from "./schema";
-const modules = { "./_generated/server.ts": () => import("./server"), "./home.ts": () => import("./home") };
+import schema from "./convex/schema";
+const modules = { "./convex/_generated/server.ts": () => import("./convex/server"), "./convex/home.ts": () => import("./convex/home") };
 it("returns the stored selection, preserves legacy absence and enforces access", async () => {
   const t = convexTest(schema, modules), get = makeFunctionReference<"query">("home:get");
   const selection = { book: "cl", chapter: 1, first: 3, last: 23, version: "alm1911" as const };

@@ -186,7 +186,7 @@ do [roteiro operacional](operations/user-administration.md) no rollout.
 
 O schema abaixo descreve a base anterior; esta extensão não migra o SQLite local.
 
-[Schema v1](../packages/backend/schema.ts):
+[Schema v1](../packages/backend/convex/schema.ts):
 
 | Tabela | Responsabilidade | Índices |
 |---|---|---|

@@ -13,7 +13,7 @@ Fontes: [AGENTS.md §4 Convenções](../AGENTS.md#4-convenções-de-código),
   teste; as funções Convex chamam essas regras e fazem a checagem final.
 - Erros para o usuário via `ConvexError("mensagem em português")`.
 - Funções Convex: sempre `args` validados, consultas por índice (`withIndex`),
-  paginação para listas que crescem; ler `packages/backend/_generated/ai/guidelines.md`.
+  paginação para listas que crescem; ler `packages/backend/convex/_generated/ai/guidelines.md`.
 
 ## Testes
 

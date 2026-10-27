@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 import { convexTest } from "convex-test";
 import { makeFunctionReference } from "convex/server";
 import { dateInZone, favoriteLimitMessage, MAX_FAVORITE_DEVOTIONALS, type ReadingData } from "domain/core";
-import schema from "./schema";
+import schema from "./convex/schema";
 
 const modules = {
-  "./_generated/server.ts": () => import("./_generated/server"),
-  "./reading.ts": () => import("./reading"),
+  "./convex/_generated/server.ts": () => import("./convex/_generated/server"),
+  "./convex/reading.ts": () => import("./convex/reading"),
 };
 const get = makeFunctionReference<"query", { today: string }, ReadingData>("reading:get");
 const setFavorite = makeFunctionReference<"mutation", { date: string; saved: boolean }, string | null>("reading:setFavorite");

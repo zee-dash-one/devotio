@@ -3,7 +3,7 @@ import { create } from "fontkit";
 import { renderAsync } from "@resvg/resvg-js";
 import { fontBase64 } from "./font.data";
 import { backgroundSvg, backgrounds } from "./backgrounds.node";
-import { imageContentSchema, imageSizes, imageStyles, IMAGE_MAX_PAGES, IMAGE_PUBLIC_URL, type ImageContent } from "../../domain/devotional-images";
+import { imageContentSchema, imageSizes, imageStyles, IMAGE_MAX_PAGES, IMAGE_PUBLIC_URL, type ImageContent } from "../../../domain/devotional-images";
 const font = create(Buffer.from(fontBase64, "base64"));
 if (!("layout" in font)) throw new Error("Expected a single font");
 const face = font;

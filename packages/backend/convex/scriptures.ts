@@ -1,4 +1,4 @@
-import source from "../../docs/bibles/ALM1911.json";
+import source from "../../../docs/bibles/ALM1911.json";
 import { ConvexError } from "convex/values";
 import { alm1911DatasetSchema, bibleSelectionSchema, bibleQuote, type BibleSelection } from "domain/core";
 let corpus: ReturnType<typeof alm1911DatasetSchema.parse> | undefined;

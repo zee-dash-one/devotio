@@ -16,9 +16,10 @@ Código no checkout não comprova atualização de produção; Expo permanece ad
 
 Na raiz, `npm run build:ready` verifica e gera o artefato para publicação.
 `npm run deploy:backend` atualiza o Convex de desenvolvimento configurado
-(atualmente `upbeat-jellyfish-720`). Com credenciais e ambiente preparados,
-`npm run deploy:pilot` valida, atualiza esse backend e publica a web em sequência.
-[Comandos, configuração do Cloudflare e correção do deploy](docs/operations/release.md).
+(atualmente `upbeat-jellyfish-720`). As funções ficam em
+`packages/backend/convex/` (ver `convex.json`). Com credenciais e ambiente
+preparados, `npm run deploy:pilot` valida, atualiza esse backend e publica a web
+em sequência. [Comandos, configuração do Cloudflare e verificação do deploy](docs/operations/release.md).
 
 ## Comece aqui
 
@@ -155,7 +156,7 @@ Abra `http://127.0.0.1:3000` e escolha Daniel (AG), Marina (membro), Lucas (sem 
 ```text
 docs/             produto, design, engenharia, operação e decisões
 specs/            requisitos e acompanhamento por funcionalidade
-packages/backend/ Convex: dados, autorização e operações
+packages/backend/ Convex (`convex/`): dados, autorização e operações; `local/` para SQLite em dev
 packages/domain/  regras, validações, tipos e hooks sem UI
 packages/ui-kit/  tokens de design compartilhados
 apps/web/         React + Vite + TanStack Router + PWA

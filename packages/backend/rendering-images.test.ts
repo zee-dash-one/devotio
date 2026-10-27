@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { renderImages } from "./images.node";
+import { renderImages } from "./convex/rendering/images.node";
 const content = { date: "2026-10-25", reference: "Colossenses 1:3–23", reflection: "Ação, fé e esperança. " .repeat(30), prayerSuggestion: "Senhor, ensina-nos a cuidar. Amém." };
 it("renders six PNG variants with correct dimensions and numbered overflow pages", async () => {
   const pages = [];
