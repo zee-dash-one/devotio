@@ -120,7 +120,11 @@ publicações e não exige repetir essa migração já concluída.
    publica funções, schema e índices das specs 015/016; não é somente um build.
 4. Consultar os contratos publicados com o comando somente de leitura abaixo.
    `communities:list` e `communities:detail` devem aceitar `governance` opcional;
-   as três funções citadas acima devem existir como queries públicas.
+   as três funções citadas acima devem existir como queries públicas. Sem login,
+   `POST https://upbeat-jellyfish-720.convex.cloud/api/query` com corpo
+   `{"path":"reading:get","args":{},"format":"json"}` não deve responder
+   `Could not find public function` (erro de autenticação ou validação indica
+   que a função existe).
 5. Completar a migração de posse das comunidades antigas conforme
    [gestão de usuários](user-administration.md#criação-e-posse-de-comunidades--spec-015):
    `communities:backfillOwners` com `{"cursor":null}` atribui o admin ativo mais
