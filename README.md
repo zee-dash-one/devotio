@@ -12,13 +12,168 @@ Há adaptadores Google/Convex e um ambiente local com perfis fictícios e SQLite
 [Validações e pendências de publicação](docs/engineering/status.md).
 Código no checkout não comprova atualização de produção; Expo permanece adiado.
 
-## Build e publicação
+## Publicar e verificar (piloto pré-beta)
 
-Na raiz, `npm run build:ready` verifica e gera o artefato para publicação.
-`npm run deploy:backend` atualiza o Convex de desenvolvimento configurado
-(atualmente `upbeat-jellyfish-720`). Com credenciais e ambiente preparados,
-`npm run deploy:pilot` valida, atualiza esse backend e publica a web em sequência.
-[Comandos, configuração do Cloudflare e correção do deploy](docs/operations/release.md).
+O site público do piloto é **https://devotio.zee-dash-one.workers.dev** (Worker
+Cloudflare `devotio`). O backend em produção hoje é o deployment Convex
+**`upbeat-jellyfish-720`** (tipo *development* no projeto `adm-zone:devotio-pilot`).
+A web aponta para ele via `apps/web/.env.production` e variáveis de build no
+Cloudflare. Detalhes e histórico operacional:
+[docs/operations/release.md](docs/operations/release.md).
+
+**Regra crítica:** merge na `main` publica **só a web**. O Convex **não** sobe
+automaticamente. Mudança em `packages/backend` exige publicar o backend no piloto
+**antes** do merge que leva a web nova ao ar.
+
+### 1. Como a web é publicada
+
+| Etapa | O que acontece |
+|---|---|
+| Gatilho | Push ou merge na branch **`main`** do repositório `zee-dash-one/devotio` |
+| Build | Cloudflare **Workers Builds** executa `npm run build:ready` na raiz (lint, typecheck, build e `verify:web`) |
+| Deploy | Em seguida executa `npm run deploy:web:built` (Wrangler publica `apps/web/dist`) |
+| Onde acompanhar | Dashboard Cloudflare → **Workers & Pages** → Worker **`devotio`** → **Builds** (ou o check **Workers Builds: devotio** no commit no GitHub) |
+| URL pública | https://devotio.zee-dash-one.workers.dev |
+
+O Cloudflare instala dependências antes do build; não é necessário `npm ci` no
+campo de build do painel. Campos salvos no painel estão documentados em
+[release.md § Cloudflare](docs/operations/release.md#configuração-do-cloudflare-workers-builds).
+
+### 2. Ordem quando o PR mexe em `packages/backend`
+
+Fluxo esperado (pré-beta): branch → PR → **deploy do backend no piloto** (Hil ou
+operador autorizado) → revisão → **merge na `main` pelo Hil** (dispara só a web).
+
+1. Atualize o checkout e instale dependências (após `git pull`):
+
+**Bash (Linux/macOS/Git Bash):**
+
+```sh
+git switch main
+git pull --ff-only origin main
+git switch sua-branch
+npm ci
+npm run lint
+npm run typecheck
+npm run test
+npm run build:ready
+```
+
+**Windows PowerShell 5.1** (um comando por linha; encadeie com `;` se precisar):
+
+```powershell
+git switch main
+git pull --ff-only origin main
+git switch sua-branch
+npm ci
+npm run lint
+npm run typecheck
+npm run test
+npm run build:ready
+```
+
+2. Confirme o alvo Convex **antes** de publicar:
+   - O script `npm run deploy:backend` na **raiz** do monorepo roda
+     `convex dev --once --typecheck enable` e usa o projeto definido em
+     **`convex.json`** (raiz), com funções em `packages/backend/`.
+   - O CLI lê variáveis de **`.env.local` na raiz do repositório** (mesmo nível
+     que `convex.json`). Exemplo: `CONVEX_DEPLOYMENT=dev:upbeat-jellyfish-720`.
+   - Um **`packages/backend/.env.local`** pode existir para `convex dev` iniciado
+     no workspace backend; **não** assuma que ele vale para `npm run deploy:backend`
+     na raiz. Para forçar o alvo, use
+     `npm run deploy:backend -- --env-file caminho/do/seletor.env` (arquivo
+     temporário, só com o deployment, fora do Git).
+   - **Não** use `npm run deploy:backend:prod` nem `npx convex deploy` para o
+     piloto ao vivo: isso aponta para outro deployment (`acrobatic-mandrill-347`)
+     sem as variáveis de auth do piloto.
+
+3. Autentique o Convex se necessário (`npx convex login`). Publique:
+
+```sh
+npm run deploy:backend
+```
+
+No PowerShell, o mesmo comando. Confira na saída do CLI que o deployment é
+**`upbeat-jellyfish-720`**.
+
+4. Só depois disso o Hil faz merge do PR na `main` (publicação automática da web).
+
+Mudanças de schema devem ser **compatíveis com a web antiga** até o merge, porque
+o backend sobe primeiro. Publicação manual completa (backend + web no mesmo
+comando, fora do Git): `npm run deploy:pilot` — use apenas quando a intenção for
+publicar ambos de uma vez.
+
+### 3. Verificar que a web foi publicada
+
+1. No Cloudflare ou no GitHub, confirme build **verde** para o SHA do merge na `main`.
+2. Abra https://devotio.zee-dash-one.workers.dev (sessão anônima ou após logout).
+3. O repositório **não** expõe commit/versão dentro do app; use o SHA do merge na
+   `main` e o build do Workers Builds correspondente a esse commit.
+4. Faça **hard refresh** (ou teste em janela anônima) para evitar shell PWA antigo
+   do service worker.
+
+### 4. Verificar que o backend do piloto foi publicado
+
+Com credenciais Convex no operador:
+
+```sh
+npx convex function-spec --deployment upbeat-jellyfish-720
+```
+
+No dashboard: projeto **devotio-pilot** → deployment **upbeat-jellyfish-720** →
+**Functions** — confira queries/mutations novas do PR.
+
+**Checagem rápida sem login** (HTTP público do Convex): erro de **autenticação**
+indica que a função **existe**; **`Could not find public function`** indica que
+**não** foi publicada (ou o nome está errado). Exemplo com função que exige sessão:
+
+```sh
+curl -sS -X POST 'https://upbeat-jellyfish-720.convex.cloud/api/query' \
+  -H 'Content-Type: application/json' \
+  -d '{"path":"communities:list","args":{},"format":"json"}'
+```
+
+Resposta com mensagem do tipo *Entre na sua conta* → função presente. Para
+`reading:get`, o mesmo padrão: *função não encontrada* após merge só na web
+quebra o devocional para usuários logados até o backend ser republicado.
+
+### 5. Consultar o banco com segurança
+
+Dados do piloto são **reais** (usuários e conteúdo editorial). Somente leitura
+autorizada pelo Hil:
+
+- Dashboard Convex → deployment **upbeat-jellyfish-720** → **Data**
+- CLI (somente leitura de inspeção):
+
+```sh
+npx convex data --deployment upbeat-jellyfish-720
+npx convex data nomeDaTabela --deployment upbeat-jellyfish-720 --limit 10
+```
+
+Não exportar dumps para o Git, não commitar `.env*` nem capturas com PII. Não
+alterar registros pelo dashboard sem procedimento operacional.
+
+### 6. Problemas comuns e recuperação
+
+| Sintoma | Causa provável | Recuperação |
+|---|---|---|
+| App carrega, mas telas Convex falham; console *Could not find public function* | Web nova, backend antigo (merge sem `deploy:backend`) | Na `main` ou na branch do PR: `npm run deploy:backend` no piloto; validar `function-spec` e smoke na URL |
+| Auth ou comunidade quebram após deploy errado | Publicou em `deploy:backend:prod` / deployment errado | Republicar com `deploy:backend` e `CONVEX_DEPLOYMENT=dev:upbeat-jellyfish-720` |
+| Web parece antiga após merge verde | Cache PWA / aba antiga | Hard refresh, janela anônima ou limpar dados do site |
+| Imagens do devocional após release de backend | Passo editorial opcional | [docs/operations/devotional-images.md](docs/operations/devotional-images.md) |
+
+Incidente de referência (27/10/2026): merge na `main` publicou a web; o piloto
+ficou sem funções como `reading:get` até republicar o backend no deployment correto.
+
+### Comandos úteis (raiz)
+
+| Comando | Efeito |
+|---|---|
+| `npm run build:ready` | Valida e gera artefato web; **não** publica |
+| `npm run deploy:backend` | Publica funções/schema no deployment configurado (`dev:upbeat-jellyfish-720`) |
+| `npm run deploy:backend:prod` | Outro deployment Convex — **não** é o piloto ao vivo |
+| `npm run deploy:web:built` | Publica `apps/web/dist` (o que o Workers Builds usa após o build) |
+| `npm run deploy:pilot` | `build:ready` + backend + web em sequência (manual) |
 
 ## Comece aqui
 
@@ -93,7 +248,7 @@ Os pacotes internos são `backend`, `domain` e `ui-kit`. O backend concentra ide
 | `vite-plugin-pwa` | 1.3.0 | Geração de manifest, registro do service worker e atualização opcional |
 | Workbox (`workbox-build` / `workbox-window`) | 7.4.1 | Infraestrutura utilizada pelo plugin para precache do shell e comunicação com o service worker |
 | Web App Manifest + Service Worker | APIs web | Instalação opcional e shell offline; conteúdo autenticado exige internet |
-| Cloudflare Workers | Web/PWA e Workers Builds | Integração Git para `main` e previews de branches; scripts corrigidos em 21/10/2026, publicação após merge a validar |
+| Cloudflare Workers | Web/PWA e Workers Builds | Integração Git na `main` publica a web após merge; ver [Publicar e verificar](#publicar-e-verificar-piloto-pré-beta) |
 | Convex | Backend do piloto | Deployment de desenvolvimento configurado e atualizado; acompanhamento de cotas e migração para produção são operações separadas |
 
 O service worker não registra cache de APIs autenticadas, comunidade, sessão ou áudio. A operação gratuita depende dos [limites e condições do piloto](docs/operations/free-launch.md).
