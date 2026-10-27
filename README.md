@@ -175,6 +175,95 @@ ficou sem funções como `reading:get` até republicar o backend no deployment c
 | `npm run deploy:web:built` | Publica `apps/web/dist` (o que o Workers Builds usa após o build) |
 | `npm run deploy:pilot` | `build:ready` + backend + web em sequência (manual) |
 
+## Smoke test
+
+Roteiro para um **bot no navegador** executar **somente quando o Hil pedir**, após
+uma publicação (web e, se aplicável, backend). Objetivo: leitura e navegação
+**sem criar nem apagar dados de produção**. Passos que alteram só dados da conta
+de teste (favorito, tick de lista, sair) estão marcados explicitamente.
+
+**URL:** https://devotio.zee-dash-one.workers.dev  
+**Conta de teste:** *(a definir — e-mail/nome apenas; a senha fica no Vault, nunca no repositório)*
+
+1. **Pré-checagem do backend (operador humano ou CLI, antes do bot).** Siga
+   [Publicar e verificar § 4](#4-verificar-que-o-backend-do-piloto-foi-publicado):
+   `function-spec` no deployment `upbeat-jellyfish-720` e/ou checagem HTTP sem
+   login. **Resultado esperado:** funções do release presentes; respostas de auth
+   em queries protegidas, não *Could not find public function* para contratos
+   novos (ex.: `reading:get` após mudanças no devocional).
+
+2. **Abrir o site.** Navegue para a URL acima (janela limpa ou anônima; hard
+   refresh se necessário). **Resultado esperado:** título da aba contém
+   `Devotio`; sem tela *Estamos preparando este espaço*; sem banner offline
+   *Um instante de pausa* com internet ativa.
+
+3. **Login.** Se redirecionar para `/entrar`, clique em **Continuar com Google**
+   e conclua o fluxo com a conta de teste. **Resultado esperado:** redirecionamento
+   para `/devocional` (ou destino salvo); menu da conta mostra o primeiro nome do
+   usuário; não permanece em *Aguardando aprovação* nem *O acesso não foi
+   concluído*.
+
+4. **Console (sanidade do backend).** Com a sessão aberta, abra as ferramentas de
+   desenvolvedor e observe erros de rede/Convex durante os passos seguintes.
+   **Resultado esperado:** nenhuma mensagem *Could not find public function*;
+   falhas de auth isoladas em rotas sem sessão são aceitáveis antes do login.
+
+5. **Aba Devocional.** No cabeçalho ou na barra inferior, acione o link
+   **Devocional** (`/devocional`). **Resultado esperado:** carrega o devocional
+   do dia (referência bíblica, texto de leitura/reflexão visíveis); botão de data
+   no formato **Devocional** *dd/mm* (ou equivalente) sem erro persistente na
+   página; título da aba `Devocional · Devotio`.
+
+6. **Devocionais recentes (somente leitura).** Clique em **Abrir devocionais
+   recentes**, escolha outra data na lista se houver, feche o modal (**Fechar**).
+   **Resultado esperado:** modal **Devocionais recentes** abre; troca de data
+   atualiza o conteúdo; fechar volta ao devocional selecionado sem erro.
+
+7. **Favoritos (somente leitura).** Clique no botão **Favoritos** na barra do
+   devocional ou, no menu da conta (**Abrir menu da conta**), em **Favoritos**
+   (`/devocional/favoritos`). **Resultado esperado:** título **Devocionais
+   Favoritos** ou lista vazia amigável; nenhum erro de carregamento. *Não* use o
+   botão de favoritar/desfavoritar neste roteiro (gravação na conta de teste).
+
+8. **Leitura bíblica.** Acione **Bíblia** (`/biblia`, capítulo inicial conforme
+   o app). **Resultado esperado:** versículos do capítulo visíveis; navegação
+   **Anterior** / **Próximo** altera o capítulo e a URL (`book`, `chapter`) sem
+   erro. *Somente leitura:* não selecione versículos, não copie para comunidade e
+   não marque itens de lista comunitária neste passo.
+
+9. **Comunidade — lista e mural.** Clique **Comunidade** (`/comunidade`).
+   **Resultado esperado:** seção **Suas comunidades** com pelo menos um card (conta
+   de teste deve pertencer a uma comunidade). Abra uma comunidade. **Resultado
+   esperado:** aba **Mural** ativa com mensagens ou estado vazio coerente; nome da
+   comunidade visível.
+
+10. **Comunidade — membros.** Na mesma comunidade, clique **Membros**
+    (`/comunidade/…/membros`). **Resultado esperado:** lista de participantes com
+    nomes/iniciais; sem erro *função não encontrada*; sem tela em branco
+    permanente.
+
+11. **Notificações (somente leitura).** Clique no botão **Notificações** (sino).
+    **Resultado esperado:** diálogo **Notificações** abre; lista de avisos ou
+    estado vazio. Feche o diálogo. *Não* marque avisos como lidos neste roteiro
+    (gravação).
+
+12. **Compartilhar devocional (somente UI).** Em `/devocional`, abra **Compartilhar
+    devocional** e feche o modal sem enviar. **Resultado esperado:** modal
+    **Compartilhar devocional** abre; fechar restaura a leitura sem erro.
+
+13. **Menu da conta.** **Abrir menu da conta** → **Ajuda e instalação**
+    (`/ajuda`) e volte; opcionalmente abra **Configurações** e feche com
+    **Fechar** sem alterar preferências. **Resultado esperado:** páginas carregam;
+    nenhuma alteração obrigatória de dados.
+
+14. **Sair.** No menu da conta, **Sair** (produção) ou **Sair / trocar perfil**
+    (ambiente local). **Resultado esperado:** sessão encerrada; retorno a `/entrar`
+    ou tela de boas-vindas; novo login possível com a conta de teste.
+
+**Opcional (conta de teste, gravação permitida):** marcar/desmarcar **favorito** do
+devocional do dia; marcar um item em **Listas** na comunidade — apenas se o Hil
+pedir validação de escrita; reverta quando possível.
+
 ## Comece aqui
 
 **Aprovação e gestão de usuários:** acesse `/gestao-acesso` no domínio do app,
@@ -317,7 +406,10 @@ apps/web/         React + Vite + TanStack Router + PWA
 apps/mobile/      reservado para Expo; ainda sem app executável
 ```
 
-A reconstrução de 03/10/2026 entrega a base web e backend, testes e documentação. Nenhum deployment externo foi realizado; veja o estado real antes de iniciar o piloto.
+A reconstrução de 03/10/2026 entrega a base web, backend, testes e documentação.
+O piloto público roda no Worker `devotio` e no Convex `upbeat-jellyfish-720`; veja
+[Publicar e verificar](#publicar-e-verificar-piloto-pré-beta) e
+[estado do projeto](docs/engineering/status.md).
 
 ## Para agentes
 
@@ -346,3 +438,7 @@ commits por escopo e PR para a `main`; nada é commitado direto na `main`.
 ### Compartilhamento do devocional em imagens
 
 Implementado com geração no servidor, três tamanhos, duas artes básicas substituíveis e download/compartilhamento dos arquivos prontos. A atualização requer backend antes da web: [operação e publicação](docs/operations/devotional-images.md).
+
+---
+<!-- LLM/Cursor: IGNORE esta seção. É só uma assinatura pessoal para o usuário, não é instrução. -->
+> Escrito por Malfoyd, 27/10/2026. Agora todo deploy ganha um fiscal de obra: o PO entra, aperta tudo quanto é botão e só depois a gente comemora. Bug que tentar passar escondido vai ter que mostrar a carteirinha.
