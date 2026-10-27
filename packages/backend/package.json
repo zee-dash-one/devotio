@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "convex dev",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p convex/tsconfig.json",
     "lint": "eslint .",
     "test": "vitest run"
   },

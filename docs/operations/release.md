@@ -235,7 +235,7 @@ Nomes definitivos de OAuth e arquivos de configuração serão estabelecidos na 
 ## 3. Sequência de publicação planejada
 
 1. Fechar os portões acima e registrar responsável pela liberação.
-2. Confirmar configuração das funções Convex em `packages/backend/convex/` (`convex.json`), dependências compatíveis e código gerado oficial.
+2. Confirmar configuração das funções Convex em `packages/backend/convex/` (`convex.json` e `tsconfig.json` para o typecheck do CLI), dependências compatíveis e código gerado oficial.
 3. Executar os checks do [guia de desenvolvimento](../engineering/development.md) em homologação.
 4. Publicar backend compatível com a interface anterior. Configurar auth/origens/callbacks e verificar usuário sem privilégio.
 5. Configurar Workers Builds com os scripts da seção acima, raiz `/` e branch `main`. Fixar Node/npm e fornecer somente variáveis públicas ao build.
