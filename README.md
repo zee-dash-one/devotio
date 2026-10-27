@@ -399,7 +399,7 @@ Abra `http://127.0.0.1:3000` e escolha Daniel (AG), Marina (membro), Lucas (sem 
 ```text
 docs/             produto, design, engenharia, operação e decisões
 specs/            requisitos e acompanhamento por funcionalidade
-packages/backend/ Convex: dados, autorização e operações
+packages/backend/ Convex (`convex/`): dados, autorização e operações; `local/` para SQLite em dev
 packages/domain/  regras, validações, tipos e hooks sem UI
 packages/ui-kit/  tokens de design compartilhados
 apps/web/         React + Vite + TanStack Router + PWA

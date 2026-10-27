@@ -3,13 +3,13 @@ import { convexTest } from "convex-test";
 import { makeFunctionReference } from "convex/server";
 import { refs } from "domain/convex";
 import type { JoinRequestPage } from "domain/core";
-import schema from "./schema";
-import type { Id } from "./server";
+import schema from "./convex/schema";
+import type { Id } from "./convex/server";
 const modules = {
-  "./_generated/server.ts": () => import("./_generated/server"),
-  "./communities.ts": () => import("./communities"),
-  "./communityGovernance.ts": () => import("./communityGovernance"),
-  "./notifications.ts": () => import("./notifications"),
+  "./convex/_generated/server.ts": () => import("./convex/_generated/server"),
+  "./convex/communities.ts": () => import("./convex/communities"),
+  "./convex/communityGovernance.ts": () => import("./convex/communityGovernance"),
+  "./convex/notifications.ts": () => import("./convex/notifications"),
 };
 const mutation = (name: string) => makeFunctionReference<"mutation">("communityGovernance:" + name);
 const requests = makeFunctionReference<"query", { id: string; cursor: string | null }, JoinRequestPage>("communityGovernance:joinRequests");

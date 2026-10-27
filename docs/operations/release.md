@@ -150,7 +150,11 @@ publicações e não exige repetir essa migração já concluída.
    publica funções, schema e índices das specs 015/016; não é somente um build.
 4. Consultar os contratos publicados com o comando somente de leitura abaixo.
    `communities:list` e `communities:detail` devem aceitar `governance` opcional;
-   as três funções citadas acima devem existir como queries públicas.
+   as três funções citadas acima devem existir como queries públicas. Sem login,
+   `POST https://upbeat-jellyfish-720.convex.cloud/api/query` com corpo
+   `{"path":"reading:get","args":{},"format":"json"}` não deve responder
+   `Could not find public function` (erro de autenticação ou validação indica
+   que a função existe).
 5. Completar a migração de posse das comunidades antigas conforme
    [gestão de usuários](user-administration.md#criação-e-posse-de-comunidades--spec-015):
    `communities:backfillOwners` com `{"cursor":null}` atribui o admin ativo mais
@@ -261,7 +265,7 @@ Nomes definitivos de OAuth e arquivos de configuração serão estabelecidos na 
 ## 3. Sequência de publicação planejada
 
 1. Fechar os portões acima e registrar responsável pela liberação.
-2. Confirmar configuração das funções Convex no diretório real `packages/backend`, dependências compatíveis e código gerado oficial.
+2. Confirmar configuração das funções Convex em `packages/backend/convex/` (`convex.json`), dependências compatíveis e código gerado oficial.
 3. Executar os checks do [guia de desenvolvimento](../engineering/development.md) em homologação.
 4. Publicar backend compatível com a interface anterior. Configurar auth/origens/callbacks e verificar usuário sem privilégio.
 5. Configurar Workers Builds com os scripts da seção acima, raiz `/` e branch `main`. Fixar Node/npm e fornecer somente variáveis públicas ao build.

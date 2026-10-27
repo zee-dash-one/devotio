@@ -33,7 +33,7 @@ O diagnóstico local do bundle usa convex dev --once --debug-bundle-path DIRETOR
 
 ## Trocar a arte
 
-- Edite packages/backend/rendering/backgrounds.node.ts: paletas e elementos SVG confiáveis. Os fundos atuais não dependem de arquivos remotos.
+- Edite packages/backend/convex/rendering/backgrounds.node.ts: paletas e elementos SVG confiáveis. Os fundos atuais não dependem de arquivos remotos.
 - Mude a version da arte correspondente em packages/domain/devotional-images.ts. Se mudar composição ou fonte, mude IMAGE_LAYOUT_VERSION.
 - Gere exemplos e confira margens/contraste/paginação. O renderer converte a fonte em contornos, mantendo o resultado independente das fontes do dispositivo.
 - Publique backend e web na ordem acima, depois use o script de preparação para o dia e agendamentos afetados. O hash novo gera uma revisão nova para todos; abrir o painel continua só consumindo os arquivos existentes.

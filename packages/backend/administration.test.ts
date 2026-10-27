@@ -10,21 +10,21 @@ import { createOTP } from "@better-auth/utils/otp";
 import { createHash } from "node:crypto";
 import { accessRefs } from "../domain/react/administration";
 import { refs } from "domain/convex";
-import schema from "./schema";
-import { matchingCounter } from "./adminLogin";
+import schema from "./convex/schema";
+import { matchingCounter } from "./convex/adminLogin";
 
-const modules = { "./imageActions.ts": () => import("./imageActions"), "./devotionalImages.ts": () => import("./devotionalImages"),
-  "./_generated/server.ts": () => import("./_generated/server"),
-  "./users.ts": () => import("./users"),
-  "./administration.ts": () => import("./administration"),
-  "./adminSession.ts": () => import("./adminSession"),
-  "./adminLogin.ts": () => import("./adminLogin"),
-  "./communities.ts": () => import("./communities"),
-  "./communityGovernance.ts": () => import("./communityGovernance"),
-  "./notifications.ts": () => import("./notifications"),
-  "./home.ts": () => import("./home"),
-  "./editorial.ts": () => import("./editorial"),
-  "./editorialAccess.ts": () => import("./editorialAccess"),
+const modules = { "./convex/imageActions.ts": () => import("./convex/imageActions"), "./convex/devotionalImages.ts": () => import("./convex/devotionalImages"),
+  "./convex/_generated/server.ts": () => import("./convex/_generated/server"),
+  "./convex/users.ts": () => import("./convex/users"),
+  "./convex/administration.ts": () => import("./convex/administration"),
+  "./convex/adminSession.ts": () => import("./convex/adminSession"),
+  "./convex/adminLogin.ts": () => import("./convex/adminLogin"),
+  "./convex/communities.ts": () => import("./convex/communities"),
+  "./convex/communityGovernance.ts": () => import("./convex/communityGovernance"),
+  "./convex/notifications.ts": () => import("./convex/notifications"),
+  "./convex/home.ts": () => import("./convex/home"),
+  "./convex/editorial.ts": () => import("./convex/editorial"),
+  "./convex/editorialAccess.ts": () => import("./convex/editorialAccess"),
 };
 const m = (name: string) => makeFunctionReference<"mutation">(name);
 const q = (name: string) => makeFunctionReference<"query">(name);
