@@ -1,1 +1,8 @@
-{"functions":"packages/backend/"}
+{
+  "functions": "packages/backend/",
+  "node": {
+    "externalPackages": [
+      "@resvg/resvg-js"
+    ]
+  }
+}

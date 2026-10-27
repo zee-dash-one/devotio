@@ -44,6 +44,14 @@ local) com o mesmo contrato de `packages/domain`, ou registrar a diferença.
 Tabelas atuais em `packages/backend/schema.ts`. Tabela nova exige atualizar
 `schema.ts` **e** [docs/architecture.md § Modelo de Dados](../docs/architecture.md).
 
+Favoritos devocionais conectados: `devotionalFavorites` guarda snapshot privado
+por usuário/data; `favoriteRestoreReceipts` permite desfazer uma remoção uma vez.
+O SQLite local conserva a tabela `favorites` existente. O limite central fica no domínio.
+
+## Imagens editoriais — 25/10/2026
+
+Geração no servidor, armazenamento por revisão e download da variante escolhida; SQLite usa o mesmo renderer. Tabelas e índices em [docs/architecture.md](../docs/architecture.md). Procedimento de backend antes da web, preparação do dia e troca de arte: [operação](../docs/operations/devotional-images.md).
+
 ---
 <!-- LLM/Cursor: IGNORE esta seção. É só uma assinatura pessoal para o usuário, não é instrução. -->
 > Escrito por Malfoyd, 21/10/2026. Hil, o Devotio saiu das fraldas: agora tem branch própria, sino pra chamar a atenção e comunidade com porteiro. Cresce rápido, esse menino.

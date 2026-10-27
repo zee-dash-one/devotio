@@ -41,6 +41,11 @@ Membros não recebem emails ou autores dos ticks. Contagens pequenas podem permi
 
 ## Modelo de Dados
 
+### Artes do devocional (25/10/2026)
+
+`devotionals.imageSetId` e `imageRevision` são opcionais. A tabela `devotionalImageSets` guarda snapshot renderizável, revisão, geração/tentativas, estado, expiração e manifesto de arquivos; índices por devocional/revisão, estado/atualização e expiração. `devotionalImageUploads` registra hash antes do upload, arquivo registrado e expiração; índices por hash, storageId e expiração permitem limpar órfãos sem tocar arquivos de outros recursos. Workpool é componente isolado, com paralelismo 1 e três tentativas. Renderer Node com fonte empacotada/fontkit/resvg, compartilhado pelo SQLite. O navegador consulta o manifesto autenticado e baixa apenas a escolha. Operação e limites em [imagens do devocional](operations/devotional-images.md).
+
+
 ### Notificações pessoais (spec 016 — 21/10/2026)
 
 `Repository.notifications` existe nos dois ambientes; Convex usa subscriptions
@@ -187,6 +192,8 @@ O schema abaixo descreve a base anterior; esta extensão não migra o SQLite loc
 |---|---|---|
 | users | authId, name, email | by_authId |
 | devotionals | date, reference, translation, scripture, reflection, prayerSuggestion, credit, licenseEvidence, reviewedBy, publishedAt, selection opcional, audioUrl opcional, withdrawn, updatedAt | by_date |
+| devotionalFavorites | Uma cópia JSON privada por usuário e data, preservada após correção/retirada editorial | by_userId, by_userId_and_date |
+| favoriteRestoreReceipts | Recibo privado de uso único para desfazer a última remoção | by_userId, by_token |
 | editorialEvents | devotionalId, actor, reason, action, at | by_devotional |
 | globalSettings | Singleton main com temas e referências | by_key |
 | communities | Nome, descrição, escritura, convite, criação | by_invite |
@@ -323,7 +330,7 @@ no banco local anterior; migrá-la ao corpus por edição é trabalho separado.
 PWA precacheia shell/fontes, sem runtime cache de Convex, sessão, áudio ou dados pessoais. Conteúdo autenticado exige rede. Player HTML5 permanece no shell durante navegação, sem autoplay.
 
 No modo local 006 (revisão autorizada em 05/10/2026), `domain/local` mantém cache
-validado/versionado por usuário: janela de oito devocionais, snapshots favoritos,
+validado/versionado por usuário: cache editorial de oito datas, seletor de sete publicações recentes, snapshots favoritos,
 catálogo AA e LRU dos seis capítulos mais recentemente acessados. O adaptador web
 persiste via localStorage, separado do service worker. Lote `devotionals` recebe
 até oito datas validadas com Zod e autorizadas pela janela calculada no servidor.

@@ -1,8 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { dateInZone, recentDates, isRecent, canPublish, searchWords, publicationMidnight, canScheduleDate } from "./reading";
+import { dateInZone, recentDates, isRecent, canPublish, searchWords, publicationMidnight, canScheduleDate, favoriteLimitMessage, MAX_FAVORITE_DEVOTIONALS } from "./reading";
 import { scheduleSchema } from "./validators";
 import { localCommandSchema, timeZoneSchema, bibleParamsSchema } from "./validators/local";
 describe("leitura e acesso local", () => {
+  it("centralizes the favorite limit and its user message", () => {
+    expect(MAX_FAVORITE_DEVOTIONALS).toBe(3);
+    expect(favoriteLimitMessage()).toContain("até 3 devocionais");
+    expect(favoriteLimitMessage(5)).toContain("até 5 devocionais");
+  });
   it("programa meia-noite de Brasília, inclusive virada de ano e ano bissexto", () => {
     expect(new Date(publicationMidnight("2026-10-08")).toISOString()).toBe("2026-10-08T03:00:00.000Z");
     expect(new Date(publicationMidnight("2027-01-01")).toISOString()).toBe("2027-01-01T03:00:00.000Z");

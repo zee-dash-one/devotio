@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Button, IconButton } from "../ui/button";
-import { Leaf, Share2 } from "lucide-react";
+import { BookOpen, Leaf, Share2 } from "lucide-react";
 import {
   copy,
+  imageAvailableToday,
   devotionalQuote,
   devotionalSectionText,
   devotionalShareText,
@@ -12,8 +13,8 @@ import {
   type Devotional,
   type HomeData,
 } from "domain/core";
-import { useReader } from "../context";
-import { Empty, Loading, ErrorMessage } from "../components";
+import { useApp, useReader } from "../context";
+import { Empty, Loading, ErrorMessage, Modal } from "../components";
 import {
   useVerseSelection,
   usePressActivation,
@@ -22,6 +23,8 @@ import {
 import { SelectionMenu } from "./selection-menu";
 import { PUBLIC_APP_URL } from "../config";
 import { shareText } from "../share-text";
+
+import { DevotionalImages } from "./devotional-images";
 
 export function DevotionalPage() {
   const { data, error } = useReader();
@@ -69,6 +72,8 @@ function DevotionalContent({
   settings: HomeData["settings"];
 }) {
   useReadingSurface();
+  const { repository } = useApp();
+  const [shareMode, setShareMode] = useState<"choice" | "image" | null>(null);
   const selection = useVerseSelection();
   const press = usePressActivation();
   const [section, setSection] = useState<
@@ -99,23 +104,7 @@ function DevotionalContent({
       true,
     );
   }
-  const label =
-    section === "reflection"
-      ? "Meditar"
-      : section === "prayerSuggestion"
-        ? "Oração"
-        : "Devocional";
-  return (
-    <>
-      <article className="reading-column" id="palavra">
-        <header className="section-heading">
-          <span className="section-number">01</span>
-          <span className="eyebrow">PALAVRA</span>
-          <span className="section-rule" />
-          <IconButton
-            aria-label="Compartilhar devocional"
-            disabled={sharing}
-            onClick={async () => {
+  async function shareWhole() {
               setSharing(true);
               setMessage("");
               try {
@@ -131,7 +120,31 @@ function DevotionalContent({
               } finally {
                 setSharing(false);
               }
-            }}
+  }
+  const label =
+    section === "reflection"
+      ? "Meditar"
+      : section === "prayerSuggestion"
+        ? "Oração"
+        : "Devocional";
+  return (
+    <>
+      {shareMode === "choice" && <Modal title="Compartilhar devocional" onClose={() => setShareMode(null)}>
+        <div className="image-share-options">
+          <Button onClick={() => { setShareMode(null); void shareWhole(); }}>Texto</Button>
+          {repository?.watchDevotionalImages && imageAvailableToday(day.date, Date.now()) && <Button variant="secondary" onClick={() => setShareMode("image")}>Imagem</Button>}
+        </div>
+      </Modal>}
+      {shareMode === "image" && <DevotionalImages key={day.id + ":" + day.reflection + ":" + day.prayerSuggestion} day={day} onClose={() => setShareMode(null)} />}
+      <article className="reading-column" id="palavra">
+        <header className="section-heading">
+          <span className="section-number">01</span>
+          <span className="eyebrow">PALAVRA</span>
+          <span className="section-rule" />
+          <IconButton
+            aria-label="Compartilhar devocional"
+            disabled={sharing}
+            onClick={() => setShareMode("choice")}
           >
             <Share2 size={20} />
           </IconButton>
@@ -140,6 +153,7 @@ function DevotionalContent({
         <h2 className="scripture-reference">
           {day.selection ? (
             <Link
+              aria-label={`Abrir ${day.reference} na Bíblia`}
               to="/biblia"
               search={{
                 book: day.selection.book,
@@ -149,7 +163,7 @@ function DevotionalContent({
                 version: day.selection.version,
               }}
             >
-              {day.reference}
+              {day.reference} <BookOpen size={20} aria-hidden="true" />
             </Link>
           ) : (
             day.reference

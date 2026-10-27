@@ -25,6 +25,23 @@ afterEach(() => { stores.splice(0).forEach(db => db.close()); dirs.splice(0).for
   rmSync(dir, { recursive: true, force: true });
 }); });
 describe("SQLite local: autorização, snapshots e persistência", () => {
+  it("lists seven available publications and enforces three private favorites", () => {
+    const { db, member, leader, editor } = setup();
+    const recent = () => db.query(member, { query: "reading", timeZone: "UTC" }) as ReadingData;
+    expect(recent().dates).toHaveLength(7);
+    expect(recent().dates[0]).toBe("2026-10-04");
+    db.command(editor, { action: "withdraw", date: "2026-10-04", reason: "Revisão" });
+    expect(recent().dates[0]).toBe("2026-10-03");
+    expect(recent().dates).toHaveLength(7);
+    for (const date of recent().dates.slice(0, 3)) db.command(member, { action: "setFavorite", date, saved: true, timeZone: "UTC" });
+    db.command(member, { action: "setFavorite", date: recent().dates[0], saved: true, timeZone: "UTC" });
+    expect(recent().favorites).toHaveLength(3);
+    expect((db.query(leader, { query: "reading", timeZone: "UTC" }) as ReadingData).favorites).toHaveLength(0);
+    expect(() => db.command(member, { action: "setFavorite", date: recent().dates[3], saved: true, timeZone: "UTC" })).toThrow("até 3 devocionais");
+    const token = db.command(member, { action: "setFavorite", date: recent().dates[0], saved: false, timeZone: "UTC" }) as string;
+    db.command(member, { action: "restoreFavorite", token });
+    expect(recent().favorites).toHaveLength(3);
+  });
   it("só cria em datas livres e exige editar existente, inclusive após retirada", () => {
     const { db, editor } = setup();
     const input = { ...publication, mode: "create" as const, date: "2026-10-05", selection };

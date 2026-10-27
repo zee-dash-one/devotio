@@ -3,7 +3,7 @@ import { Link, Outlet, useLocation, useMatches } from "@tanstack/react-router";
 import { BookOpen, BookText, Users, ArrowUpRight, Leaf } from "lucide-react";
 import { RepositoryProvider, useHome, useLocalDate } from "domain/react";
 import { loginDestination, type Devotional } from "domain/core";
-import { useApp, ReaderContext, AudioSelectionContext } from "./context";
+import { useApp, ReaderContext, AudioSelectionContext, ReadingNavigationContext } from "./context";
 import { Brand, AudioPlayer } from "./components";
 import { RouteRedirect } from "./redirect";
 import { NotificationsBell } from "./notifications";
@@ -33,6 +33,7 @@ function ReaderShell() {
   const home = useHome(date);
   const location = useLocation();
   const [selectedAudio, setSelectedAudio] = useState<Devotional | null>(null);
+  const [recentVisit, setRecentVisit] = useState(0);
   const masthead = useRef<HTMLDivElement>(null);
   const mobileNavigation = useRef<HTMLElement>(null);
   const [navigationHeight, setNavigationHeight] = useState(70);
@@ -47,7 +48,7 @@ function ReaderShell() {
     observer.observe(navigation);
     return () => observer.disconnect();
   }, []);
-  const audio = app.repository?.reading ? selectedAudio : home.data?.devotional;
+  const audio = app.repository?.devotionalReading || app.repository?.reading ? selectedAudio : home.data?.devotional;
   useEffect(() => {
     const foreground = () => {
       if (document.visibilityState === "visible") refresh();
@@ -55,8 +56,9 @@ function ReaderShell() {
     document.addEventListener("visibilitychange", foreground);
     return () => document.removeEventListener("visibilitychange", foreground);
   }, [refresh]);
-  const isReading = location.pathname === "/devocional";
+  const isReading = location.pathname === "/devocional" || location.pathname === "/devocional/favoritos";
   return (
+    <ReadingNavigationContext.Provider value={recentVisit}>
     <AudioSelectionContext.Provider value={setSelectedAudio}>
       <ReaderContext.Provider
         value={{ data: home.data, error: home.error, date }}
@@ -85,12 +87,13 @@ function ReaderShell() {
             >
               <header className="site-header">
                 <div className="header-inner">
-                  <Link to="/devocional" aria-label="Devotio, página inicial">
+                  <Link to="/devocional" aria-label="Devotio, página inicial" onClick={() => setRecentVisit(visit => visit + 1)}>
                     <Brand />
                   </Link>
                   <nav className="desktop-nav" aria-label="Navegação principal">
                     <Link
                       to="/devocional"
+                      onClick={() => setRecentVisit(visit => visit + 1)}
                       aria-label="Devocional"
                       title="Devocional"
                       activeProps={{ className: "active" }}
@@ -183,7 +186,7 @@ function ReaderShell() {
             className="mobile-nav"
             aria-label="Navegação no celular"
           >
-            <Link to="/devocional" activeProps={{ className: "active" }}>
+            <Link to="/devocional" onClick={() => setRecentVisit(visit => visit + 1)} activeProps={{ className: "active" }}>
               <BookOpen size={21} />
               <span>Devocional</span>
             </Link>
@@ -209,5 +212,6 @@ function ReaderShell() {
         </div>
       </ReaderContext.Provider>
     </AudioSelectionContext.Provider>
+    </ReadingNavigationContext.Provider>
   );
 }

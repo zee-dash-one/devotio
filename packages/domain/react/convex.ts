@@ -11,8 +11,13 @@ import type {
   Community,
   CommunityDetail,
 } from "../types";
+import type { ReadingData } from "../reading";
+import { dateInZone } from "../reading";
 export const refs = {
   home: makeFunctionReference<"query", { date: string }, HomeData>("home:get"),
+  reading: makeFunctionReference<"query", { today: string }, ReadingData>("reading:get"),
+  favorite: makeFunctionReference<"mutation", { date: string; saved: boolean }, string | null>("reading:setFavorite"),
+  restoreFavorite: makeFunctionReference<"mutation", { token: string }, null>("reading:restoreFavorite"),
   communities: makeFunctionReference<
     "query",
     { governance?: boolean },
@@ -93,6 +98,13 @@ export function createConvexRepository(client: ConvexReactClient): Repository {
   }
   return {
     mode: "live",
+    devotionalReading: {
+      watchReading: () => (next, error) => subscribe(client.watchQuery(refs.reading, { today: dateInZone("America/Sao_Paulo") }), next, error),
+      setFavorite: (date, saved) => safe(client.mutation(refs.favorite, { date, saved })),
+      restoreFavorite: async token => { await safe(client.mutation(refs.restoreFavorite, { token })); },
+    },
+    watchDevotionalImages: (id, revision) => (next, error) => subscribe(client.watchQuery(makeFunctionReference<"query", { id: string; revision: string }, import("../devotional-images").DevotionalImageManifest>("devotionalImages:get"), { id, revision }), next, error),
+    retryDevotionalImages: async id => { await safe(client.mutation(makeFunctionReference<"mutation">("devotionalImages:retry"), { id })); },
     social: createSocialRepository(client),
     governance: createGovernanceRepository(client),
     notifications: createNotificationsRepository(client),

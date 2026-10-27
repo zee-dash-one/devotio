@@ -33,6 +33,7 @@ export function useReader() {
   return useContext(ReaderContext);
 }
 export const AudioSelectionContext = createContext<(devotional: Devotional | null) => void>(() => {});
+export const ReadingNavigationContext = createContext(0);
 interface WritingState { editors: Record<string, EditorialDraft>; communities: Record<string, CommunityWritingDraft>; picker: BiblePickerState | null }
 const emptyWriting: WritingState = { editors: {}, communities: {}, picker: null };
 const WritingContext = createContext<WritingState & {

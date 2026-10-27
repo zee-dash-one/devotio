@@ -1,57 +1,64 @@
 import { Button, IconButton } from "../ui/button";
 import { useContext, useEffect, useMemo, useState } from "react";
-import { Bookmark, BookmarkCheck, ChevronDown } from "lucide-react";
-import { useHome, useRepository, useWatch } from "domain/react";
+import { Heart, ChevronDown } from "lucide-react";
+import { Link, useLocation } from "@tanstack/react-router";
+import { useLocalDate, useRepository, useWatch } from "domain/react";
 import {
   formatDate,
   validationMessage,
   type ReadingRepository,
-  type HomeData,
+  type Devotional,
   type Favorite,
 } from "domain/core";
-import { ReaderContext, useReader, AudioSelectionContext } from "../context";
+import { ReaderContext, useReader, AudioSelectionContext, ReadingNavigationContext } from "../context";
 import { DevotionalPage } from "./devotional";
 import { Empty, ErrorMessage, Loading, Modal } from "../components";
 import { Dropdown } from "../dropdown";
 
 export function ReadingPage() {
   const repository = useRepository();
-  return repository.reading ? (
-    <ReadingSelection reading={repository.reading} />
+  const location = useLocation();
+  const recentVisit = useContext(ReadingNavigationContext);
+  const reading = repository.devotionalReading ?? repository.reading;
+  return reading ? (
+    <ReadingSelection key={`${location.pathname}:${recentVisit}`} reading={reading} entryMode={location.pathname.endsWith("/favoritos") ? "favorites" : "recent"} />
   ) : (
     <DevotionalPage />
   );
 }
-function ReadingSelection({ reading }: { reading: ReadingRepository }) {
+function ReadingSelection({ reading, entryMode }: { reading: Pick<ReadingRepository, "watchReading" | "setFavorite" | "restoreFavorite">; entryMode: "recent" | "favorites" }) {
   const reader = useReader();
-  const state = useWatch(useMemo(() => reading.watchReading(), [reading]));
-  const [mode, setMode] = useState<"recent" | "favorites">("recent");
+  const { date: currentDay } = useLocalDate("America/Sao_Paulo");
+  const state = useWatch(useMemo(() => reading.watchReading(), [reading, currentDay]));
+  const [mode, setMode] = useState<"recent" | "favorites">(entryMode);
   const [selectedRecent, setSelectedRecent] = useState("");
   const [selectedFavorite, setSelectedFavorite] = useState("");
   const [recentOpen, setRecentOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [feedback, setFeedback] = useState("");
   const [removedFavorite, setRemovedFavorite] = useState<{
     favorite: Favorite;
     token: string;
   } | null>(null);
   const selectAudio = useContext(AudioSelectionContext);
-  const favoriteAudio =
+  const selectedAudio =
     mode === "favorites"
       ? (state.data?.favorites.find(
           (f) => f.devotional.date === selectedFavorite,
         )?.devotional ?? state.data?.favorites[0]?.devotional)
-      : undefined;
+      : (state.data?.recent.find(item => item.date === selectedRecent) ?? state.data?.recent[0]);
   useEffect(() => {
-    if (favoriteAudio) selectAudio(favoriteAudio);
-  }, [favoriteAudio, selectAudio]);
+    selectAudio(selectedAudio ?? null);
+  }, [selectedAudio, selectAudio]);
   if (!state.data)
     return (
       <div className="page">
         {state.error ? <ErrorMessage message={state.error} /> : <Loading />}
       </div>
     );
-  const favorites = state.data.favorites;
+  const readingData = state.data;
+  const favorites = readingData.favorites;
   const showingFavorites = mode === "favorites";
   const dates = showingFavorites
     ? favorites.map((f) => f.devotional.date)
@@ -62,15 +69,18 @@ function ReadingSelection({ reading }: { reading: ReadingRepository }) {
     ? selectedRecent
     : state.data.dates[0];
   const snapshot = favorites.find((f) => f.devotional.date === date);
+  const currentRecent = state.data.recent.find(item => item.date === date);
   async function toggle() {
     if (!date && !removedFavorite) return;
     setBusy(true);
     setError("");
+    setFeedback("");
     try {
       if (!date && removedFavorite) {
         await reading.restoreFavorite(removedFavorite.token);
         setSelectedFavorite(removedFavorite.favorite.devotional.date);
         setRemovedFavorite(null);
+        setFeedback("Favorito restaurado.");
       } else if (date) {
         const token = await reading.setFavorite(date, !snapshot);
         setRemovedFavorite(
@@ -78,6 +88,7 @@ function ReadingSelection({ reading }: { reading: ReadingRepository }) {
             ? { favorite: snapshot, token }
             : null,
         );
+        setFeedback(snapshot ? "Removido dos favoritos." : "Adicionado aos favoritos.");
       }
     } catch (e) {
       setError(validationMessage(e));
@@ -88,6 +99,7 @@ function ReadingSelection({ reading }: { reading: ReadingRepository }) {
   return (
     <>
       <section className="reading-tools" aria-label="Escolher leitura">
+        {showingFavorites && <h1 className="reading-mode-title">Devocionais Favoritos</h1>}
         <div className="reading-tabs">
           <div className="reading-devotional-group">
             <Button
@@ -99,6 +111,7 @@ function ReadingSelection({ reading }: { reading: ReadingRepository }) {
                 setMode("recent");
                 setRemovedFavorite(null);
                 setError("");
+                setFeedback("");
               }}
             >
               Devocional{recentDate && ` ${shortDate(recentDate)}`}
@@ -125,6 +138,7 @@ function ReadingSelection({ reading }: { reading: ReadingRepository }) {
               onClick={() => {
                 setMode("favorites");
                 setError("");
+                setFeedback("");
               }}
             >
               Favoritos
@@ -140,11 +154,10 @@ function ReadingSelection({ reading }: { reading: ReadingRepository }) {
                 onToggle={toggle}
               />
             ) : date ? (
-              <RecentFavoriteButton
-                date={date}
+              <FavoriteButton
                 saved={!!snapshot}
                 busy={busy}
-                disabled={busy || state.data.offline}
+                disabled={busy || state.data.offline || !currentRecent}
                 onToggle={toggle}
               />
             ) : (
@@ -178,6 +191,7 @@ function ReadingSelection({ reading }: { reading: ReadingRepository }) {
                   onChange={(value) => {
                     setSelectedFavorite(value);
                     setError("");
+                    setFeedback("");
                   }}
                   options={dates.map((day) => ({
                     value: day,
@@ -189,6 +203,7 @@ function ReadingSelection({ reading }: { reading: ReadingRepository }) {
           </div>
         )}
         {error && <ErrorMessage message={error} />}
+        {feedback && <p role="status" className="reading-feedback">{feedback}</p>}
       </section>
       {recentOpen && (
         <Modal
@@ -200,7 +215,7 @@ function ReadingSelection({ reading }: { reading: ReadingRepository }) {
               {state.data.dates.map((day) => (
                 <li key={day}>
                   <RecentDevotional
-                    date={day}
+                    devotional={readingData.recent.find(item => item.date === day)!}
                     selected={!showingFavorites && day === recentDate}
                     onSelect={() => {
                       setSelectedRecent(day);
@@ -208,6 +223,7 @@ function ReadingSelection({ reading }: { reading: ReadingRepository }) {
                       setRemovedFavorite(null);
                       setRecentOpen(false);
                       setError("");
+                      setFeedback("");
                     }}
                   />
                 </li>
@@ -222,13 +238,12 @@ function ReadingSelection({ reading }: { reading: ReadingRepository }) {
         <Empty
           title={
             showingFavorites
-              ? "Guarde o que tocou seu coração."
+              ? "Você ainda não tem devocionais favoritos."
               : "Nenhuma leitura disponível."
           }
         >
-          <p>
-            Ao favoritar um devocional, uma cópia pessoal fica guardada aqui.
-          </p>
+          <p>{showingFavorites ? "Guarde as reflexões que deseja revisitar." : "Volte em breve."}</p>
+          {showingFavorites && <Link to="/devocional">Explorar devocionais</Link>}
         </Empty>
       ) : showingFavorites && snapshot ? (
         <ReaderContext.Provider
@@ -248,8 +263,12 @@ function ReadingSelection({ reading }: { reading: ReadingRepository }) {
           </p>
           <DevotionalPage />
         </ReaderContext.Provider>
+      ) : currentRecent ? (
+        <ReaderContext.Provider value={{ date, data: { user: reader.data?.user ?? { id: "", name: "" }, devotional: currentRecent, settings: reader.data?.settings ?? null } }}>
+          <DevotionalPage />
+        </ReaderContext.Provider>
       ) : (
-        <RecentReading date={date} />
+        <Empty title="Nenhuma leitura disponível." />
       )}
     </>
   );
@@ -271,7 +290,7 @@ function FavoriteButton({
     ? "Restaurar último favorito"
     : saved
       ? "Remover dos favoritos"
-      : "Guardar nos favoritos";
+      : "Adicionar aos favoritos";
   return (
     <IconButton
       type="button"
@@ -282,82 +301,37 @@ function FavoriteButton({
       disabled={disabled ?? busy}
       onClick={onToggle}
     >
-      {saved ? <BookmarkCheck size={17} /> : <Bookmark size={17} />}
+      <Heart size={17} fill={saved ? "currentColor" : "none"} aria-hidden="true" />
     </IconButton>
-  );
-}
-function RecentFavoriteButton({
-  date,
-  saved,
-  busy,
-  disabled,
-  onToggle,
-}: {
-  date: string;
-  saved: boolean;
-  busy: boolean;
-  disabled?: boolean;
-  onToggle: () => void;
-}) {
-  const state = useHome(date);
-  return (
-    <FavoriteButton
-      saved={saved}
-      busy={busy}
-      disabled={disabled || !state.data?.devotional}
-      onToggle={onToggle}
-    />
   );
 }
 function shortDate(date: string) {
   return date.split("-").reverse().join("/");
 }
 function RecentDevotional({
-  date,
+  devotional,
   selected,
   onSelect,
 }: {
-  date: string;
+  devotional: Devotional;
   selected: boolean;
   onSelect: () => void;
 }) {
-  const state = useHome(date);
-  const devotional = state.data?.devotional;
+  const date = devotional.date;
   return (
     <button
       type="button"
       aria-label={`Ler devocional de ${shortDate(date)}`}
       aria-pressed={selected}
-      disabled={!devotional}
       onClick={onSelect}
     >
       <span className="recent-devotional-heading">
         <time dateTime={date}>{shortDate(date)}</time>
-        {devotional && <span>{devotional.reference}</span>}
+        <span>{devotional.reference}</span>
       </span>
       <span className="recent-devotional-preview">
-        {devotional?.scripture ??
-          (state.error ||
-            (state.data ? "Nenhum devocional nesta data." : "Carregando…"))}
+        {devotional.scripture}
       </span>
     </button>
-  );
-}
-function RecentReading({ date }: { date: string }) {
-  const state = useHome(date);
-  const selectAudio = useContext(AudioSelectionContext);
-  useEffect(() => {
-    if (state.data) selectAudio(state.data.devotional);
-  }, [state.data, selectAudio]);
-  return (
-    <ReaderContext.Provider
-      value={{
-        date,
-        data: state.data as HomeData | undefined,
-        error: state.error,
-      }}
-    >
-      <DevotionalPage />
-    </ReaderContext.Provider>
   );
 }

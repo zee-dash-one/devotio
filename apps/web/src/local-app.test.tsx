@@ -92,7 +92,10 @@ function server(loggedIn: boolean, actor = profile, conflict = false, manages = 
     if (input.query === "bible") return new Response(JSON.stringify({ books: [book], version: "aa", verses: 1, importedAt: 1, source: "Fixture" }));
     if (input.query === "chapter") return new Response(JSON.stringify({ book, chapter: input.chapter, verses: ["Versículo bíblico de teste", "Segundo verso de teste", "Terceiro verso", "Quarto verso", "Quinto verso", "Sexto verso"].map((text, index) => ({ abbrev: "jo", bookName: "João", chapter: input.chapter, number: index + 1, text })) }));
     if (input.query === "search") return new Response(JSON.stringify({ verses: [{ abbrev: "jo", bookName: "João", chapter: 1, number: 1, text: "Trecho encontrado na busca" }], total: 1, page: input.page }));
-    if (input.query === "reading") return new Response(JSON.stringify({ dates: recentDates(dateInZone("America/Sao_Paulo")), favorites }));
+    if (input.query === "reading") {
+      const dates = recentDates(dateInZone("America/Sao_Paulo")).slice(0, 7);
+      return new Response(JSON.stringify({ dates, recent: dates.map(devotional), favorites }));
+    }
     if (input.query === "devotionals") return new Response(JSON.stringify(Object.fromEntries(input.dates.map((date: string) => [date, {
       user: actor, settings: null,
       devotional: devotional(date),
@@ -114,6 +117,33 @@ function isQuery(path: string, name: string) {
   return input ? (JSON.parse(input) as { query?: string }).query === name : false;
 }
 describe("entrada local integrada", () => {
+  it.each(["paged", "continuous"])("abre Colossenses 1:3–23 inteiro no modo %s", async mode => {
+    localStorage.setItem("devotio:preferences:v1:marina", JSON.stringify({ theme: "day", fontSize: 20, mode }));
+    const original = server(true, profile, false, false, true);
+    const book = { abbrev: "cl", name: "Colossenses", chapters: 4, testament: "NT", order: 51 };
+    vi.stubGlobal("fetch", async (path: string, options?: RequestInit) => {
+      const response = await original(path, options);
+      if (isQuery(path,"devotionals")) {
+        const homes = await response.json();
+        for (const home of Object.values(homes) as { devotional: { reference: string; selection: BibleSelection } }[]) { home.devotional.reference = "Colossenses 1:3–23"; home.devotional.selection = { book: "cl", chapter: 1, first: 3, last: 23, version: "aa" }; }
+        return new Response(JSON.stringify(homes));
+      }
+      if (isQuery(path,"bible")) { const data = await response.json(); return new Response(JSON.stringify({ ...data, books: [book] })); }
+      if (isQuery(path,"chapter")) return new Response(JSON.stringify({ book, chapter: 1, verses: Array.from({ length: 29 }, (_, i) => ({ abbrev: "cl", bookName: "Colossenses", chapter: 1, number: i+1, text: "Versículo " + (i+1) })) }));
+      return response;
+    });
+    render(<StrictMode><LocalApp /></StrictMode>);
+    fireEvent.click(await screen.findByRole("link", { name: "Abrir Colossenses 1:3–23 na Bíblia" }));
+    await waitFor(() => expect(document.getElementById("verse-1-23")?.getAttribute("aria-checked")).toBe("true"));
+    for (let verse = 3; verse <= 23; verse++) expect(document.getElementById("verse-1-"+verse)?.getAttribute("aria-checked")).toBe("true");
+    expect(document.getElementById("verse-1-2")?.getAttribute("aria-checked")).toBe("false");
+  });
+  it.each(["1,177", "1,7"])("explica uma seleção inválida na URL (%s)", async verses => {
+    window.history.replaceState(null, "", "/biblia?book=jo&chapter=1&verses="+verses); server(true);
+    render(<StrictMode><LocalApp /></StrictMode>);
+    await screen.findByText(/A referência contém/);
+    expect(document.getElementById("verse-1-1")?.getAttribute("aria-checked")).toBe("false");
+  });
   it.each(["paged", "continuous"])("devocional seleciona Palavra e abre passagem marcada no modo %s", async (mode) => {
     localStorage.setItem("devotio:preferences:v1:marina", JSON.stringify({ theme: "day", fontSize: 20, mode }));
     server(true, profile, false, false, true);
@@ -127,7 +157,7 @@ describe("entrada local integrada", () => {
     expect(screen.getByRole("button", { name: "Enviar para amigos" })).toBeDefined();
     fireEvent.click(screen.getByRole("button", { name: "Copiar" }));
     await waitFor(() => expect(writeText).toHaveBeenCalledWith("1 - Um\n5 - Cinco\n\nJoão 1:1, 5\nAA"));
-    fireEvent.click(screen.getByRole("link", { name: "João 1:1–2, 5–6" }));
+    fireEvent.click(screen.getByRole("link", { name: "Abrir João 1:1–2, 5–6 na Bíblia" }));
     await waitFor(() => expect(window.location.pathname).toBe("/biblia"));
     for (const n of [1, 2, 5, 6]) await waitFor(() => expect(document.getElementById(`verse-1-${n}`)?.getAttribute("aria-checked")).toBe("true"));
     expect(document.getElementById("verse-1-3")?.getAttribute("aria-checked")).toBe("false");
@@ -145,6 +175,7 @@ describe("entrada local integrada", () => {
     expect(screen.queryByRole("link", { name: "Salmos 23:1" })).toBeNull();
     expect(screen.queryByRole("checkbox")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Compartilhar devocional" }));
+    fireEvent.click(screen.getByRole("button", { name: "Texto" }));
     await waitFor(() => expect(share).toHaveBeenCalledWith({ text: expect.stringContaining("PALAVRA\nSalmos 23:1 — AA") }));
     expect(share.mock.calls[0][0].text).toContain("Devotio — https://devotio.zee-dash-one.workers.dev");
     Object.defineProperty(navigator, "share", { configurable: true, value: undefined });
@@ -178,6 +209,7 @@ describe("entrada local integrada", () => {
     Object.defineProperty(navigator, "clipboard", { configurable: true, value: undefined });
     render(<StrictMode><LocalApp /></StrictMode>);
     fireEvent.click(await screen.findByRole("button", { name: "Compartilhar devocional" }));
+    fireEvent.click(screen.getByRole("button", { name: "Texto" }));
     const area = await screen.findByLabelText("Texto para compartilhar") as HTMLTextAreaElement;
     expect(area.value).toContain("MEDITAR\n\nReflexão de teste\n\nORAÇÃO\n\nOração de teste");
     expect(screen.queryByRole("button", { name: "Enviar para amigos" })).toBeNull();
@@ -277,7 +309,7 @@ describe("entrada local integrada", () => {
     const before = fetcher.mock.calls.length;
     fireEvent.click(dates);
     const choices = await screen.findAllByRole("button", { name: /^Ler devocional de/ });
-    expect(choices).toHaveLength(8);
+    expect(choices).toHaveLength(7);
     expect(choices[1].textContent).toContain("Salmos 23:1");
     expect(choices[1].textContent).toContain("Leitura integrada de teste");
     const older = choices[1], label = older.getAttribute("aria-label")!.replace("Ler devocional de ", "");
@@ -303,7 +335,7 @@ describe("entrada local integrada", () => {
     const older = (await screen.findAllByRole("button", { name: /^Ler devocional de/ }))[2];
     const label = older.getAttribute("aria-label")!.replace("Ler devocional de ", "");
     fireEvent.click(older);
-    fireEvent.click(await screen.findByRole("button", { name: "Guardar nos favoritos" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Adicionar aos favoritos" }));
     expect((await screen.findByRole("button", { name: "Remover dos favoritos" })).getAttribute("aria-pressed")).toBe("true");
     fireEvent.click(screen.getByRole("button", { name: "Favoritos" }));
     await screen.findByText(/Cópia pessoal salva em/);
@@ -311,26 +343,77 @@ describe("entrada local integrada", () => {
     fireEvent.click(screen.getByRole("button", { name: `Devocional ${label}` }));
     expect(screen.getByRole("button", { name: `Devocional ${label}` }).getAttribute("aria-pressed")).toBe("true");
     fireEvent.click(await screen.findByRole("button", { name: "Remover dos favoritos" }));
-    await screen.findByRole("button", { name: "Guardar nos favoritos" });
+    await screen.findByRole("button", { name: "Adicionar aos favoritos" });
     fireEvent.click(screen.getByRole("button", { name: "Favoritos" }));
-    await screen.findByText("Guarde o que tocou seu coração.");
-    const restore = await screen.findByRole("button", { name: "Guardar nos favoritos" });
+    await screen.findByText("Você ainda não tem devocionais favoritos.");
+    const restore = await screen.findByRole("button", { name: "Adicionar aos favoritos" });
     expect((restore as HTMLButtonElement).disabled).toBe(true);
+  });
+  it("abre favoritos pelo perfil e volta às recentes pelo menu principal", async () => {
+    server(true);
+    render(<StrictMode><LocalApp /></StrictMode>);
+    await screen.findByText("Leitura integrada de teste");
+    const menu = document.querySelector<HTMLDetailsElement>(".account-menu")!;
+    menu.open = true;
+    fireEvent.click(screen.getByRole("link", { name: "Favoritos" }));
+    await screen.findByRole("heading", { name: "Devocionais Favoritos" });
+    await screen.findByText("Você ainda não tem devocionais favoritos.");
+    fireEvent.click(screen.getAllByRole("link", { name: "Devocional" })[0]);
+    await screen.findByText("Leitura integrada de teste");
+    expect(screen.queryByRole("heading", { name: "Devocionais Favoritos" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Abrir devocionais recentes" }));
+    expect(await screen.findAllByRole("button", { name: /^Ler devocional de/ })).toHaveLength(7);
+  });
+  it("reinicia no devocional de hoje ao tocar novamente na aba principal", async () => {
+    server(true);
+    render(<StrictMode><LocalApp /></StrictMode>);
+    await screen.findByText("Leitura integrada de teste");
+    fireEvent.click(screen.getByRole("button", { name: "Abrir devocionais recentes" }));
+    const choices = await screen.findAllByRole("button", { name: /^Ler devocional de/ });
+    const oldDate = choices[2].getAttribute("aria-label")!.replace("Ler devocional de ", "");
+    fireEvent.click(choices[2]);
+    expect(screen.getByRole("button", { name: `Devocional ${oldDate}` })).toBeTruthy();
+    fireEvent.click(screen.getAllByRole("link", { name: "Devocional" })[0]);
+    const today = recentDates(dateInZone("America/Sao_Paulo"))[0].split("-").reverse().join("/");
+    await screen.findByRole("button", { name: `Devocional ${today}` });
+  });
+  it("compartilha a data selecionada em recentes e favoritos", async () => {
+    server(true);
+    const share = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "share", { configurable: true, value: share });
+    render(<StrictMode><LocalApp /></StrictMode>);
+    await screen.findByText("Leitura integrada de teste");
+    fireEvent.click(screen.getByRole("button", { name: "Abrir devocionais recentes" }));
+    const older = (await screen.findAllByRole("button", { name: /^Ler devocional de/ }))[2];
+    const label = older.getAttribute("aria-label")!.replace("Ler devocional de ", "");
+    fireEvent.click(older);
+    fireEvent.click(screen.getByRole("button", { name: "Compartilhar devocional" }));
+    await waitFor(() => expect(share).toHaveBeenCalledWith({ text: expect.stringContaining(`Devocional de ${label}`) }));
+    fireEvent.click(screen.getByRole("button", { name: "Adicionar aos favoritos" }));
+    await screen.findByRole("button", { name: "Remover dos favoritos" });
+    const menu = document.querySelector<HTMLDetailsElement>(".account-menu")!;
+    menu.open = true;
+    fireEvent.click(screen.getByRole("link", { name: "Favoritos" }));
+    await screen.findByRole("heading", { name: "Devocionais Favoritos" });
+    fireEvent.click(screen.getByRole("button", { name: "Compartilhar devocional" }));
+    await waitFor(() => expect(share).toHaveBeenCalledTimes(2));
+    expect(share.mock.calls[1][0].text).toContain(`Devocional de ${label}`);
+    Object.defineProperty(navigator, "share", { configurable: true, value: undefined });
   });
   it("mantém o ícone vazio desabilitado e permite desfazer o último favorito sem sair da tela", async () => {
     server(true); render(<StrictMode><LocalApp /></StrictMode>);
     await screen.findByText("Leitura integrada de teste");
     fireEvent.click(screen.getByRole("button", { name: "Favoritos" }));
-    expect((screen.getByRole("button", { name: "Guardar nos favoritos" }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole("button", { name: "Adicionar aos favoritos" }) as HTMLButtonElement).disabled).toBe(true);
     fireEvent.click(screen.getByRole("button", { name: /^Devocional \d/ }));
-    const save = await screen.findByRole("button", { name: "Guardar nos favoritos" });
+    const save = await screen.findByRole("button", { name: "Adicionar aos favoritos" });
     await waitFor(() => expect((save as HTMLButtonElement).disabled).toBe(false));
     fireEvent.click(save);
     await screen.findByRole("button", { name: "Remover dos favoritos" });
     fireEvent.click(screen.getByRole("button", { name: "Favoritos" }));
     await screen.findByText(/Cópia pessoal salva em/);
     fireEvent.click(screen.getByRole("button", { name: "Remover dos favoritos" }));
-    await screen.findByText("Guarde o que tocou seu coração.");
+    await screen.findByText("Você ainda não tem devocionais favoritos.");
     fireEvent.click(await screen.findByRole("button", { name: "Restaurar último favorito" }));
     await screen.findByText(/Cópia pessoal salva em/);
     expect(screen.getByRole("button", { name: "Remover dos favoritos" }).getAttribute("aria-pressed")).toBe("true");
@@ -339,7 +422,7 @@ describe("entrada local integrada", () => {
     fireEvent.click(screen.getByRole("button", { name: /^Devocional \d/ }));
     fireEvent.click(screen.getByRole("button", { name: "Favoritos" }));
     expect(screen.queryByRole("button", { name: "Restaurar último favorito" })).toBeNull();
-    expect((screen.getByRole("button", { name: "Guardar nos favoritos" }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole("button", { name: "Adicionar aos favoritos" }) as HTMLButtonElement).disabled).toBe(true);
   });
   it("fecha o menu da conta ao clicar fora, Escape e acionar configurações ou link", async () => {
     server(true); render(<StrictMode><LocalApp /></StrictMode>);

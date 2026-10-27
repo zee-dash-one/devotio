@@ -30,7 +30,10 @@ function setup(mirror = storage()) {
       case "notificationSummary": value = { unread: 1, revision: 1 }; break;
       case "notifications": value = { items: [], nextCursor: null }; break;
       case "devotionals": value = Object.fromEntries(input.dates.map(d => [d, home(d)])); break;
-      case "reading": value = { dates: recentDates(now.toISOString().slice(0, 10)), favorites: [fixture] }; break;
+      case "reading": {
+        const dates = recentDates(now.toISOString().slice(0, 10)).slice(0, 7);
+        value = { dates, recent: dates.map(day => home(day).devotional), favorites: [fixture] }; break;
+      }
       case "chapter": value = chapter(input.chapter); break;
       case "bible": value = { books: [book], version: "aa", verses: 1, importedAt: 1, source: "fixture" }; break;
       case "community": value = { community: { id: input.id }, members: [], messages: [], lists: [{ id: "list", items: [{ id: "tick" }] }] }; break;
@@ -156,18 +159,18 @@ describe("cache local: orçamento de rede e persistência", () => {
     expect(app.fetcher).toHaveBeenCalledTimes(1);
     expect(Object.keys((app.mirror.read() as LocalCache).homes)).toHaveLength(8);
   });
-  it("na virada solicita só um dia e remove o mais antigo, sem recarregar favoritos", async () => {
+  it("na virada solicita só um dia do cache e atualiza a lista dos sete publicados", async () => {
     const app = setup(), next = vi.fn();
     const stop = app.repository.watchHome(date)(next, vi.fn());
     const reading = vi.fn(); const stopReading = app.repository.reading!.watchReading()(reading, vi.fn());
     await vi.waitFor(() => expect(next).toHaveBeenCalled());
     await vi.waitFor(() => expect(reading).toHaveBeenCalled());
     app.fetcher.mockClear(); app.advance(1); await app.checkDay();
-    expect(app.calls()).toEqual([{ query: "devotionals", dates: ["2026-10-06"], timeZone: "UTC" }]);
-    expect(reading.mock.lastCall?.[0].dates).toEqual(recentDates("2026-10-06"));
+    expect(app.calls()).toEqual(expect.arrayContaining([{ query: "devotionals", dates: ["2026-10-06"], timeZone: "UTC" }, { query: "reading", timeZone: "UTC" }]));
+    expect(reading.mock.lastCall?.[0].dates).toEqual(recentDates("2026-10-06").slice(0, 7));
     expect(Object.keys((app.mirror.read() as LocalCache).homes)).toEqual(expect.arrayContaining(recentDates("2026-10-06")));
     expect((app.mirror.read() as LocalCache).homes["2026-09-28"]).toBeUndefined();
-    await app.checkDay(); expect(app.fetcher).toHaveBeenCalledTimes(1);
+    await app.checkDay(); expect(app.fetcher).toHaveBeenCalledTimes(2);
     stop(); stopReading();
   });
   it("recupera só os dias faltantes após ausência e limita a janela a oito", async () => {
@@ -278,7 +281,7 @@ describe("fronteira de sessão e recuperação", () => {
     app.fetcher.mockRejectedValue(new TypeError("offline"));
     expect((await once(reopened.repository.watchHome(date))).devotional?.date).toBe(date);
     expect((await once(reopened.repository.reading!.watchChapter("jo", 1)))?.chapter).toBe(1);
-    expect(await once(reopened.repository.reading!.watchReading())).toMatchObject({ dates: recentDates(date), favorites: [fixture], offline: true });
+    expect(await once(reopened.repository.reading!.watchReading())).toMatchObject({ dates: recentDates(date).slice(0, 7), favorites: [fixture], offline: true });
     app.fetcher.mockResolvedValue(new Response(JSON.stringify({ error: "Sessão inválida" }), { status: 401 }));
     const next = vi.fn(); const stop = reopened.repository.watchCommunities()(next, vi.fn());
     await vi.waitFor(() => expect(app.expired).toHaveBeenCalled());

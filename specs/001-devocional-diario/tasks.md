@@ -1,5 +1,16 @@
 # Tasks: Devocional Diário
 
+## Revisão de 26/10/2026 — recentes e favoritos
+
+- [x] Domínio: contrato de sete publicações, limite de três favoritos e mensagem parametrizada.
+- [x] Backend Convex: consulta privada, snapshots por usuário/data, limite atômico e recibo de restauração.
+- [x] Backend SQLite: seleção de sete publicações, limite e permanência dos favoritos antigos.
+- [x] Web: mesma tela em recentes/favoritos, entrada pelo menu do perfil, coração e compartilhamento da seleção.
+- [x] Testes de domínio, backend e web, typecheck, lint e build.
+- [ ] Publicar backend no piloto antes do merge; verificar navegação e compartilhamento em navegador real.
+
+O histórico abaixo contém itens antigos da janela de oito datas; esta revisão a substitui.
+
 ## Revisão web — 08/10/2026
 
 - [x] W8 — Rodapé compacto no fim da tela, favorito sempre visível e desfazer remoção do último snapshot por recibo privado. Passaram 31 testes web, 78 domain e 12 SQLite (incluindo snapshot retirado/antigo, isolamento e consumo único), lint/typecheck do monorepo e build/PWA. Primeira execução web teve timeout no carregamento inicial; repetição completa passou. Homologação visual e mobile nativo pendentes.
@@ -84,3 +95,14 @@
 T1/T2/T4/T-W1/T-W2 permanecem abertas quanto à integração real. T6–T8 e
 T-W4/T-W5 são requisitos novos de 04/10/2026 e começam abertos. Evidências
 anteriores de testes de domínio não cobrem janela nem favoritos.
+
+## Tarefas 10 e 11 — 25/10/2026
+
+- [x] Corrigir seleção estruturada em home.get e tornar a referência acessível.
+- [x] Gerar PNGs no servidor, por revisão, em seis variantes com paginação.
+- [x] Fila, storage, controle de revisão, retirada, tentativas e limpeza no Convex.
+- [x] Renderer e armazenamento SQLite local com transporte SSE.
+- [x] Menu Texto/Imagem, prévia, arquivos prontos e download por página na web.
+- [ ] Homologação em aparelhos físicos e publicação do backend/merge pelo Hil.
+
+Detalhes e evidências nas tarefas 10/11 de .todo; diferenças operacionais em docs/operations/devotional-images.md. Mobile nativo permanece adiado.

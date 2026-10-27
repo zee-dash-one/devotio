@@ -1,3 +1,4 @@
+import workpool from "@convex-dev/workpool/test";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { convexTest, type TestConvex } from "convex-test";
 import { componentsGeneric, makeFunctionReference } from "convex/server";
@@ -12,7 +13,7 @@ import { refs } from "domain/convex";
 import schema from "./schema";
 import { matchingCounter } from "./adminLogin";
 
-const modules = {
+const modules = { "./imageActions.ts": () => import("./imageActions"), "./devotionalImages.ts": () => import("./devotionalImages"),
   "./_generated/server.ts": () => import("./_generated/server"),
   "./users.ts": () => import("./users"),
   "./administration.ts": () => import("./administration"),
@@ -33,6 +34,7 @@ const components = componentsGeneric() as unknown as {
 const stores: TestConvex<typeof schema>[] = [];
 function setup() {
   const t = convexTest(schema, modules);
+  workpool.register(t, "imageWorkpool");
   betterAuth.register(t);
   rateLimiter.register(t);
   stores.push(t);

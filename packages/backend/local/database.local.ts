@@ -12,7 +12,7 @@ import { bibleVersionNames, type BibleVersion } from "../../domain/validators/bi
 import { scriptureLicenseForVersion, editorialMonthDates, availableEditorialDates } from "../../domain/editorial";
 import {
   bibleDatasetSchema, bibleBooksSchema, canManage, canRemoveMember, canPublish, hasApprovedAccess,
-  isPublished, dateInZone, recentDates, isRecent, searchWords, publicationMidnight, canScheduleDate, scheduleSchema,
+  isPublished, dateInZone, recentDates, isRecent, searchWords, publicationMidnight, canScheduleDate, scheduleSchema, MAX_FAVORITE_DEVOTIONALS, RECENT_DEVOTIONALS_LIMIT, favoriteLimitMessage,
   type LocalProfile, type Devotional, type HomeData, type Community, type CommunityDetail,
   type Member, type Favorite, type BibleBook, type BibleChapter, type BibleResults,
   type BibleCatalog, type EditorialEntry, type LocalCommand, type LocalQuery, bibleQuote,
@@ -38,7 +38,7 @@ export class LocalDatabase {
   private listeners = new Map<string, Set<(summary: NotificationSummary) => void>>();
   private changedNotifications = new Set<string>();
   private removedFavorites = new Map<string, { token: string; favorite: Favorite }>();
-  constructor(path: string, bibleDirectory?: string, readonly now = () => Date.now()) {
+  constructor(readonly path: string, bibleDirectory?: string, readonly now = () => Date.now()) {
     if (path !== ":memory:") mkdirSync(dirname(path), { recursive: true });
     this.db = new DatabaseSync(path);
     this.db.exec(`PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000;
@@ -216,7 +216,10 @@ export class LocalDatabase {
       case "session": return user;
       case "devotionals": return Object.fromEntries(input.dates.map(date => [date, this.query(user, { query: "home", date, timeZone: input.timeZone })]));
       case "home": return { user, devotional: this.published(input.date, input.timeZone), settings: { monthlyVerse: "Um coração atento ao que permanece.", monthlyReference: "Tema ilustrativo do mês", weeklyVerse: "Caminhar com presença e cuidado.", weeklyReference: "Tema ilustrativo da semana" } } satisfies HomeData;
-      case "reading": return { dates: recentDates(dateInZone(input.timeZone, new Date(this.now()))), favorites: this.all<{ data: string }>("SELECT data FROM favorites WHERE userId=? ORDER BY date DESC", user.id).map(r => JSON.parse(r.data) as Favorite) };
+      case "reading": {
+        const recent = this.all<{ data: string }>("SELECT data FROM devotionals WHERE date<=? AND publishedAt<=? AND withdrawn=0 ORDER BY date DESC LIMIT ?", dateInZone(input.timeZone, new Date(this.now())), this.now(), RECENT_DEVOTIONALS_LIMIT).map(row => JSON.parse(row.data) as Devotional);
+        return { dates: recent.map(item => item.date), recent, favorites: this.all<{ data: string }>("SELECT data FROM favorites WHERE userId=? ORDER BY date DESC", user.id).map(r => JSON.parse(r.data) as Favorite) };
+      }
       case "communities": return this.all<Community>("SELECT c.*,m.role,m.id memberId FROM communities c JOIN members m ON m.communityId=c.id WHERE m.userId=? ORDER BY c.name", user.id).map(c => ({ ...c, inviteCode: canManage(c.role) ? c.inviteCode : undefined }));
       case "invite": return this.get("SELECT id,name FROM communities WHERE inviteCode=?", input.code) ?? null;
       case "community": return this.detail(user.id, input.id, input.cursor);
@@ -369,13 +372,18 @@ export class LocalDatabase {
             this.removedFavorites.set(user.id, { token, favorite: JSON.parse(row.data) as Favorite });
             return token;
           }
-          const devotional = this.published(input.date, input.timeZone);
+          const devotional = (this.query(user, { query: "reading", timeZone: input.timeZone }) as { recent: Devotional[] }).recent.find(item => item.date === input.date);
           if (!devotional) throw new LocalError("Este devocional não está disponível para favoritar.", 404);
+          if (this.get("SELECT 1 FROM favorites WHERE userId=? AND date=?", user.id, input.date)) return null;
+          const count = this.get<{ count: number }>("SELECT COUNT(*) count FROM favorites WHERE userId=?", user.id)!.count;
+          if (count >= MAX_FAVORITE_DEVOTIONALS) throw new LocalError(favoriteLimitMessage(), 409);
           this.run("INSERT OR IGNORE INTO favorites VALUES (?,?,?)", user.id, input.date, JSON.stringify({ devotional, favoritedAt: this.now() } satisfies Favorite)); this.removedFavorites.delete(user.id); return null;
         }
         case "restoreFavorite": {
           const removed = this.removedFavorites.get(user.id);
           if (!removed || removed.token !== input.token) throw new LocalError("Não foi possível desfazer esta remoção. Volte à leitura para favoritar novamente.", 409);
+          const count = this.get<{ count: number }>("SELECT COUNT(*) count FROM favorites WHERE userId=?", user.id)!.count;
+          if (count >= MAX_FAVORITE_DEVOTIONALS) throw new LocalError(favoriteLimitMessage(), 409);
           this.run("INSERT OR IGNORE INTO favorites VALUES (?,?,?)", user.id, removed.favorite.devotional.date, JSON.stringify(removed.favorite));
           this.removedFavorites.delete(user.id);
           return null;

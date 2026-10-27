@@ -1,7 +1,9 @@
 # Spec: Devocional Diário
 
+> **Revisão aprovada pelo pedido de 26/10/2026:** o seletor recente mostra os **sete devocionais publicados mais recentes**, incluindo hoje se publicado, mesmo quando há datas sem publicação. Hoje é o padrão; sem publicação hoje, o mais recente assume. Favoritos privados mantêm a cópia pessoal existente, agora com limite inicial de três por conta, configurado em um único ponto e aplicado pelo servidor. O menu do perfil abre a mesma tela em modo Favoritos; a navegação principal abre Recentes. As regras anteriores da janela de oito datas ficam substituídas por esta revisão. Compartilhamento sempre usa a leitura selecionada. Implementação e evidências: [tarefa 12](../../.todo/.done/12-recent-devotionals-favorites.md).
+
 > Revisão de 02/10/2026: aprovação histórica dos requisitos preservada; não significa implementação concluída. A distribuição inicial web e as lacunas estão no [catálogo](../README.md). Novos requisitos de fundação constam da [spec 004](../004-fundacao-lancamento/spec.md).  
-> **Revisão de 04/10/2026:** janela de leitura dos últimos 7 dias (além do dia atual) e favoritos com cópia pessoal — ver §4 itens 11–13. Esses requisitos ainda não estão implementados.
+> **Histórico de 04/10/2026:** a janela original continha hoje e os sete dias anteriores; a revisão de 26/10/2026 substitui essa regra. A cópia pessoal de favoritos permanece.
 
 **ID:** 001-devocional-diario
 **Status:** aprovada (requisitos 11–13 aguardam plano/tasks e implementação)
@@ -30,18 +32,17 @@ impressão de "sobriedade" que o produto se propõe a ter.
   faço outra atividade.
 - Como usuário, eu quero uma sugestão de oração curta ligada ao tema do dia, para
   direcionar minha oração pessoal.
-- Como usuário, eu quero reler o devocional de até sete dias atrás, para recuperar
-  uma leitura recente sem depender de histórico longo.
+- Como usuário, eu quero reler os sete devocionais publicados mais recentes, mesmo
+  quando houve dias sem publicação.
 - Como usuário, eu quero favoritar o devocional de um dia e guardar uma cópia na
-  minha conta, para conservar o texto mesmo depois que ele sair da janela de
-  sete dias.
+  minha conta, para conservar o texto mesmo depois que ele sair dos recentes.
 
 ## 4. Requisitos funcionais
 
 ### Revisão visual autorizada — 08/10/2026
 
 - A faixa superior reúne `Devocional dd/MM/aaaa`, seta independente para abrir os recentes, `Favoritos` e ação de favoritar a leitura exibida (marcador sem check/com check).
-- A seta abre um modal com os oito dias do cache: data, referência e prévia do texto base. Escolher um item fecha o modal e abre a leitura sem nova consulta de dados já carregados.
+- A seta abre um modal com os sete devocionais publicados mais recentes: data, referência e prévia do texto base. Escolher um item fecha o modal e abre a leitura sem nova consulta de dados já carregados.
 - Alternar entre Devocional e Favoritos preserva a data recente selecionada. Favoritos mantém suas cópias pessoais e seleção.
 - Remover introdução ornamental, data duplicada e Começar a leitura acima de Palavra; preservar conteúdo, temas e escala de fonte.
 - Revisão para web local; mobile adiado.
@@ -111,24 +112,15 @@ impressão de "sobriedade" que o produto se propõe a ter.
     fluxo de autenticação antes de montar esta tela (comportamento herdado do
     roteamento protegido do app, não implementado dentro desta feature).
 
-11. **Janela de leitura recente (até sete dias atrás).** Além do dia atual, o
-    sistema deve permitir ao usuário autenticado escolher e ler o devocional de
-    qualquer data local no intervalo fechado
-    `[hojeLocal − 7 dias, hojeLocal]` (oito datas possíveis: hoje e os sete dias
-    anteriores).
-    - Critério de aceite: datas fora dessa janela não são oferecidas na interface
-      de leitura e não podem ser obtidas por escolha do usuário (sem calendário
-      aberto, busca por data arbitrária, lista infinita ou URL/parâmetro que
-      libere dia anterior à janela).
-    - Critério de aceite: para cada data da janela, ausência de publicação usa o
-      mesmo estado vazio sóbrio do item 4 — não é erro.
-    - Critério de aceite: a virada de meia-noite local encolhe/avança a janela;
-      um dia que saiu da janela deixa de aparecer na leitura recente (exceto se
-      estiver nos favoritos do usuário — item 12).
+11. **Sete devocionais publicados mais recentes.** A lista autenticada contém no
+    máximo sete publicações disponíveis, em ordem decrescente de data, até hoje.
+    Dias sem publicação e publicações retiradas/programadas não ocupam vaga.
+    Hoje é selecionado quando publicado; caso contrário, o primeiro disponível.
+    Não há calendário aberto, busca arbitrária nem lista infinita. A virada do dia
+    atualiza a seleção e a lista; cópias antigas permanecem nos favoritos.
 
 12. **Favoritar com cópia pessoal.** O usuário autenticado deve poder favoritar o
-    devocional de um dia **que esteja disponível para leitura** (janela do item
-    11, com publicação existente) e manter uma **cópia** do conteúdo vinculada à
+    devocional **disponível nos recentes** (item 11) e manter uma **cópia** do conteúdo vinculada à
     sua conta — não apenas um ponteiro para o registro editorial global.
     - A cópia deve persistir em **dois lugares**: (a) armazenamento local em JSON
       no dispositivo; (b) banco de dados vinculado à conta autenticada.
@@ -137,7 +129,7 @@ impressão de "sobriedade" que o produto se propõe a ter.
       original, e `audioUrl` se houver no momento do favorito. Metadados mínimos:
       quando foi favoritado.
     - Critério de aceite: após favoritar, a cópia permanece acessível ao titular
-      mesmo que o dia saia da janela de sete dias ou que o registro editorial
+      mesmo que o dia saia dos recentes ou que o registro editorial
       global seja corrigido/retirado depois — a cópia não é atualizada
       automaticamente com edições posteriores (é snapshot no ato do favorito).
     - Critério de aceite: desfavoritar remove a cópia do banco da conta e do JSON
@@ -146,9 +138,12 @@ impressão de "sobriedade" que o produto se propõe a ter.
     - Critério de aceite: favoritos de um usuário nunca aparecem para outro
       usuário; o client não é a barreira de segurança — o servidor só devolve
       cópias do titular autenticado.
+    - Limite inicial de três cópias por conta, configurado no domínio e aplicado
+      na gravação do servidor; duplicatas são idempotentes, a remoção continua
+      disponível no limite e não existe substituição automática.
 
 13. **Sem busca de histórico antigo.** Não há busca, filtro ou navegação para
-    devocionais anteriores à janela do item 11, exceto o acesso às **cópias
+    devocionais além dos sete itens do item 11, exceto o acesso às **cópias
     favoritadas** do próprio usuário (item 12). Favoritos não são um arquivo
     público nem um catálogo editorial.
 
@@ -221,11 +216,10 @@ app. Favoritos são estritamente por conta.
 
 ## 9. Perguntas em aberto
 
-- Timezone: o plano original adotou a data local do dispositivo. Essa escolha
-  permanece; a política editorial de liberação de conteúdo futuro será definida
-  na spec 004, sem presumir acesso irrestrito a datas arbitrárias.
-- Limite máximo de favoritos por conta (se houver teto operacional) — definir
-  antes da implementação se as cotas do piloto exigirem.
+- O piloto usa a data editorial de Brasília, coerente com a liberação de publicações;
+  chamadas diretas não expõem publicações futuras.
+- O limite inicial de favoritos é três, com configuração central em
+  `MAX_FAVORITE_DEVOTIONALS`.
 - Se o favorito for feito a partir de uma data da janela e o áudio for opcional:
   confirmar se a ausência de `audioUrl` no snapshot é aceitável (sim, alinhado ao
   item 7).
@@ -242,3 +236,9 @@ Implementação das decisões da tarefa 07:
 - Web Share quando disponível; fallback para clipboard com aviso e textarea manual em falha. Cancelar o compartilhamento nativo não copia.
 - URL pública configurável por VITE_PUBLIC_APP_URL, padrão https://devotio.zee-dash-one.workers.dev. Não usar a origem local do navegador como URL compartilhada.
 - Seleção nativa e pull-to-refresh desativados na superfície de leitura, preservando rolagem vertical. Cadastro editorial e tema semanal inalterados; Expo continua adiado.
+
+## Revisão aprovada — 25/10/2026, tarefas 10 e 11
+
+Hil autorizou implementar o plano revisado em uma branch conjunta. A referência estruturada abre os versículos exatos; legado sem seleção permanece texto, sem inferir passagens nem ampliar para vários capítulos.
+
+O servidor gera uma vez por revisão as artes do devocional publicado do dia: data, referência, Meditar e Oração, sem corpo bíblico. Três tamanhos (1080×1920, 1080×1350 e 1080×1080), duas paletas básicas e PNG. A arte inicial é simples e substituível por configuração versionada; refinamento visual fica para depois. Texto integral, fonte legível e páginas numeradas (máximo dez por variante). Retenção de 30 dias, limpeza de revisões substituídas. Compartilhar usa arquivos preparados, com download por página e cancelamento sem ação automática. Favoritos pessoais não recebem uma imagem divergente por coincidência de data. SQLite usa o mesmo renderizador no servidor. App nativo continua adiado.
