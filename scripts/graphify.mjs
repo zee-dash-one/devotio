@@ -7,7 +7,7 @@ const root = fileURLToPath(new URL("../", import.meta.url));
 const bin = path.join(root, ".tools", "graphify", process.platform === "win32" ? "Scripts" : "bin");
 const python = path.join(bin, process.platform === "win32" ? "python.exe" : "python");
 if (!existsSync(python)) {
-  console.error("Graphify não está instalado. Consulte docs/engineering/graphify.md.");
+  console.error("Graphify não está instalado. Consulte docs/development.md.");
   process.exit(1);
 }
 

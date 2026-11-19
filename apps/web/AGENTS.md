@@ -1,25 +1,12 @@
 # AGENTS.md — apps/web
 
-Estende [regras gerais](../../AGENTS.md) e [arquitetura](../../docs/architecture.md).
+Estende [`AGENTS.md`](../../AGENTS.md), [`docs/architecture.md`](../../docs/architecture.md) e [`docs/design.md`](../../docs/design.md), incluindo todas as regras de Git e de execução (sem PowerShell).
 
-React 19 + Vite SPA + TanStack Router + Tailwind 3. Sem SSR. Service worker guarda somente shell estático; cache de leitura local abaixo é separado.
+## Regras específicas da Web/PWA
 
-Exceção de desenvolvimento autorizada em 04/10/2026: [spec 006](../../specs/006-desenvolvimento-local/spec.md)
-usa SQLite em backend/local e login mockado somente no Vite DEV sem Convex.
-Revisão autorizada em 05/10/2026: oito devocionais, favoritos e seis capítulos LRU
-persistem por conta no navegador; limpeza no logout/troca/expiração, não na recarga.
-Sem polling HTTP. Relógio local e eventos de identidade não são consultas de rede.
-Isso não autoriza bypass de Google/Convex em produção nem cache privado no service worker.
-
-- Componentes consomem domain/react; contratos e validações vêm de domain/core. Regras e autorização continuam no núcleo.
-- Seguir [UI/UX](../../docs/design/experience.md) e tokens de ui-kit.
-- Preferir HTML semântico e componentes locais.
-- Áudio HTML5 sem autoplay; preload none.
-- Prévia somente importada sob import.meta.env.DEV. Nunca expor fixtures no build público.
-- APIs de navegador ficam em apps/web, nunca no núcleo puro.
-- Auth real exige credenciais e verificação em homologação; não introduzir bypass.
-- Executar lint, typecheck, testes e build na raiz após mudanças pertinentes.
-
-Comandos: npm run dev --workspace=web, npm run build --workspace=web, npm run typecheck --workspace=web, npm run lint --workspace=web e npm run preview --workspace=web.
-
-Consulte o [estado real](../../docs/engineering/status.md) antes de declarar prontidão.
+- **Stack:** React 19 + Vite SPA + TanStack Router + Tailwind CSS 3, sem SSR.
+- **Fronteira de domínio:** componentes consomem hooks de `domain/react` e contratos/validadores de `domain/core`. Nenhuma regra de negócio ou decisão de permissão vive em `apps/web`. APIs de navegador (`window`, `localStorage`, `navigator`, áudio, DOM) ficam restritas a `apps/web`.
+- **UI e acessibilidade:** seguir os tokens de `packages/ui-kit` e os padrões de [`docs/design.md`](../../docs/design.md) — HTML semântico, `<dialog>` nativo acessível, foco preservado, suporte a teclado e respeito a `prefers-reduced-motion`.
+- **Áudio:** `HTMLAudioElement` nativo sem autoplay e com `preload="none"`.
+- **PWA e caches:** o service worker faz precache exclusivamente do shell estático (HTML, JS, CSS, fontes e ícones). Nunca registrar cache de APIs autenticadas, sessões, comunidades, recados ou áudio no service worker. O cache local de desenvolvimento é separado, isolado por conta e limpo em logout/troca/expiração.
+- **Isolamento do modo local:** código de desenvolvimento (`domain/local` e endpoints `/__local/*`) só pode ser carregado sob `import.meta.env.DEV` sem URLs Convex configuradas. Nunca expor fixtures, perfis fictícios ou bypass de autenticação no bundle de produção (`npm run verify:web` valida essa barreira).

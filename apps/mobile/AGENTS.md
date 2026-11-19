@@ -1,25 +1,14 @@
 # AGENTS.md — apps/mobile
 
-Estende [regras gerais](../../AGENTS.md) e [arquitetura](../../docs/architecture.md).
+Estende [`AGENTS.md`](../../AGENTS.md) e [`docs/architecture.md`](../../docs/architecture.md), incluindo todas as regras de Git e de execução (sem PowerShell).
 
-## Situação
+## Situação atual
 
-Diretório reservado, sem package.json ou app executável. A proposta do piloto
-atende celulares pela web; Expo fica para etapa posterior da
-[ADR 001](../../docs/adr/001-web-first-free-launch.md). Tasks nativas continuam abertas.
+Diretório reservado para o futuro aplicativo nativo (sem `package.json` nem workspace ativo). Hoje o atendimento móvel ocorre pela Web/PWA.
 
-## Direção quando o app for iniciado
+## Diretrizes para quando o workspace nativo for iniciado
 
-- Expo + Expo Router + NativeWind; escolher versões compatíveis no plano da feature.
-- Mesmas regras/validações/contratos de backend e domain; nenhuma autorização apenas no client.
-- Componentes nativos próprios, consumindo tokens ui-kit; não compartilhar DOM.
-- Usar expo-audio, com configuração de background e controles de mídia conforme
-  documentação do SDK escolhido. Testar em iOS/Android físicos antes de concluir.
-- Validar integração Better Auth/Expo e armazenamento seguro de credenciais;
-  não armazenar tokens sensíveis em AsyncStorage sem proteção.
-- Offline e push exigem spec própria; não presumir que a distribuição nativa os inclui.
-- Antes de lojas, validar orçamento, requisitos de publicação, privacidade e
-  ausência de features futuras expostas.
-
-Não há comandos npm de mobile disponíveis hoje. Documentá-los quando o workspace
-for criado e verificado.
+- **Stack prevista:** Expo + Expo Router + NativeWind + `expo-audio`.
+- **Reuso obrigatório do núcleo:** consumir os mesmos contratos, regras, validadores e hooks de `packages/domain`, o mesmo backend em `packages/backend` e os mesmos tokens de `packages/ui-kit`.
+- **Apresentação própria:** componentes React Native dedicados (sem compartilhar DOM com `apps/web`) e zero lógica de permissão exclusiva no cliente.
+- **Segurança e recursos nativos:** armazenar credenciais apenas em storage seguro da plataforma (nunca em `AsyncStorage` puro); áudio em segundo plano, offline e notificações push exigem planejamento dedicado e homologação em aparelhos iOS e Android físicos antes de publicação em lojas.

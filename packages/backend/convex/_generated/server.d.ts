@@ -33,6 +33,7 @@ type Env = {
   readonly ADMIN_LOGIN: string | undefined;
   readonly ADMIN_PASSWORD_HASH: string | undefined;
   readonly ADMIN_TOTP_SECRET: string | undefined;
+  readonly DEVOTIONAL_IMAGES_ENABLED: string | undefined;
   readonly PILOT_EXISTING_USERS_BEFORE: string | undefined;
 };
 
