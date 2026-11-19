@@ -1,6 +1,6 @@
-# Ambiente de Desenvolvimento e Ferramentas
+# Ambiente de Desenvolvimento e Scripts
 
-Guia para executar o monorepo em modo local ou conectado e utilizar as ferramentas auxiliares de código. Respeite sempre as regras de execução definidas em [`../AGENTS.md`](../AGENTS.md).
+Guia para executar o monorepo em modo local ou conectado. Respeite sempre as regras de execução definidas em [`../AGENTS.md`](../AGENTS.md).
 
 ## 1. Requisitos e execução local (SQLite)
 
@@ -57,23 +57,3 @@ Para testar interações simultâneas entre duas contas locais (como convites de
 | `npm run verify:web` | Compila e audita manifest PWA, ícones, licenças OFL, corpus `alm1911`, service worker e ausência de fixtures |
 | `npm run build:ready` | Portão completo pré-PR: `lint` + `typecheck` + `verify:web` (sem publicar nada) |
 | `node scripts/preview-devotional-images.mjs` | Renderiza localmente exemplos das 6 variantes PNG em `.data/image-preview/` |
-
-## 5. Graphify (navegação estrutural por AST)
-
-Ferramenta opcional e isolada em `.tools/graphify` (`graphifyy 0.9.94`, Python `3.10+`), acionada via `scripts/graphify.mjs` sem poluir o PATH global nem participar do build ou deploy.
-
-- **Instalação em novo ambiente Linux:**
-  ```sh
-  python3 -m venv .tools/graphify
-  .tools/graphify/bin/python -m pip install -r tools/graphify/requirements.txt
-  npm run graphify -- --version
-  ```
-- **Geração e consulta do mapa de código:**
-  ```sh
-  npm run graphify:code
-  npm run graphify -- query "communityGovernance"
-  npm run graphify -- explain "creationPermission"
-  npm run graphify -- path "requestJoin" "decideJoinRequest"
-  npm run graphify -- cluster-only . --no-label
-  ```
-- **Regras de uso:** `graphify:code` usa `--code-only --no-gitignore --no-cluster` (para incluir `packages/` ignorado no `.gitignore` raiz, respeitando `.graphifyignore` que exclui `.env*`, bancos, credenciais, corpus e gerados) e grava em `graphify-out/`. Opera exclusivamente sobre AST local sem chamar LLMs ou APIs externas. O grafo é apenas um índice auxiliar — confirme sempre contratos e regras diretamente no código-fonte.

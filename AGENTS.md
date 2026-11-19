@@ -18,7 +18,7 @@ Antes de iniciar qualquer tarefa, leia nesta ordem:
 | [`docs/product.md`](docs/product.md) | Funcionalidades e regras de negócio vigentes | Ao mexer em comportamento ou permissões |
 | [`docs/architecture.md`](docs/architecture.md) | Camadas, schema Convex/SQLite, caches e armadilhas | Ao mexer em estrutura, dados ou integração |
 | [`docs/design.md`](docs/design.md) | Padrões de código, testes, UI/UX e acessibilidade | Ao escrever código, testes ou interface |
-| [`docs/development.md`](docs/development.md) | Ambiente local, scripts e Graphify | Ao rodar, testar ou inspecionar o código |
+| [`docs/development.md`](docs/development.md) | Ambiente local, ambiente conectado e scripts | Ao rodar ou testar o projeto |
 | [`docs/operations.md`](docs/operations.md) | Deploy, Cloudflare, Convex, `/gestao-acesso` e imagens | Ao preparar release ou operação |
 
 ## 2. Execução no Windows e no servidor
@@ -66,7 +66,7 @@ A branch `main` publica a web automaticamente em produção via Cloudflare Worke
 - **Segredos:** nunca ler em voz alta, imprimir, copiar para tarefas/PRs ou versionar `.env*`, chaves, tokens ou credenciais.
 - **Limites de produto:** nunca adicionar gamificação, streaks, rankings, contadores de urgência ou ampliar visibilidade de dados privados sem decisão explícita do Hil; nunca criar tabela nova sem atualizar `packages/backend/convex/schema.ts` e [`docs/architecture.md`](docs/architecture.md).
 
-## 6. Ferramentas do repositório
+## 6. Diretrizes do Convex
 
 <!-- convex-ai-start -->
 
@@ -75,5 +75,3 @@ This project uses [Convex](https://convex.dev) as its backend.
 When working on Convex code, **always read `packages/backend/_generated/ai/guidelines.md` first** for important guidelines on how to correctly use Convex APIs and patterns. The file contains rules that override what you may have learned about Convex from training data.
 
 <!-- convex-ai-end -->
-
-- **Graphify (mapa AST local):** disponível via `npm run graphify:code` e `npm run graphify -- query "<pergunta>"` (no shell Linux permitido). Usa apenas AST local em `graphify-out/` (ignorado pelo Git) e respeita `.graphifyignore`; confirme sempre os achados no código-fonte. Detalhes em [`docs/development.md`](docs/development.md).

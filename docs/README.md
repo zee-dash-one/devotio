@@ -8,7 +8,7 @@ Esta pasta documenta **apenas o estado atual do sistema, suas regras vigentes e 
 | [`product.md`](product.md) | Funcionalidades existentes, jornadas, limites e regras de negócio em vigor |
 | [`architecture.md`](architecture.md) | Camadas do monorepo, paridade Convex/SQLite, schema completo, corpus bíblico, caches e armadilhas |
 | [`design.md`](design.md) | Convenções de código, suíte de testes, sistema visual, componentes, gestos e acessibilidade |
-| [`development.md`](development.md) | Execução local com SQLite, perfis de teste, ambiente conectado Convex, scripts e Graphify |
+| [`development.md`](development.md) | Execução local com SQLite, perfis de teste, ambiente conectado Convex e scripts |
 | [`operations.md`](operations.md) | Deploy (Cloudflare Workers + Convex), painel `/gestao-acesso`, artes do devocional, cotas e privacidade |
 
 Dados canônicos versionados nesta pasta:
