@@ -12,7 +12,7 @@ Resumo consolidado de todas as funcionalidades e regras de negócio implementada
 
 ## 2. Devocional diário e favoritos (`/devocional`, `/devocional/favoritos`)
 
-- **Composição da leitura:** faixa superior com tema mensal e referência, tema semanal discreto, seletor de data, player de áudio opcional (`preload="none"`, sem autoplay), seções de **Palavra** (com referência clicável que abre o capítulo correspondente na Bíblia), **Meditar** (`reflection`) e **Oração** (`prayerSuggestion`).
+- **Composição da leitura:** faixa superior com tema mensal e referência, tema semanal discreto, seletor de data, player de áudio opcional (`preload="none"`, sem autoplay), seções de **Palavra** (com referência clicável que abre o capítulo correspondente na Bíblia), **Meditar** (`reflection`) e **Oração** (`prayerSuggestion`). Superusuários editam os dois temas em **Temas do mês e da semana** (`/sistema/temas`). A leitura continua aberta a toda conta aprovada.
 - **Disponibilidade:** cada devocional é único por data (`YYYY-MM-DD`), liberado à meia-noite de `America/Sao_Paulo` (`publishedAt`) e ocultado imediatamente se retirado (`withdrawn`).
 - **Publicações recentes:** a navegação principal exibe as **7 publicações liberadas mais recentes** (incluindo hoje quando disponível e ignorando lacunas ou retiradas).
 - **Favoritos privados:** acessíveis pelo menu da conta (`/devocional/favoritos`) e pelo marcador na barra do devocional. Cada usuário pode manter até **3 favoritos simultâneos** (`MAX_FAVORITE_DEVOTIONALS = 3`), gravados como **snapshot privado** do conteúdo no momento em que foram salvos — permanecendo legíveis mesmo após edição ou retirada editorial posterior. Ao remover um favorito, um recibo de uso único permite desfazer a remoção imediatamente.

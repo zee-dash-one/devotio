@@ -188,6 +188,13 @@ export function createLocalRepository(storage: LocalCacheStorage, onExpired: () 
       case "sendQuote": case "sendMessage": case "createChecklist": case "updateScripture": case "removeMember":
         await invalidate(key => key.startsWith("community:" + input.id + ":") || (input.action === "removeMember" && (key === "communities" || key.startsWith("governance:")))); break;
       case "setUserStatus": case "deleteUser": break;
+      case "setThemes":
+        revision++;
+        for (const date of Object.keys(cache.homes)) dirtyDates.add(date);
+        cache.homes = {};
+        persist();
+        await invalidate(key => key.startsWith("home:"));
+        break;
       case "setTick":
         await invalidate(key => {
           const detail = entries.get(key)?.value as CommunityDetail | undefined;
@@ -306,6 +313,8 @@ export function createLocalRepository(storage: LocalCacheStorage, onExpired: () 
       listUsers: () => query({ query: "systemUsers" }),
       setUserStatus: async (id, status) => { await command({ action: "setUserStatus", id, status }); },
       deleteUser: async (id, confirmEmail) => { await command({ action: "deleteUser", id, confirmEmail }); },
+      getThemes: () => query({ query: "themes" }),
+      setThemes: async (input) => { await command({ action: "setThemes", input }); },
     },
     watchHome: date => watch("home:" + date, () => home(date)),
     watchCommunities: () => watch("communities", () => query<Community[]>({ query: "communities" })),

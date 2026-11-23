@@ -1,5 +1,5 @@
 import { ConvexError, v } from "convex/values";
-import { effectiveAccess, userDeletionBlockers } from "domain/core";
+import { defaultThemes, effectiveAccess, themesInputSchema, userDeletionBlockers } from "domain/core";
 import { query, mutation } from "./_generated/server";
 import type { MutationCtx, QueryCtx } from "./server";
 import type { Doc, Id } from "./_generated/dataModel";
@@ -119,6 +119,39 @@ export const deleteUser = mutation({
     for (const row of await takeAll(await ctx.db.query("checklistTicks").withIndex("by_userId", (q) => q.eq("userId", id)).take(80))) await ctx.db.delete(row._id);
     await ctx.db.insert("userAdminEvents", { actor: `superuser:${actor._id}`, target: id, action: "delete", at: Date.now() });
     await ctx.db.delete(id);
+    return null;
+  },
+});
+
+const themesValidator = v.object({
+  monthlyVerse: v.string(),
+  monthlyReference: v.string(),
+  weeklyVerse: v.string(),
+  weeklyReference: v.string(),
+});
+
+export const getThemes = query({
+  args: {},
+  returns: themesValidator,
+  handler: async (ctx) => {
+    await requireSystem(ctx);
+    const current = await ctx.db.query("globalSettings").withIndex("by_key", (q) => q.eq("key", "main")).unique();
+    return current
+      ? { monthlyVerse: current.monthlyVerse, monthlyReference: current.monthlyReference, weeklyVerse: current.weeklyVerse, weeklyReference: current.weeklyReference }
+      : defaultThemes;
+  },
+});
+
+export const setThemes = mutation({
+  args: themesValidator,
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const actor = await requireSystem(ctx);
+    const input = themesInputSchema.parse(args);
+    const current = await ctx.db.query("globalSettings").withIndex("by_key", (q) => q.eq("key", "main")).unique();
+    if (current) await ctx.db.patch(current._id, input);
+    else await ctx.db.insert("globalSettings", { key: "main", ...input });
+    await ctx.db.insert("userAdminEvents", { actor: `superuser:${actor._id}`, target: "themes", action: "themes", at: Date.now() });
     return null;
   },
 });

@@ -131,6 +131,8 @@ export function createConvexRepository(client: ConvexReactClient): Repository {
       listUsers: () => safe(client.query(makeFunctionReference<"query", Record<string, never>, import("../system").SystemDirectoryUser[]>("superuser:listUsers"), {})),
       setUserStatus: async (id, status) => { await safe(client.mutation(makeFunctionReference<"mutation", { id: string; status: "approved" | "disabled" }, null>("superuser:setStatus"), { id, status })); },
       deleteUser: async (id, confirmEmail) => { await safe(client.mutation(makeFunctionReference<"mutation", { id: string; confirmEmail: string }, null>("superuser:deleteUser"), { id, confirmEmail })); },
+      getThemes: () => safe(client.query(makeFunctionReference<"query", Record<string, never>, import("../system").ThemesInput>("superuser:getThemes"), {})),
+      setThemes: async (input) => { await safe(client.mutation(makeFunctionReference<"mutation", import("../system").ThemesInput, null>("superuser:setThemes"), input)); },
     },
     async setTick(itemId, checked) {
       await safe(client.mutation(refs.tick, { itemId, checked }));

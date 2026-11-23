@@ -11,4 +11,5 @@
 ## Checklist
 
 - [x] Domínio, Convex, local e menu
-- [ ] Testes e publicação
+- [x] Testes locais e publicação da gestão de contas
+- [x] Temas mensal e semanal em `/sistema/temas`

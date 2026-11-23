@@ -11,6 +11,7 @@ import {
   Shield,
   UserRound,
   Users,
+  CalendarDays,
 } from "lucide-react";
 import { canPublish, initials } from "domain/core";
 import { useApp } from "./context";
@@ -116,6 +117,12 @@ export function AccountMenu({ name = "Minha conta" }: { name?: string }) {
             <Link className={linkAppearance} to="/sistema/usuarios">
               <Users size={16} />
               Gerenciar usuários
+            </Link>
+          )}
+          {(app.localProfile?.superuser || app.pilotAccess?.superuser) && (
+            <Link className={linkAppearance} to="/sistema/temas">
+              <CalendarDays size={16} />
+              Temas do mês e da semana
             </Link>
           )}
           <Button variant="ghost" onClick={() => setSettingsOpen(true)}>

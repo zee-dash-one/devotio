@@ -11,7 +11,7 @@ import { alm1911Chapter } from "./alm1911.local";
 import { bibleVersionNames, type BibleVersion } from "../../domain/validators/bible";
 import { scriptureLicenseForVersion, editorialMonthDates, availableEditorialDates } from "../../domain/editorial";
 import {
-  bibleDatasetSchema, bibleBooksSchema, canManage, canRemoveMember, canPublish,   hasApprovedAccess, canManageSystem, userDeletionBlockers, effectiveAccess,
+  bibleDatasetSchema, bibleBooksSchema, canManage, canRemoveMember, canPublish,   hasApprovedAccess, canManageSystem, userDeletionBlockers, effectiveAccess, defaultThemes, themesInputSchema,
   isPublished, dateInZone, recentDates, isRecent, searchWords, publicationMidnight, canScheduleDate, scheduleSchema, imageTextLimitMessage, MAX_FAVORITE_DEVOTIONALS, RECENT_DEVOTIONALS_LIMIT, favoriteLimitMessage,
   type LocalProfile, type Devotional, type HomeData, type Community, type CommunityDetail,
   type Member, type Favorite, type BibleBook, type BibleChapter, type BibleResults,
@@ -216,7 +216,7 @@ export class LocalDatabase {
       case "socialMarkers": return this.social.markers(user.id, input.chapter);
       case "session": return user;
       case "devotionals": return Object.fromEntries(input.dates.map(date => [date, this.query(user, { query: "home", date, timeZone: input.timeZone })]));
-      case "home": return { user, devotional: this.published(input.date, input.timeZone), settings: { monthlyVerse: "Um coração atento ao que permanece.", monthlyReference: "Tema ilustrativo do mês", weeklyVerse: "Caminhar com presença e cuidado.", weeklyReference: "Tema ilustrativo da semana" } } satisfies HomeData;
+      case "home": return { user, devotional: this.published(input.date, input.timeZone), settings: this.storedThemes() } satisfies HomeData;
       case "reading": {
         const recent = this.all<{ data: string }>("SELECT data FROM devotionals WHERE date<=? AND publishedAt<=? AND withdrawn=0 ORDER BY date DESC LIMIT ?", dateInZone(input.timeZone, new Date(this.now())), this.now(), RECENT_DEVOTIONALS_LIMIT).map(row => JSON.parse(row.data) as Devotional);
         return { dates: recent.map(item => item.date), recent, favorites: this.all<{ data: string }>("SELECT data FROM favorites WHERE userId=? ORDER BY date DESC", user.id).map(r => JSON.parse(r.data) as Favorite) };
@@ -252,6 +252,7 @@ export class LocalDatabase {
         return availableEditorialDates(input.month, rows.map(row => row.date), input.today);
       }
       case "systemUsers": return this.systemUsers(user);
+      case "themes": this.requireSystem(user); return this.storedThemes();
     }
   }
   command(user: LocalProfile, input: LocalCommand): unknown {
@@ -435,8 +436,19 @@ export class LocalDatabase {
         }
         case "setUserStatus": return this.systemSetStatus(user, input.id, input.status);
         case "deleteUser": return this.systemDeleteUser(user, input.id, input.confirmEmail);
+        case "setThemes": {
+          this.requireSystem(user);
+          const themes = themesInputSchema.parse(input.input);
+          this.run("INSERT INTO metadata(key,value) VALUES ('themes',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value", JSON.stringify(themes));
+          return null;
+        }
       }
     });
+  }
+  private storedThemes() {
+    const raw = this.get<{ value: string }>("SELECT value FROM metadata WHERE key='themes'");
+    const parsed = themesInputSchema.safeParse(raw ? JSON.parse(raw.value) : defaultThemes);
+    return parsed.success ? parsed.data : defaultThemes;
   }
   private requireSystem(user: LocalProfile) {
     if (!canManageSystem(this.profile(user.id))) throw new LocalError("Acesso exclusivo de superusuários.", 403);
