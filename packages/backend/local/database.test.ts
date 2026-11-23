@@ -199,6 +199,18 @@ describe("SQLite local: autorização, snapshots e persistência", () => {
     expect(second.get<{ withdrawn: number }>("SELECT withdrawn FROM devotionals WHERE date='2026-10-04'")?.withdrawn).toBe(1);
     second.logout(session.token); expect(second.session(session.token)).toBeNull();
   });
+  it("lets a superuser approve a pending account and refuses to delete a demo profile", () => {
+    const { db, member, editor } = setup();
+    db.run("INSERT INTO users VALUES (?,?)", "novo", JSON.stringify({ id: "novo", name: "Nova Pessoa", label: "Pedido", description: "Pedido local", editorial: false, email: "nova@exemplo.com", status: "pending" }));
+    expect(() => db.query(member, { query: "systemUsers" })).toThrow("superusu");
+    const listed = db.query(editor, { query: "systemUsers" }) as { id: string; status: string }[];
+    expect(listed.find(user => user.id === "novo")?.status).toBe("pending");
+    db.command(editor, { action: "setUserStatus", id: "novo", status: "approved" });
+    expect((db.query(editor, { query: "systemUsers" }) as { id: string; status: string }[]).find(user => user.id === "novo")?.status).toBe("approved");
+    expect(() => db.command(editor, { action: "deleteUser", id: "marina", confirmEmail: "marina@local.devotio" })).toThrow("demonstração");
+    db.command(editor, { action: "deleteUser", id: "novo", confirmEmail: "nova@exemplo.com" });
+    expect((db.query(editor, { query: "systemUsers" }) as { id: string }[]).some(user => user.id === "novo")).toBe(false);
+  });
   it("expira sessões sem aceitar identidade desconhecida", () => {
     const { db, advance } = setup(); const { token } = db.login("marina"); advance(2);
     expect(db.session(token)?.id).toBe("marina"); advance(29);

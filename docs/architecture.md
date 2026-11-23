@@ -31,7 +31,7 @@ Visão técnica atual das camadas, contratos, persistência, caches e invariante
 
 | Grupo | Tabela | Papel principal e invariantes | Índices principais |
 |---|---|---|---|
-| **Usuários e acesso** | `users` | Conta vinculada (`tokenIdentifier`, `authId` legado), nome/e-mail normalizados, `status` (`pending`/`approved`/`disabled`), `editorial`, `communityCreationAllowed`, `communityCreationLimit` e contador agregado `notificationUnread` | `by_tokenIdentifier`, `by_authId`, `by_email`, `by_normalizedEmail`, `by_normalizedName`, `by_status_and_*` |
+| **Usuários e acesso** | `users` | Conta vinculada (`tokenIdentifier`, `authId` legado), nome/e-mail normalizados, `status` (`pending`/`approved`/`disabled`), `editorial`, `superuser`, `communityCreationAllowed`, `communityCreationLimit` e contador agregado `notificationUnread` | `by_tokenIdentifier`, `by_authId`, `by_email`, `by_normalizedEmail`, `by_normalizedName`, `by_status_and_*` |
 | | `accessSettings` | Singleton (`key: "main"`) que controla `approvalRequired` para novos cadastros | `by_key` |
 | | `adminSessions` | Sessões ativas do proprietário (`tokenHash`, `credentialVersion`, `expiresAt`) | `by_tokenHash` |
 | | `adminSecurity` | Singleton (`key: "owner"`) com `lastTotpCounter` e `credentialVersion` anti-replay | `by_key` |

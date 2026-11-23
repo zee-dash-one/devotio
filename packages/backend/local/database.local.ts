@@ -11,7 +11,7 @@ import { alm1911Chapter } from "./alm1911.local";
 import { bibleVersionNames, type BibleVersion } from "../../domain/validators/bible";
 import { scriptureLicenseForVersion, editorialMonthDates, availableEditorialDates } from "../../domain/editorial";
 import {
-  bibleDatasetSchema, bibleBooksSchema, canManage, canRemoveMember, canPublish, hasApprovedAccess,
+  bibleDatasetSchema, bibleBooksSchema, canManage, canRemoveMember, canPublish,   hasApprovedAccess, canManageSystem, userDeletionBlockers, effectiveAccess,
   isPublished, dateInZone, recentDates, isRecent, searchWords, publicationMidnight, canScheduleDate, scheduleSchema, imageTextLimitMessage, MAX_FAVORITE_DEVOTIONALS, RECENT_DEVOTIONALS_LIMIT, favoriteLimitMessage,
   type LocalProfile, type Devotional, type HomeData, type Community, type CommunityDetail,
   type Member, type Favorite, type BibleBook, type BibleChapter, type BibleResults,
@@ -26,7 +26,8 @@ export const profiles: LocalProfile[] = [
   { id: "daniel", name: "Daniel Almeida", label: "Liderança · AG", description: "Administra a Comunidade Esperança. Publica avisos e organiza listas.", editorial: false },
   { id: "marina", name: "Marina Oliveira", label: "Membro", description: "Participa da Esperança. Lê o mural e marca apenas seus próprios itens.", editorial: false },
   { id: "lucas", name: "Lucas Santos", label: "Leitor sem comunidade", description: "Leia, salve favoritos ou entre em um grupo com seu código.", editorial: false },
-  { id: "ester", name: "Ester Costa", label: "Gestor do sistema", description: "Cria, programa, edita e retira devocionais locais. Papel independente da gestão de comunidades.", editorial: true },
+  { id: "ester", name: "Ester Costa", label: "Gestor do sistema", description: "Cria, programa, edita e retira devocionais locais. Papel independente da gestão de comunidades.", editorial: true, superuser: true },
+  { id: "hil", name: "Hilderney", label: "Superusuário", description: "Aprova cadastros, exclui contas sem histórico e configura o piloto local.", editorial: true, superuser: true },
 ];
 type Row = Record<string, unknown>;
 type PublicationRow = { data: string; publishedAt: number; withdrawn: number };
@@ -145,7 +146,7 @@ export class LocalDatabase {
       for (const profile of profiles) this.run("INSERT OR IGNORE INTO users VALUES (?,?)", profile.id, JSON.stringify(profile));
       // Refresh the known mock profile's presentation without replacing account data or memberships.
       const editor = this.profile("ester");
-      this.run("UPDATE users SET data=? WHERE id='ester'", JSON.stringify({ ...editor, label: profiles[3].label, description: profiles[3].description }));
+      this.run("UPDATE users SET data=? WHERE id='ester'", JSON.stringify({ ...editor, label: profiles[3].label, description: profiles[3].description, editorial: true, superuser: true }));
       if (!this.get("SELECT value FROM metadata WHERE key='seed'")) {
         this.run("INSERT INTO communities VALUES ('esperanca','Comunidade Esperança','Um espaço para caminhar juntos na fé, no cuidado e na oração.','Que o amor seja o princípio de tudo o que fazemos.','ESPERANC')");
         this.run("INSERT INTO communities VALUES ('caminho','Comunidade Caminho','Outro grupo para verificar o isolamento de acesso.','','CAMINHOS')");
@@ -250,6 +251,7 @@ export class LocalDatabase {
         const rows = this.all<{ date: string }>("SELECT date FROM devotionals WHERE date>=? AND date<=? ORDER BY date", dates[0], dates.at(-1)!);
         return availableEditorialDates(input.month, rows.map(row => row.date), input.today);
       }
+      case "systemUsers": return this.systemUsers(user);
     }
   }
   command(user: LocalProfile, input: LocalCommand): unknown {
@@ -431,8 +433,56 @@ export class LocalDatabase {
           if (!existing.withdrawn) { this.run("UPDATE devotionals SET withdrawn=1 WHERE date=?", input.date); this.audit(user.id, "withdraw", input.date, input.reason); }
           return null;
         }
+        case "setUserStatus": return this.systemSetStatus(user, input.id, input.status);
+        case "deleteUser": return this.systemDeleteUser(user, input.id, input.confirmEmail);
       }
     });
+  }
+  private requireSystem(user: LocalProfile) {
+    if (!canManageSystem(this.profile(user.id))) throw new LocalError("Acesso exclusivo de superusuários.", 403);
+  }
+  private systemUsers(user: LocalProfile) {
+    this.requireSystem(user);
+    const rank = { pending: 0, approved: 1, disabled: 2 };
+    return this.all<{ id: string; data: string }>("SELECT id,data FROM users").map(row => {
+      const profile = JSON.parse(row.data) as LocalProfile & { email?: string; status?: "pending" | "approved" | "disabled" };
+      return { id: row.id, name: profile.name, email: profile.email ?? `${row.id}@local.devotio`, status: effectiveAccess(profile.status), editorial: profile.editorial === true, superuser: profile.superuser === true, linked: true };
+    }).sort((a, b) => rank[a.status] - rank[b.status] || a.name.localeCompare(b.name, "pt"));
+  }
+  private systemSetStatus(actor: LocalProfile, id: string, status: "approved" | "disabled") {
+    this.requireSystem(actor);
+    if (id === actor.id) throw new LocalError("Você não pode alterar a própria conta nesta tela.");
+    const current = this.profile(id);
+    if (current.superuser) throw new LocalError("Superusuários só podem ser alterados pelo painel do responsável.");
+    if (status !== "approved" && this.get("SELECT 1 FROM communities WHERE ownerId=?", id)) throw new LocalError("Transfira a posse das comunidades antes de desativar.");
+    if (status !== "approved" && this.get("SELECT 1 FROM members WHERE userId=? AND role!='member'", id)) throw new LocalError("Remova a administração nas comunidades antes de desativar.");
+    this.run("UPDATE users SET data=? WHERE id=?", JSON.stringify({ ...current, status }), id);
+    return null;
+  }
+  private systemDeleteUser(actor: LocalProfile, id: string, confirmEmail: string) {
+    this.requireSystem(actor);
+    const current = this.profile(id) as LocalProfile & { email?: string };
+    const email = (current.email ?? `${id}@local.devotio`).toLowerCase();
+    const blocker = userDeletionBlockers({
+      self: id === actor.id,
+      superuser: current.superuser === true,
+      editorial: current.editorial === true,
+      ownsCommunity: !!this.get("SELECT 1 FROM communities WHERE ownerId=?", id),
+      communityManager: !!this.get("SELECT 1 FROM members WHERE userId=? AND role!='member'", id),
+      hasCommunityMessages: !!this.get("SELECT 1 FROM messages WHERE userId=?", id),
+      hasScriptureShares: false,
+      seedProfile: profiles.some(profile => profile.id === id),
+      emailMatches: confirmEmail.trim().toLowerCase() === email,
+    });
+    if (blocker) throw new LocalError(blocker);
+    this.run("DELETE FROM ticks WHERE userId=?", id);
+    this.run("DELETE FROM favorites WHERE userId=?", id);
+    this.run("DELETE FROM notifications WHERE userId=?", id);
+    this.run("DELETE FROM quoteDrafts WHERE userId=?", id);
+    this.run("DELETE FROM members WHERE userId=?", id);
+    this.run("DELETE FROM sessions WHERE userId=?", id);
+    this.run("DELETE FROM users WHERE id=?", id);
+    return null;
   }
   private audit(userId: string, action: string, date: string, reason: string) { this.run("INSERT INTO audit VALUES (?,?,?,?,?,?)", randomUUID(), userId, action, date, reason, this.now()); }
   private requireApproved(userId: string) {

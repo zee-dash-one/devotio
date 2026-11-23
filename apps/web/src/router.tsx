@@ -23,6 +23,7 @@ import { SignInPage, InfoPage } from "./pages/access";
 import { RouteRedirect } from "./redirect";
 import { ReaderLayout } from "./reader-shell";
 import { AdministrationPage } from "./pages/administration";
+import { SystemUsersPage } from "./pages/system-users";
 import { AccessWaitPage } from "./pages/access-wait";
 import { ProfilePage } from "./social";
 
@@ -33,6 +34,7 @@ const pageTitles: Record<string, string> = {
   "/perfil": "Meu perfil",
   "/editorial": "Gestão de devocionais",
   "/editorial/cadastro": "Cadastro de devocional",
+  "/sistema/usuarios": "Gerenciar usuários",
   "/entrar": "Bem-vindo",
   "/ajuda": "Ajuda e instalação",
   "/privacidade": "Privacidade",
@@ -119,6 +121,11 @@ const bibleRoute = createRoute({
   validateSearch: (search) => bibleParamsSchema.parse(search),
   component: BiblePage,
 });
+const systemUsersRoute = createRoute({
+  getParentRoute: () => readerRoute,
+  path: "/sistema/usuarios",
+  component: SystemUsersPage,
+});
 const editorialRoute = createRoute({
   getParentRoute: () => readerRoute,
   path: "/editorial",
@@ -198,6 +205,7 @@ const routeTree = rootRoute.addChildren([
     favoriteDevotionalsRoute,
     bibleRoute,
     editorialRoute,
+    systemUsersRoute,
     communitiesRoute,
     communityRoute,
     listsRoute,

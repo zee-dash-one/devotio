@@ -10,6 +10,7 @@ import {
   Settings,
   Shield,
   UserRound,
+  Users,
 } from "lucide-react";
 import { canPublish, initials } from "domain/core";
 import { useApp } from "./context";
@@ -109,6 +110,12 @@ export function AccountMenu({ name = "Minha conta" }: { name?: string }) {
             <Link className={linkAppearance} to="/editorial">
               <PenLine size={16} />
               Gestão de devocionais
+            </Link>
+          )}
+          {(app.localProfile?.superuser || app.pilotAccess?.superuser) && (
+            <Link className={linkAppearance} to="/sistema/usuarios">
+              <Users size={16} />
+              Gerenciar usuários
             </Link>
           )}
           <Button variant="ghost" onClick={() => setSettingsOpen(true)}>

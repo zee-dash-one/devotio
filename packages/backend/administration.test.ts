@@ -150,6 +150,7 @@ describe("aprovação no backend conectado", () => {
     expect(await user.mutation(accessRefs.bootstrap, {})).toEqual({
       status: "pending",
       editorial: false,
+      superuser: false,
     });
     await user.mutation(accessRefs.bootstrap, {});
     expect(await t.run((ctx) => ctx.db.query("users").collect())).toHaveLength(
@@ -239,6 +240,7 @@ describe("aprovação no backend conectado", () => {
     expect(await user.mutation(accessRefs.bootstrap, {})).toEqual({
       status: "approved",
       editorial: true,
+      superuser: false,
     });
     await user.query(refs.home, { date: "2026-10-09" });
     await t.mutation(m("administration:update"), {
