@@ -210,6 +210,9 @@ describe("SQLite local: autorização, snapshots e persistência", () => {
     expect(() => db.command(editor, { action: "deleteUser", id: "marina", confirmEmail: "marina@local.devotio" })).toThrow("demonstração");
     db.command(editor, { action: "deleteUser", id: "novo", confirmEmail: "nova@exemplo.com" });
     expect((db.query(editor, { query: "systemUsers" }) as { id: string }[]).some(user => user.id === "novo")).toBe(false);
+    expect(() => db.command(member, { action: "setThemes", input: { monthlyVerse: "Mês", monthlyReference: "Sl 1:1", weeklyVerse: "Semana", weeklyReference: "Jo 1:1" } })).toThrow("superusu");
+    db.command(editor, { action: "setThemes", input: { monthlyVerse: "Mês novo", monthlyReference: "Sl 1:1", weeklyVerse: "Semana nova", weeklyReference: "Jo 1:1" } });
+    expect((db.query(member, { query: "home", date: "2026-10-04", timeZone: "UTC" }) as HomeData).settings?.monthlyVerse).toBe("Mês novo");
   });
   it("expira sessões sem aceitar identidade desconhecida", () => {
     const { db, advance } = setup(); const { token } = db.login("marina"); advance(2);

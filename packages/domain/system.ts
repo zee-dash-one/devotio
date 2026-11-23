@@ -1,5 +1,20 @@
+import { z } from "zod";
 import type { AccessStatus } from "./administration";
 import { hasApprovedAccess } from "./administration";
+
+export const themesInputSchema = z.object({
+  monthlyVerse: z.string().trim().min(1, "Informe o versículo do mês.").max(500, "Use até 500 caracteres."),
+  monthlyReference: z.string().trim().min(1, "Informe a referência do mês.").max(160, "Use até 160 caracteres."),
+  weeklyVerse: z.string().trim().min(1, "Informe o versículo da semana.").max(500, "Use até 500 caracteres."),
+  weeklyReference: z.string().trim().min(1, "Informe a referência da semana.").max(160, "Use até 160 caracteres."),
+});
+export type ThemesInput = z.infer<typeof themesInputSchema>;
+export const defaultThemes: ThemesInput = {
+  monthlyVerse: "Um coração atento ao que permanece.",
+  monthlyReference: "Tema ilustrativo do mês",
+  weeklyVerse: "Caminhar com presença e cuidado.",
+  weeklyReference: "Tema ilustrativo da semana",
+};
 
 export function canManageSystem(user: { status?: AccessStatus; superuser?: boolean }) {
   return hasApprovedAccess(user.status) && user.superuser === true;
@@ -50,4 +65,6 @@ export interface SystemRepository {
   listUsers(): Promise<SystemDirectoryUser[]>;
   setUserStatus(id: string, status: "approved" | "disabled"): Promise<void>;
   deleteUser(id: string, confirmEmail: string): Promise<void>;
+  getThemes(): Promise<ThemesInput>;
+  setThemes(input: ThemesInput): Promise<void>;
 }

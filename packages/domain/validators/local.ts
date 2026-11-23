@@ -4,6 +4,7 @@ import { socialCommandSchema, shareFilterSchema } from "./social";
 import { bibleVersionSchema, bibleSearchSchema } from "./bible";
 import { bibleSelectionSchema } from "../sharing";
 import { editorialMonthSchema } from "../editorial";
+import { themesInputSchema } from "../system";
 import { dateSchema, communitySchema, inviteSchema, messageSchema, scriptureSchema, checklistSchema, publicationSchema, scheduleSchema } from "./index";
 
 export const timeZoneSchema = z.string().max(100).refine(value => {
@@ -60,6 +61,7 @@ export const localCommandSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("withdraw"), date: dateSchema, reason: z.string().trim().min(1).max(1000) }),
   z.object({ action: z.literal("setUserStatus"), id, status: z.enum(["approved", "disabled"]) }),
   z.object({ action: z.literal("deleteUser"), id, confirmEmail: z.string().trim().email("Informe o e-mail do cadastro.").max(160) }),
+  z.object({ action: z.literal("setThemes"), input: themesInputSchema }),
 ]);
 export const localQuerySchema = z.discriminatedUnion("query", [
   z.object({ query: z.literal("governance"), input: governanceQuerySchema }),
@@ -83,6 +85,7 @@ export const localQuerySchema = z.discriminatedUnion("query", [
   z.object({ query: z.literal("editorial") }),
   z.object({ query: z.literal("editorialCalendar"), month: editorialMonthSchema, today: dateSchema }),
   z.object({ query: z.literal("systemUsers") }),
+  z.object({ query: z.literal("themes") }),
 ]);
 export type LocalCommand = z.infer<typeof localCommandSchema>;
 export type LocalQuery = z.infer<typeof localQuerySchema>;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canManageSystem, isNamedOwner, userDeletionBlockers, type DeletionFacts } from "./system";
+import { canManageSystem, isNamedOwner, themesInputSchema, userDeletionBlockers, type DeletionFacts } from "./system";
 
 const open: DeletionFacts = {
   self: false, superuser: false, editorial: false, ownsCommunity: false, communityManager: false,
@@ -19,6 +19,10 @@ describe("system access", () => {
     expect(isNamedOwner("Ana Hilderney")).toBe(false);
   });
 
+  it("requires both monthly and weekly theme fields", () => {
+    expect(themesInputSchema.safeParse({ monthlyVerse: "", monthlyReference: "Salmos 23:1", weeklyVerse: "Texto", weeklyReference: "João 1:1" }).success).toBe(false);
+    expect(themesInputSchema.safeParse({ monthlyVerse: "O Senhor é o meu pastor.", monthlyReference: "Salmos 23:1", weeklyVerse: "No princípio.", weeklyReference: "João 1:1" }).success).toBe(true);
+  });
   it("blocks deletion when the account still has a social footprint", () => {
     expect(userDeletionBlockers(open)).toBeNull();
     expect(userDeletionBlockers({ ...open, emailMatches: false })).toBe("O e-mail digitado não confere.");

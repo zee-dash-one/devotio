@@ -24,6 +24,7 @@ import { RouteRedirect } from "./redirect";
 import { ReaderLayout } from "./reader-shell";
 import { AdministrationPage } from "./pages/administration";
 import { SystemUsersPage } from "./pages/system-users";
+import { SystemThemesPage } from "./pages/system-themes";
 import { AccessWaitPage } from "./pages/access-wait";
 import { ProfilePage } from "./social";
 
@@ -35,6 +36,7 @@ const pageTitles: Record<string, string> = {
   "/editorial": "Gestão de devocionais",
   "/editorial/cadastro": "Cadastro de devocional",
   "/sistema/usuarios": "Gerenciar usuários",
+  "/sistema/temas": "Temas do mês e da semana",
   "/entrar": "Bem-vindo",
   "/ajuda": "Ajuda e instalação",
   "/privacidade": "Privacidade",
@@ -121,6 +123,11 @@ const bibleRoute = createRoute({
   validateSearch: (search) => bibleParamsSchema.parse(search),
   component: BiblePage,
 });
+const systemThemesRoute = createRoute({
+  getParentRoute: () => readerRoute,
+  path: "/sistema/temas",
+  component: SystemThemesPage,
+});
 const systemUsersRoute = createRoute({
   getParentRoute: () => readerRoute,
   path: "/sistema/usuarios",
@@ -206,6 +213,7 @@ const routeTree = rootRoute.addChildren([
     bibleRoute,
     editorialRoute,
     systemUsersRoute,
+    systemThemesRoute,
     communitiesRoute,
     communityRoute,
     listsRoute,
