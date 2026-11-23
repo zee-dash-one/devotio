@@ -4,7 +4,7 @@ import {
   canManageEditorial,
   publicationSchema,
   editorialAuditSchema,
-  editorialSaveSchema, editorialMonthDates, availableEditorialDates, canScheduleDate, publicationMidnight, dateSchema, scriptureLicense, validationMessage,
+  editorialSaveSchema, editorialMonthDates, availableEditorialDates, canScheduleDate, publicationMidnight, dateSchema, scriptureLicense, validationMessage, imageTextLimitMessage,
 } from "domain/core";
 import { editorialScripture } from "./scriptures";
 import { scriptureSelectionValidator } from "./scriptureValidators";
@@ -93,6 +93,12 @@ export const save = mutation({
     const selection = draft.selection ?? existing?.selection;
     const quote = draft.selection ? editorialScripture(draft.selection) : null;
     if (!quote && !existing) throw new ConvexError("Escolha o trecho na leitura bíblica.");
+    const imageLimit = imageTextLimitMessage({
+      reference: quote?.reference ?? existing?.reference ?? "",
+      reflection: draft.reflection,
+      prayerSuggestion: draft.prayerSuggestion,
+    });
+    if (imageLimit) throw new ConvexError(imageLimit);
     const input = publicationSchema.parse({
       date: draft.date, reflection: draft.reflection, prayerSuggestion: draft.prayerSuggestion,
       scripture: quote?.text ?? existing?.scripture, reference: quote?.reference ?? existing?.reference,

@@ -12,7 +12,7 @@ import { bibleVersionNames, type BibleVersion } from "../../domain/validators/bi
 import { scriptureLicenseForVersion, editorialMonthDates, availableEditorialDates } from "../../domain/editorial";
 import {
   bibleDatasetSchema, bibleBooksSchema, canManage, canRemoveMember, canPublish, hasApprovedAccess,
-  isPublished, dateInZone, recentDates, isRecent, searchWords, publicationMidnight, canScheduleDate, scheduleSchema, MAX_FAVORITE_DEVOTIONALS, RECENT_DEVOTIONALS_LIMIT, favoriteLimitMessage,
+  isPublished, dateInZone, recentDates, isRecent, searchWords, publicationMidnight, canScheduleDate, scheduleSchema, imageTextLimitMessage, MAX_FAVORITE_DEVOTIONALS, RECENT_DEVOTIONALS_LIMIT, favoriteLimitMessage,
   type LocalProfile, type Devotional, type HomeData, type Community, type CommunityDetail,
   type Member, type Favorite, type BibleBook, type BibleChapter, type BibleResults,
   type BibleCatalog, type EditorialEntry, type LocalCommand, type LocalQuery, bibleQuote,
@@ -408,6 +408,8 @@ export class LocalDatabase {
             // Legacy entries keep their original Word until a new Bible selection replaces it.
             content.scripture = previous.scripture; content.reference = previous.reference;
           }
+          const imageLimit = imageTextLimitMessage(content);
+          if (imageLimit) throw new LocalError(imageLimit);
           const data = JSON.stringify({ ...previous, ...content, date, id: date, translation: content.selection ? bibleVersionNames[content.selection.version] : previous?.translation ?? "AA · ABíbliaDigital", licenseEvidence: content.selection ? scriptureLicenseForVersion(content.selection.version) : previous?.licenseEvidence ?? content.licenseEvidence, credit: previous?.credit ?? name, reviewedBy: name, publishedBy: previous?.publishedBy ?? user.id });
           const publishedAt = publicationMidnight(date);
           if (mode === "create") this.run("INSERT INTO devotionals VALUES (?,?,?,0)", date, data, publishedAt);

@@ -13,6 +13,7 @@ import {
   scheduleSchema,
   scriptureLicenseForVersion,
   shiftEditorialMonth,
+  imageTextLimitMessage,
   validationMessage,
   type EditorialDraft,
   type Devotional,
@@ -256,6 +257,10 @@ function EditorForm({
             }
           />
         </label>
+        <p className="caption">
+          {draft.reflection.trim().length}/512 na reflexão · {draft.prayerSuggestion.trim().length}/512 na oração. A imagem leva o texto inteiro, em até 10 páginas.
+          {draft.reflection.trim() && draft.prayerSuggestion.trim() ? " " + (imageTextLimitMessage({ reference: draft.reference || "Palavra", reflection: draft.reflection, prayerSuggestion: draft.prayerSuggestion }) ?? "") : ""}
+        </p>
         <label>Créditos<input readOnly value={existing?.credit ?? app.localProfile?.name ?? ""} /></label>
         {draft.programming && (
           <div className="devotional-scheduling">
