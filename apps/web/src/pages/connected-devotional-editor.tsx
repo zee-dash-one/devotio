@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { BookOpen } from "lucide-react";
-import { bibleVersionNames, bibleVersionSchema, dateInZone, editorialDraft, editorialSaveSchema, shiftEditorialMonth, validationMessage, type ConnectedEditorial, type ConnectedPublication, type EditorialDraft } from "domain/core";
+import { bibleVersionNames, bibleVersionSchema, dateInZone, editorialDraft, editorialSaveSchema, imageTextLimitMessage, shiftEditorialMonth, validationMessage, type ConnectedEditorial, type ConnectedPublication, type EditorialDraft } from "domain/core";
 import { useApp, useWriting } from "../context";
 import { Dropdown } from "../dropdown";
 import { Button } from "../ui/button";
@@ -88,7 +88,7 @@ function ConnectedEditorForm({ editorial, existing }: { editorial: ConnectedEdit
       <label>Reflexão<textarea required maxLength={512} rows={5} value={draft.reflection} onChange={event => change({ reflection: event.target.value })} /></label>
       <p className="caption">{draft.reflection.length}/512 caracteres{draft.reflection.length > 512 ? " — reduza o texto antes de salvar." : ""}</p>
       <label>Sugestão de oração<textarea required maxLength={512} rows={4} value={draft.prayerSuggestion} onChange={event => change({ prayerSuggestion: event.target.value })} /></label>
-      <p className="caption">{draft.prayerSuggestion.length}/512 caracteres{draft.prayerSuggestion.length > 512 ? " — reduza o texto antes de salvar." : ""}</p>
+      <p className="caption">{draft.prayerSuggestion.length}/512 caracteres. A imagem leva o texto inteiro, em até 10 páginas.{draft.reflection.trim() && draft.prayerSuggestion.trim() ? " " + (imageTextLimitMessage({ reference: draft.reference || "Palavra", reflection: draft.reflection, prayerSuggestion: draft.prayerSuggestion }) ?? "") : ""}</p>
       <label>Créditos<input readOnly value={existing?.credit ?? calendar?.credit ?? ""} /></label>
       <label>Disponível a partir de (horário de Brasília)<input readOnly value={draft.date ? `${draft.date.split("-").reverse().join("/")} às 00:00` : "Escolha a data da leitura"} /></label>
       {existing && <label>Motivo da correção<input required maxLength={1000} value={draft.reason ?? ""} onChange={event => change({ reason: event.target.value })} /></label>}

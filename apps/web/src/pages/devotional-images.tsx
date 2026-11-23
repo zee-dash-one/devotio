@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { imageRevision, imageSizes, imageStyles, type Devotional, type DevotionalImageManifest } from "domain/core";
+import { imageRevision, imageSizes, imageStyles, validationMessage, type Devotional, type DevotionalImageManifest } from "domain/core";
 import { useApp } from "../context";
 import { Modal } from "../components";
 import { Button } from "../ui/button";
-import { canShareImages, shareImages } from "../share-images";
+import { canShareImages, copyImage, shareImages } from "../share-images";
 interface Prepared { key: string; pages: { file: File; url: string; page: number }[] }
 export function DevotionalImages({ day, onClose }: { day: Devotional; onClose(): void }) {
   const { repository, pilotAccess, localProfile } = useApp();
@@ -11,16 +11,17 @@ export function DevotionalImages({ day, onClose }: { day: Devotional; onClose():
   const [manifest, setManifest] = useState<DevotionalImageManifest>();
   const [error, setError] = useState(""), [notice, setNotice] = useState("");
   const [prepared, setPrepared] = useState<Prepared>(), [attempt, setAttempt] = useState(0), [sharing, setSharing] = useState(false);
-  let revision = "";
-  try { revision = imageRevision(day); } catch { /* Legacy content outside the supported image limits remains readable. */ }
+  let revision = "", limitMessage = "";
+  try { revision = imageRevision(day); } catch (error) { limitMessage = validationMessage(error); }
   const variant = size + "-" + style, key = revision + ":" + variant;
   const files = prepared?.key === key && manifest?.status === "ready" ? prepared.pages : [];
   const editorial = pilotAccess?.editorial || localProfile?.editorial;
   useEffect(() => {
     setManifest(undefined); setError("");
+    if (limitMessage) { setError(limitMessage); return; }
     if (!revision || !repository?.watchDevotionalImages) { setError("Imagens indisponíveis para este devocional."); return; }
     return repository.watchDevotionalImages(day.id, revision)(value => { setManifest(value); setError(""); }, cause => setError(cause.message));
-  }, [repository, day.id, revision, attempt]);
+  }, [repository, day.id, revision, limitMessage, attempt]);
   const sources = JSON.stringify(manifest?.status === "ready" ? manifest.files.filter(file => file.variant === variant).sort((a,b) => a.page-b.page) : []);
   useEffect(() => {
     const controller = new AbortController(), urls: string[] = [];
@@ -44,6 +45,14 @@ export function DevotionalImages({ day, onClose }: { day: Devotional; onClose():
     })().catch(cause => { if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : "Não foi possível preparar a imagem."); });
     return () => { controller.abort(); urls.forEach(url => URL.revokeObjectURL(url)); };
   }, [sources, key, variant, day.date, attempt]);
+  async function copy(file: File) {
+    setSharing(true); setNotice("");
+    try {
+      const result = await copyImage(file);
+      setNotice(result === "copied" ? "Imagem copiada. Cole onde aceitar imagem." : "Este navegador não copia a imagem. Use Baixar imagem.");
+    } catch (cause) { setNotice(cause instanceof Error ? cause.message : "Não foi possível copiar a imagem. Use Baixar imagem."); }
+    finally { setSharing(false); }
+  }
   async function share(selected: File[]) {
     setSharing(true); setNotice("");
     try {
@@ -63,15 +72,17 @@ export function DevotionalImages({ day, onClose }: { day: Devotional; onClose():
       {error ? <div role="alert"><p>{error}</p><Button variant="secondary" onClick={() => setAttempt(value => value+1)}>Tentar baixar novamente</Button></div> : !manifest || manifest.status === "pending" || manifest.status === "rendering" ? <p role="status">As imagens estão sendo preparadas. Você pode continuar a leitura e voltar depois.</p> : manifest.status === "unavailable" ? <p role="status">As imagens estão disponíveis apenas para a edição publicada do dia. Você pode compartilhar este texto.</p> : manifest.status === "failed" ? <p role="status">Não foi possível preparar as imagens. O texto continua disponível.</p> : !files.length ? <p role="status">Preparando os arquivos para compartilhar…</p> : null}
       {editorial && repository?.retryDevotionalImages && (manifest?.status === "failed" || manifest?.status === "unavailable") && <Button variant="secondary" onClick={() => { void repository.retryDevotionalImages!(day.id, revision).catch(cause => setError(cause.message)); }}>Preparar imagens novamente</Button>}
       <Button disabled={!files.length || sharing || !canShareImages(all)} onClick={() => { void share(all); }}>{files.length > 1 ? "Compartilhar páginas" : "Compartilhar imagem"}</Button>
-      {!!files.length && !canShareImages(all) && <p className="caption">Neste navegador, use o download abaixo. Se disponível, compartilhe cada página separadamente.</p>}
+      {files.length === 1 && <Button variant="secondary" disabled={sharing} onClick={() => { void copy(files[0].file); }}>Copiar imagem</Button>}
+      {!!files.length && !canShareImages(all) && <p className="caption">Neste navegador, copie ou baixe a imagem abaixo. Se disponível, compartilhe cada página separadamente.</p>}
       {notice && <p role="status">{notice}</p>}
       {files.map(item => <figure key={item.page} className="image-share-preview">
         <a href={item.url} target="_blank" rel="noreferrer" aria-label={"Abrir prévia da página " + item.page}><img src={item.url} alt={"Devocional de " + day.date + ", " + day.reference + ", página " + item.page + " de " + files.length} /></a>
         <figcaption>Página {item.page} de {files.length}</figcaption>
         <a className="image-download" href={item.url} download={item.file.name}>Baixar imagem{files.length > 1 ? " · página " + item.page : ""}</a>
+        {files.length > 1 && <Button variant="secondary" disabled={sharing} onClick={() => { void copy(item.file); }}>Copiar página {item.page}</Button>}
         {files.length > 1 && canShareImages([item.file]) && <Button variant="secondary" disabled={sharing} onClick={() => { void share([item.file]); }}>Compartilhar página {item.page}</Button>}
       </figure>)}
-      {!!files.length && <p className="caption">Os aplicativos disponíveis são definidos pelo seu dispositivo. Você também pode abrir a prévia para salvar a imagem.</p>}
+      {!!files.length && <p className="caption">Copiar coloca uma página PNG na área de transferência, para colar onde aceitar imagem. Várias páginas são copiadas uma por vez.</p>}
     </div>
   </Modal>;
 }

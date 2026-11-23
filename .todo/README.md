@@ -4,7 +4,7 @@
 
 ## Tarefas abertas
 
-Nenhuma tarefa aberta no momento.
+- [01 — Imagem limitada pelo texto](01-imagem-limite-texto.md)
 
 ## Decisões abertas
 

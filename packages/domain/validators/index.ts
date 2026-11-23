@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { bibleSelectionSchema } from "./sharing";
+import { imageTextLimitMessage } from "../devotional-images";
 export * from "./access";
 export const dateSchema = z
   .string()
@@ -68,6 +69,8 @@ export const scheduleSchema = publicationSchema.pick({ date: true, reference: tr
 }).superRefine((input, context) => {
   if (input.mode === "create" && !input.selection) context.addIssue({ code: z.ZodIssueCode.custom, path: ["selection"], message: "Escolha a Palavra na leitura bíblica." });
   if (input.mode === "update" && !input.reason) context.addIssue({ code: z.ZodIssueCode.custom, path: ["reason"], message: "Informe o motivo da correção." });
+  const imageLimit = imageTextLimitMessage(input);
+  if (imageLimit) context.addIssue({ code: z.ZodIssueCode.custom, path: ["reflection"], message: imageLimit });
 });
 export const devotionalSelectionSchema = z.object({
   scripture: publicationSchema.shape.scripture,
