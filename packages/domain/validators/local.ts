@@ -58,6 +58,8 @@ export const localCommandSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("publish"), input: publicationSchema }),
   z.object({ action: z.literal("schedule"), input: scheduleSchema }),
   z.object({ action: z.literal("withdraw"), date: dateSchema, reason: z.string().trim().min(1).max(1000) }),
+  z.object({ action: z.literal("setUserStatus"), id, status: z.enum(["approved", "disabled"]) }),
+  z.object({ action: z.literal("deleteUser"), id, confirmEmail: z.string().trim().email("Informe o e-mail do cadastro.").max(160) }),
 ]);
 export const localQuerySchema = z.discriminatedUnion("query", [
   z.object({ query: z.literal("governance"), input: governanceQuerySchema }),
@@ -80,6 +82,7 @@ export const localQuerySchema = z.discriminatedUnion("query", [
   z.object({ query: z.literal("search"), ...bibleSearchSchema.shape }),
   z.object({ query: z.literal("editorial") }),
   z.object({ query: z.literal("editorialCalendar"), month: editorialMonthSchema, today: dateSchema }),
+  z.object({ query: z.literal("systemUsers") }),
 ]);
 export type LocalCommand = z.infer<typeof localCommandSchema>;
 export type LocalQuery = z.infer<typeof localQuerySchema>;

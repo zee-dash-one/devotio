@@ -2,7 +2,7 @@ import type { Devotional, Watch } from "./types";
 import type { z } from "zod";
 import { dateSchema, type publicationSchema, type scheduleSchema } from "./validators";
 
-export interface LocalProfile { id: string; name: string; label: string; description: string; editorial: boolean }
+export interface LocalProfile { id: string; name: string; label: string; description: string; editorial: boolean; superuser?: boolean }
 export interface Favorite { devotional: Devotional; favoritedAt: number }
 export const MAX_FAVORITE_DEVOTIONALS = 3;
 export const RECENT_DEVOTIONALS_LIMIT = 7;

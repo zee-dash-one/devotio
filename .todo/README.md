@@ -5,6 +5,7 @@
 ## Tarefas abertas
 
 - [01 — Imagem limitada pelo texto](01-imagem-limite-texto.md)
+- [02 — Superusuário e gestão de contas](02-superusuario.md)
 
 ## Decisões abertas
 

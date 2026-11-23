@@ -1,8 +1,9 @@
 import { v } from "convex/values";
 import { componentsGeneric, makeFunctionReference } from "convex/server";
 import type { ComponentApi } from "@convex-dev/better-auth/_generated/component.js";
-import { effectiveAccess, initialAccess } from "domain/core";
+import { effectiveAccess, hasApprovedAccess, initialAccess, isNamedOwner } from "domain/core";
 import { query, mutation, internalMutation, env } from "./_generated/server";
+import type { MutationCtx } from "./server";
 import { z } from "zod";
 import { lookupUser, registerUser } from "./access";
 import { creationPermission } from "./communityGovernance";
@@ -15,17 +16,28 @@ export const statusValidator = v.union(
 const accessValidator = v.object({
   status: statusValidator,
   editorial: v.boolean(),
+  superuser: v.boolean(),
   canCreateCommunity: v.optional(v.boolean()),
   communityLimit: v.optional(v.number()),
 });
+async function promoteNamedOwner(ctx: MutationCtx, user: NonNullable<Awaited<ReturnType<typeof registerUser>>>) {
+  if (!isNamedOwner(user.name) || !hasApprovedAccess(user.status)) return user;
+  const named = await ctx.db.query("users").withIndex("by_normalizedName", (q) => q.gte("normalizedName", "hilderney").lt("normalizedName", "hildernez")).take(8);
+  const approved = named.filter((row) => isNamedOwner(row.name) && hasApprovedAccess(row.status));
+  if (approved.length !== 1 || approved[0]._id !== user._id || (user.superuser === true && user.editorial === true)) return user;
+  await ctx.db.patch(user._id, { superuser: true, editorial: true });
+  await ctx.db.insert("userAdminEvents", { actor: "system:promoteNamedOwner", target: user._id, action: "superuser:true", at: Date.now() });
+  return { ...user, superuser: true as const, editorial: true as const };
+}
 export const bootstrap = mutation({
   args: {},
   returns: accessValidator,
   handler: async (ctx) => {
-    const user = await registerUser(ctx);
+    const user = await promoteNamedOwner(ctx, await registerUser(ctx));
     return {
       status: effectiveAccess(user.status),
       editorial: user.editorial === true,
+      superuser: user.superuser === true,
     };
   },
 });
@@ -38,6 +50,7 @@ export const access = query({
       ? {
           status: effectiveAccess(user.status),
           editorial: user.editorial === true,
+          superuser: user.superuser === true,
           canCreateCommunity: (await creationPermission(ctx, user)).canCreate,
           communityLimit: user.communityCreationLimit ?? 1,
         }

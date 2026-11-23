@@ -187,6 +187,7 @@ export function createLocalRepository(storage: LocalCacheStorage, onExpired: () 
         await invalidate(key => key === "drafts:" + input.id || (input.action === "publishQuoteDraft" && key.startsWith("community:" + input.id + ":"))); break;
       case "sendQuote": case "sendMessage": case "createChecklist": case "updateScripture": case "removeMember":
         await invalidate(key => key.startsWith("community:" + input.id + ":") || (input.action === "removeMember" && (key === "communities" || key.startsWith("governance:")))); break;
+      case "setUserStatus": case "deleteUser": break;
       case "setTick":
         await invalidate(key => {
           const detail = entries.get(key)?.value as CommunityDetail | undefined;
@@ -300,6 +301,11 @@ export function createLocalRepository(storage: LocalCacheStorage, onExpired: () 
       setRole: (id, memberId, role) => command({ action: "governance", input: { kind: "setRole", id, memberId, role } }),
       leave: id => command({ action: "governance", input: { kind: "leave", id } }),
       transfer: (id, memberId) => command({ action: "governance", input: { kind: "transfer", id, memberId } }),
+    },
+    system: {
+      listUsers: () => query({ query: "systemUsers" }),
+      setUserStatus: async (id, status) => { await command({ action: "setUserStatus", id, status }); },
+      deleteUser: async (id, confirmEmail) => { await command({ action: "deleteUser", id, confirmEmail }); },
     },
     watchHome: date => watch("home:" + date, () => home(date)),
     watchCommunities: () => watch("communities", () => query<Community[]>({ query: "communities" })),

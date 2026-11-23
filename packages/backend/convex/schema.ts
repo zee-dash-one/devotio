@@ -52,6 +52,7 @@ export default defineSchema({
       ),
     ),
     editorial: v.optional(v.boolean()),
+    superuser: v.optional(v.boolean()),
     communityCreationAllowed: v.optional(v.boolean()),
     communityCreationLimit: v.optional(v.number()),
     notificationUnread: v.optional(v.number()),
@@ -161,7 +162,7 @@ export default defineSchema({
     senderId: v.id("users"),
     content: v.string(),
     sentAt: v.number(),
-  }).index("by_community_time", ["communityId", "sentAt"]),
+  }).index("by_community_time", ["communityId", "sentAt"]).index("by_senderId", ["senderId"]),
   checklists: defineTable({
     communityId: v.id("communities"),
     name: v.string(),
@@ -176,5 +177,6 @@ export default defineSchema({
     userId: v.id("users"),
   })
     .index("by_item", ["itemId"])
-    .index("by_pair", ["itemId", "userId"]),
+    .index("by_pair", ["itemId", "userId"])
+    .index("by_userId", ["userId"]),
 });

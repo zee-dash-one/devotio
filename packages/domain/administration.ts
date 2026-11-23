@@ -33,6 +33,7 @@ export function canManageEditorial(user: {
 export interface AccessState {
   status: AccessStatus;
   editorial: boolean;
+  superuser?: boolean;
   canCreateCommunity?: boolean;
   communityLimit?: number;
 }

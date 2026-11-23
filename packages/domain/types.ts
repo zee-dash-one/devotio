@@ -85,6 +85,7 @@ export interface Repository {
   sharing?: import("./sharing").SharingRepository;
   governance?: import("./community-governance").CommunityGovernance;
   communityMessage?(id: string, messageId: string): Promise<Message>;
+  system?: import("./system").SystemRepository;
   refresh?(): Promise<void>;
   watchHome(date: string): Watch<HomeData>;
   watchCommunities(): Watch<Community[]>;
