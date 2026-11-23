@@ -5,7 +5,8 @@ import { LocalDatabase, LocalError, profiles } from "./database.local";
 import { LOCAL_SESSION_SECONDS } from "../../domain/local-cache";
 
 import { LocalImages } from "./images.local";
-import { imageRequestSchema, canManageEditorial } from "../../domain/index";
+import { imageRequestSchema, canManageEditorial, peregrinoRequestSchema } from "../../domain/index";
+import { suggestLocal } from "./peregrino.local";
 const cookieName = "devotio_local_session";
 function token(req: IncomingMessage) {
   return req.headers.cookie?.split(";").map(v => v.trim()).find(v => v.startsWith(cookieName + "="))?.slice(cookieName.length + 1);
@@ -86,6 +87,12 @@ export function createLocalHandler(database: LocalDatabase, images?: LocalImages
         let value: unknown;
         try { value = JSON.parse(url.searchParams.get("input") ?? "null"); } catch { throw new LocalError("Consulta inválida."); }
         return send(200, database.query(user, localQuerySchema.parse(value)));
+      }
+      if (req.method === "POST" && path === "/peregrino") {
+        if (req.headers.origin !== `http://${host}` || !req.headers["content-type"]?.startsWith("application/json")) throw new LocalError("Origem da requisição inválida.", 403);
+        const user = database.session(sessionToken);
+        if (!user || req.headers["x-devotio-profile"] !== user.id) throw new LocalError("Sua sessão mudou. Entre novamente.", 401);
+        return send(200, await suggestLocal(database, user.id, peregrinoRequestSchema.parse(await body(req))));
       }
       if (req.method !== "POST" || path !== "/command") throw new LocalError("Operação não encontrada.", 404);
       if (req.headers.origin !== `http://${host}` || !req.headers["content-type"]?.startsWith("application/json")) throw new LocalError("Origem da requisição inválida.", 403);

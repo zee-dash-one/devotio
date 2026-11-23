@@ -133,6 +133,11 @@ export function createConvexRepository(client: ConvexReactClient): Repository {
       deleteUser: async (id, confirmEmail) => { await safe(client.mutation(makeFunctionReference<"mutation", { id: string; confirmEmail: string }, null>("superuser:deleteUser"), { id, confirmEmail })); },
       getThemes: () => safe(client.query(makeFunctionReference<"query", Record<string, never>, import("../system").ThemesInput>("superuser:getThemes"), {})),
       setThemes: async (input) => { await safe(client.mutation(makeFunctionReference<"mutation", import("../system").ThemesInput, null>("superuser:setThemes"), input)); },
+      peregrinoKeyStatus: () => safe(client.query(makeFunctionReference<"query", Record<string, never>, { configured: boolean }>("peregrino:keyStatus"), {})),
+      setOpenRouterKey: async (key) => { await safe(client.mutation(makeFunctionReference<"mutation", { key: string }, null>("peregrino:setKey"), { key })); },
+      clearOpenRouterKey: async () => { await safe(client.mutation(makeFunctionReference<"mutation", Record<string, never>, null>("peregrino:clearKey"), {})); },
+      peregrinoStatus: () => safe(client.query(makeFunctionReference<"query", Record<string, never>, { configured: boolean; model: string }>("peregrino:status"), {})),
+      peregrinoSuggest: (input) => safe(client.action(makeFunctionReference<"action", typeof input, { reflection?: string; prayerSuggestion?: string; model: string }>("peregrino:suggest"), input)),
     },
     async setTick(itemId, checked) {
       await safe(client.mutation(refs.tick, { itemId, checked }));

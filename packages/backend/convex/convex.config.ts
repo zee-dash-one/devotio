@@ -10,6 +10,7 @@ const app = defineApp({
     ADMIN_PASSWORD_HASH: v.optional(v.string()),
     ADMIN_TOTP_SECRET: v.optional(v.string()),
     PILOT_EXISTING_USERS_BEFORE: v.optional(v.string()),
+    INTEGRATION_ENCRYPTION_KEY: v.optional(v.string()),
   },
 });
 app.use(betterAuth);

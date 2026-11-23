@@ -18,3 +18,4 @@ export * from "./community-governance";
 
 export * from "./devotional-images";
 export * from "./system";
+export * from "./peregrino";

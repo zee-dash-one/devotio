@@ -5,6 +5,7 @@ import { bibleVersionNames, bibleVersionSchema, dateInZone, editorialDraft, edit
 import { useApp, useWriting } from "../context";
 import { Dropdown } from "../dropdown";
 import { Button } from "../ui/button";
+import { PeregrinoPanel } from "./peregrino-panel";
 import { BiblePickerButton } from "../ui/bible-picker-button";
 import { ErrorMessage, Loading } from "../components";
 
@@ -34,7 +35,7 @@ function ConnectedEditorForm({ editorial, existing }: { editorial: ConnectedEdit
   const [month, setMonth] = useState((draft.date || today).slice(0, 7));
   const [calendar, setCalendar] = useState<{ dates: string[]; credit: string }>();
   const [calendarError, setCalendarError] = useState("");
-  const [busy, setBusy] = useState(false), [error, setError] = useState("");
+  const [busy, setBusy] = useState(false), [error, setError] = useState(""), [auxiliary, setAuxiliary] = useState(false);
   useEffect(() => {
     let active = true;
     setCalendar(undefined); setCalendarError("");
@@ -94,9 +95,11 @@ function ConnectedEditorForm({ editorial, existing }: { editorial: ConnectedEdit
       {existing && <label>Motivo da correção<input required maxLength={1000} value={draft.reason ?? ""} onChange={event => change({ reason: event.target.value })} /></label>}
       {existing && <p className="caption">O motivo fica no histórico administrativo e não aparece no devocional.</p>}
       {error && <ErrorMessage message={error} />}
+      {auxiliary && <PeregrinoPanel selection={draft.selection} date={existing?.date} reflection={draft.reflection} prayerSuggestion={draft.prayerSuggestion} onApply={patch => change(patch)} />}
       <div className="devotional-editor-actions">
         <Button type="submit" disabled={busy || !calendar || !!calendarError}>{busy ? "Salvando…" : "Salvar publicação"}</Button>
         <Button type="button" variant="secondary" disabled={busy} onClick={() => { writing.setEditor(key, null); writing.setPicker(null); void navigate({ to: "/editorial" }); }}>Cancelar</Button>
+        <Button type="button" variant="ghost" aria-expanded={auxiliary} onClick={() => setAuxiliary(value => !value)}>Auxílio</Button>
       </div>
     </form>
     <BiblePickerButton type="button" aria-label="Alternar para leitura bíblica" disabled={!versions.length} onClick={() => void chooseScripture()}><BookOpen size={22} /></BiblePickerButton>

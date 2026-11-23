@@ -253,6 +253,11 @@ export class LocalDatabase {
       }
       case "systemUsers": return this.systemUsers(user);
       case "themes": this.requireSystem(user); return this.storedThemes();
+      case "peregrinoStatus": {
+        if (!canManageSystem(this.profile(user.id)) && !canPublish(this.profile(user.id).editorial)) throw new LocalError("Acesso exclusivo da gestão editorial.", 403);
+        return { configured: !!this.openRouterKey(), model: "openrouter/free" };
+      }
+      case "peregrinoKeyStatus": this.requireSystem(user); return { configured: !!this.openRouterKey() };
     }
   }
   command(user: LocalProfile, input: LocalCommand): unknown {
@@ -442,8 +447,21 @@ export class LocalDatabase {
           this.run("INSERT INTO metadata(key,value) VALUES ('themes',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value", JSON.stringify(themes));
           return null;
         }
+        case "setOpenRouterKey": {
+          this.requireSystem(user);
+          this.run("INSERT INTO metadata(key,value) VALUES ('openrouterKey',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value", input.key);
+          return null;
+        }
+        case "clearOpenRouterKey": {
+          this.requireSystem(user);
+          this.run("DELETE FROM metadata WHERE key='openrouterKey'");
+          return null;
+        }
       }
     });
+  }
+  openRouterKey() {
+    return this.get<{ value: string }>("SELECT value FROM metadata WHERE key='openrouterKey'")?.value ?? "";
   }
   private storedThemes() {
     const raw = this.get<{ value: string }>("SELECT value FROM metadata WHERE key='themes'");
