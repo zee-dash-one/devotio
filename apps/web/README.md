@@ -1,28 +1,30 @@
-# Devotio — Web
+# Devotio — Web (`apps/web`)
 
-React 19 + Vite, TanStack Router e Tailwind 3. Interface em português, fontes locais Lora/Inter e tokens compartilhados.
+Aplicação SPA/PWA construída com React 19, Vite 6, TanStack Router, Tailwind CSS 3, fontes locais Lora/Inter e tokens de `packages/ui-kit`.
 
-Na raiz: npm ci, npm run setup:local e npm run dev. Abra http://127.0.0.1:3000.
+## Estrutura principal
 
-Sem configuração, desenvolvimento usa login mockado e SQLite persistente;
-produção mostra acesso indisponível. Veja [perfis e banco local](../../docs/engineering/local-development.md).
-Configure Convex/Google somente para homologação separada, conforme o [guia](../../docs/engineering/development.md).
+- `src/main.tsx` — bootstrap da aplicação, providers e seleção automática entre adaptador Convex e adaptador local (apenas em `DEV`).
+- `src/router.tsx` — árvore de rotas públicas, administrativas, editoriais e layout autenticado (`ReaderLayout`).
+- `src/pages/` — páginas de Devocional/Favoritos, Bíblia, Comunidades, Editorial, Administração (`/gestao-acesso`), Acesso, Ajuda e Privacidade.
+- `src/social.tsx` — Perfil, amizades e histórico/detalhes de trechos compartilhados.
+- `src/styles/` e `src/ui/` — estilos por área e componentes visuais reutilizáveis.
+- `public/` — ícones, licenças OFL e corpus bíblico estático gerado (`public/bibles/`, ignorado no Git).
+- `wrangler.toml` — configuração de publicação estática no Cloudflare Workers.
 
-## Estrutura
+## Comandos do workspace
 
-- src/main.tsx: entrada, providers e seleção de ambiente.
-- src/router.tsx: rotas públicas, layout de leitura e shell responsivo.
-- src/redirect.tsx: transições com destino estável, sem redirecionamento repetido.
-- src/pages: devocional/favoritos, Bíblia, comunidade, editorial local, acesso, ajuda e privacidade.
-- src/components.tsx: apresentação e áudio HTML5.
-- src/pwa.tsx: atualização opcional.
-- public: ícones, licenças e fallback para Pages.
-- vite.config.ts: build, servidor e PWA sem cache privado.
+Na raiz do monorepo:
 
-Build: npm run build. Preview: npm run preview --workspace=web.
+- `npm run dev --workspace=web` — prepara o corpus estático e inicia o servidor Vite em `127.0.0.1:3000`.
+- `npm run build --workspace=web` — gera o corpus estático e compila a SPA/PWA em `dist/`.
+- `npm run preview --workspace=web` — serve localmente o artefato compilado.
+- `npm run test --workspace=web` — executa os testes integrados e de interface (`Vitest` + `jsdom`).
+- `npm run lint --workspace=web` e `npm run typecheck --workspace=web` — análise estática e checagem de tipos.
 
-Testes integrados: `npm run test --workspace=web`. Exercitam entrada, sessão,
-login/logout e navegação com React StrictMode/jsdom. A suíte completa na raiz
-(`npm run test`) também executa os testes de domínio e backend.
+## Referências
 
-Referências: [UI/UX](../../docs/design/experience.md), [stack](../../docs/engineering/stack.md), [status](../../docs/engineering/status.md), [regras web](AGENTS.md). OAuth e instalação real ainda exigem homologação.
+- Regras do workspace: [`AGENTS.md`](AGENTS.md) e [`../../AGENTS.md`](../../AGENTS.md)
+- UI, testes e acessibilidade: [`../../docs/design.md`](../../docs/design.md)
+- Ambiente local e conectado: [`../../docs/development.md`](../../docs/development.md)
+- Deploy e operação: [`../../docs/operations.md`](../../docs/operations.md)

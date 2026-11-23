@@ -1,66 +1,31 @@
 # Constituição do Projeto
 
-> Baseado no modelo de "constitution" do Spec-Driven Development: princípios que
-> qualquer spec, plano ou linha de código deve respeitar. Mudar algo aqui exige
-> decisão consciente e registro em `docs/adr/` — não é para ser editado de passagem.
+Princípios permanentes que qualquer decisão de produto, tarefa ou linha de código no Devotio deve respeitar.
 
 ## I. Minimalismo é lei, não estética
 
-A tela principal existe para uma coisa: colocar a Palavra na frente do usuário sem
-fricção. Toda proposta de feature deve responder: **"isso adiciona ruído entre o
-usuário e o texto?"** Se sim, ela vai para uma aba secundária ou é descartada.
-Carrosséis, badges, contadores de sequência (streaks) e notificações não-essenciais
-estão fora por padrão em qualquer versão.
+A tela principal existe para colocar a Palavra diante do leitor sem fricção. Toda proposta de funcionalidade deve responder: **"isso adiciona ruído entre a pessoa e o texto?"** Se sim, fica em segundo plano ou é descartada. Carrosséis promocionais, badges, contadores de sequência (*streaks*) e notificações não essenciais estão fora por padrão.
 
 ## II. Reverência acima de engajamento
 
-Não otimizamos para tempo de tela, DAU ou retenção via mecanismos comportamentais
-(gamificação, urgência artificial, notificações de FOMO). O sucesso do produto é
-medido por profundidade de uso espiritual, não por métricas de engajamento de
-growth hacking. Isso é uma restrição de produto que qualquer agente de IA deve
-respeitar mesmo sem ser lembrado a cada spec.
+O Devotio não otimiza tempo de tela, retenção comportamental ou urgência artificial (gamificação, rankings, alertas de FOMO). O valor do produto está na clareza, no recolhimento e na utilidade espiritual real — restrição obrigatória para qualquer pessoa ou agente que altere o sistema.
 
-## III. Núcleo agnóstico, casca específica
+## III. Núcleo agnóstico, casca fina
 
-Toda regra de negócio, todo schema, toda validação e toda checagem de permissão
-vivem em `packages/backend` (Convex) e `packages/domain` — código que não sabe se
-está rodando em navegador ou em app nativo. `apps/web` e `apps/mobile` só decidem
-**como mostrar**, nunca **o que é permitido**. Isso é o que torna o produto
-sustentável para uma equipe pequena manter duas plataformas.
+Toda regra de negócio, schema, validação e autorização vive em `packages/domain` e `packages/backend` — código independente de DOM ou framework nativo. `apps/web` e `apps/mobile` decidem apenas **como apresentar**, nunca **o que é permitido**.
 
-## IV. Supervisão pastoral por padrão
+## IV. Supervisão pastoral e papéis explícitos
 
-O app modela uma hierarquia real (AG → AC → membro) e essa hierarquia é uma
-característica de produto, não um detalhe técnico. Qualquer feature nova que
-envolva visibilidade de conteúdo entre usuários deve definir explicitamente, na
-spec, quem pode ver o quê — a resposta padrão quando não especificado é **privado**.
+Comunidades e curadoria refletem responsabilidades claras: proprietário da plataforma (`/gestao-acesso`), equipe editorial, liderança comunitária (`owner` e `admin`) e membros. Qualquer recurso envolvendo visibilidade entre pessoas exige definição explícita de quem vê o quê — na dúvida, o padrão é **privado**.
 
-## V. Privacidade e discrição
+## V. Privacidade e discrição por padrão
 
-Comentários bíblicos, orações e progresso de leitura são privados até que o próprio
-usuário (ou o AG/AC dentro do seu escopo de autoridade) decida liberar. Nunca
-inferir consentimento de compartilhamento a partir de uma ação não relacionada.
+Favoritos, recados entre amigos, pedidos de entrada e marcações individuais de listas pertencem estritamente ao escopo autorizado. Nunca inferir consentimento de compartilhamento a partir de ações não relacionadas, nem expor e-mails ou listas privadas de amizades a terceiros ou líderes comunitários.
 
-## VI. Cada feature nasce como spec
+## VI. Planejamento aprovado antes do código
 
-Nenhum código de produto é escrito sem uma spec aprovada em `/specs`. A spec vem
-antes do plano técnico, o plano vem antes das tasks, as tasks vêm antes do código.
-Pular etapa é a causa mais comum de retrabalho neste tipo de projeto pastoral, onde
-decisões de visibilidade/permissão erradas têm custo de confiança, não só técnico.
+Nenhuma funcionalidade nova entra direto no código sem escopo e decisões de visibilidade/permissão alinhados com o responsável do projeto em `.todo/`. Em um produto pastoral, erros de permissão ou exposição custam confiança, não apenas retrabalho técnico.
 
 ## VII. Sobriedade teológica no tom, neutralidade no código
 
-O conteúdo (reflexões, comentários, citações históricas) é editorial e pastoral,
-com um `publishedBy` humano responsável. O código nunca toma decisão teológica por
-conta própria (ex: gerar reflexão automaticamente sem revisão humana) — geração
-assistida por IA de conteúdo devocional, se algum dia existir, é sempre rascunho
-para revisão do AG, nunca publicação direta.
-
-## VIII. MVP é um compromisso, não uma limitação técnica
-
-O ciclo atual entrega primeiro a web local com Devocional, leitura bíblica e
-Comunidades, conforme decisão do usuário de 04/10/2026 registrada na
-[ADR 002](adr/002-local-complete-product.md). A publicação será planejada depois
-da validação desse marco. Clubes e demais recursos de Fé Madura permanecem
-futuros **por decisão de produto**. A inclusão da leitura bíblica no ciclo não
-dispensa aprovação da spec correspondente nem autoriza antecipar outras features.
+Todo conteúdo devocional e temático tem autoria e revisão humana responsável (`reviewedBy`). O código nunca publica conteúdo teológico de forma autônoma; eventual auxílio computacional futuro será sempre rascunho submetido à revisão humana, nunca publicação direta.

@@ -118,7 +118,6 @@ function ReadingSelection({ reading, entryMode }: { reading: Pick<ReadingReposit
             </Button>
             <IconButton
               type="button"
-              variant="secondary"
               className="reading-recent-toggle"
               title="Abrir devocionais recentes"
               aria-label="Abrir devocionais recentes"
@@ -294,7 +293,6 @@ function FavoriteButton({
   return (
     <IconButton
       type="button"
-      variant="secondary"
       title={label}
       aria-pressed={saved}
       aria-label={label}

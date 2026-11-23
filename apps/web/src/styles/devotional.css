@@ -229,33 +229,34 @@
 .reading-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 16px;
-  border-bottom: 1px solid var(--line);
-  margin-bottom: 20px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 28px;
+  margin-bottom: 28px;
+  padding: 10px 0 6px;
 }
 
 .reading-tabs .reading-devotional-group,
 .reading-tabs .reading-favorites-group {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
 }
 
 .reading-tabs .reading-tab {
-  flex-grow: 1;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 8px;
+  min-height: 48px;
+  padding: 12px 4px;
   border: 0;
-  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
   color: var(--muted);
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
 }
 
 .reading-tabs .reading-tab[aria-pressed="true"] {
   color: var(--ink);
-  border-bottom-color: var(--gold);
-  border-radius: 0;
   background: transparent;
+  font-weight: 600;
 }
 
 .reading-picker {
@@ -267,15 +268,23 @@
 .reading-devotional-group,
 .reading-favorites-group {
   display: flex;
-  align-items: stretch;
+  align-items: center;
   min-width: 0;
-  gap: 4px;
+  gap: 2px;
 }
 
-.reading-tabs .reading-tab {
-  min-height: 44px;
-  border-radius: 0;
+.reading-tabs .button--icon {
+  border: 0;
   background: transparent;
+  color: var(--muted);
+}
+
+.reading-tabs .button--icon:hover:not(:disabled),
+.reading-tabs .button--icon[aria-pressed="true"],
+.reading-tabs .button--icon[aria-expanded="true"] {
+  border-color: transparent;
+  background: transparent;
+  color: var(--ink);
 }
 
 .reading-tabs .reading-recent-toggle[aria-expanded="true"] svg {
