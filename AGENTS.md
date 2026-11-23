@@ -51,7 +51,7 @@ A branch `main` publica a web automaticamente em produção via Cloudflare Worke
    ```
 3. **Commits por escopo em inglês:** Conventional Commits (`tipo(escopo): resumo no imperativo`), escopos usuais: `domain`, `backend`, `web`, `local`, `docs`, `ci`. Cada commit deve manter o typecheck íntegro.
 4. **Atenção ao `.gitignore` em `packages/**`:** arquivos já rastreados funcionam normalmente, mas **arquivos novos** dentro de `packages/` exigem `git add -f <caminho>` e conferência no `git status`. Nunca usar `-f` em `.env*`, `.convex/`, `_generated/` ou credenciais.
-5. **Pull Request:** enviar a branch (`git push -u origin <branch>`) e abrir PR para `main` (`gh pr create`), incluindo resumo, como testar e, se `packages/backend` mudou, o aviso `- [ ] Backend: run npm run deploy:backend before merging`.
+5. **Pull Request:** enviar a branch (`git push -u origin <branch>`) e abrir PR para `main` (`gh pr create`), usando [`.github/pull_request_template.md`](.github/pull_request_template.md). Incluir resumo, como testar e, se `packages/backend` mudou, o aviso `- [ ] Backend: run npm run deploy:backend before merging (pilot upbeat-jellyfish-720)`.
 6. **Sem deploy nem merge pelo agente:** nunca executar `npm run deploy:*`, `npx convex deploy`, `wrangler deploy` nem fazer merge/push direto na `main`. Quem publica o backend e faz merge é o Hil.
 7. **Compatibilidade retroativa de backend:** como o backend sobe antes do merge da web, alterações de schema e funções Convex precisam manter compatibilidade com a web já em produção (campos novos `v.optional`, contratos anteriores preservados até a subida da web). Ajustes de revisão entram como novos commits na mesma branch (sem reescrever histórico publicado sem autorização).
 

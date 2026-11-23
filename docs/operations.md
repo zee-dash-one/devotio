@@ -8,7 +8,7 @@ Procedimentos vigentes de publicação, administração de contas, imagens edito
   - **Produção (`main`):** cada merge/push na `main` compila e publica automaticamente a web.
   - **Previews (branches/PRs):** geram URLs de versão via `wrangler versions upload` (`preview_urls = true` em `apps/web/wrangler.toml`), sem promover à produção. As previews apontam para o mesmo backend Convex configurado nas variáveis do Worker (não há banco isolado por PR).
 - **Backend (Convex):**
-  - **Ambiente ativo do piloto:** `dev:upbeat-jellyfish-720`, atualizado via `npm run deploy:backend` (`convex dev --once --typecheck enable`).
+  - **Ambiente ativo do piloto:** `dev:upbeat-jellyfish-720`, atualizado via `npm run deploy:backend` na raiz (`convex dev --once --typecheck enable`). Esse comando lê o `.env.local` da raiz, ao lado de `convex.json`. Um `.env.local` dentro de `packages/backend` pode apontar para outro deployment quando o Convex é iniciado só nesse workspace.
   - **Ambiente de produção reservado:** `acrobatic-mandrill-347` (`npm run deploy:backend:prod`), reservado para migração futura após configuração própria de variáveis de autenticação e URLs da web.
 - **Ordem obrigatória de release:** sempre que um PR alterar `packages/backend/convex` (schema, funções, índices ou componentes), publicar primeiro o backend (`npm run deploy:backend`), confirmar contratos/logs (`npx convex function-spec --deployment upbeat-jellyfish-720`) e **só depois** fazer o merge do PR na `main`.
 

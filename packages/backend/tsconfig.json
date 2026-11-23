@@ -1,1 +1,15 @@
-{"compilerOptions":{"target":"ES2022","module":"ESNext","moduleResolution":"bundler","strict":true,"skipLibCheck":true,"noEmit":true,"resolveJsonModule":true,"allowImportingTsExtensions":true,"types":["node","vite/client"]},"include":["**/*.ts"],"exclude":["node_modules"]}
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "resolveJsonModule": true,
+    "allowImportingTsExtensions": true,
+    "types": ["node", "vite/client"]
+  },
+  "include": ["**/*.test.ts", "local/**/*.ts"],
+  "exclude": ["node_modules", "convex"]
+}
