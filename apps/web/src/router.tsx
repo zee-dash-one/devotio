@@ -25,6 +25,7 @@ import { ReaderLayout } from "./reader-shell";
 import { AdministrationPage } from "./pages/administration";
 import { SystemUsersPage } from "./pages/system-users";
 import { SystemThemesPage } from "./pages/system-themes";
+import { SystemPeregrinoPage } from "./pages/system-peregrino";
 import { AccessWaitPage } from "./pages/access-wait";
 import { ProfilePage } from "./social";
 
@@ -37,6 +38,7 @@ const pageTitles: Record<string, string> = {
   "/editorial/cadastro": "Cadastro de devocional",
   "/sistema/usuarios": "Gerenciar usuários",
   "/sistema/temas": "Temas do mês e da semana",
+  "/sistema/peregrino": "Peregrino",
   "/entrar": "Bem-vindo",
   "/ajuda": "Ajuda e instalação",
   "/privacidade": "Privacidade",
@@ -122,6 +124,11 @@ const bibleRoute = createRoute({
   path: "/biblia",
   validateSearch: (search) => bibleParamsSchema.parse(search),
   component: BiblePage,
+});
+const systemPeregrinoRoute = createRoute({
+  getParentRoute: () => readerRoute,
+  path: "/sistema/peregrino",
+  component: SystemPeregrinoPage,
 });
 const systemThemesRoute = createRoute({
   getParentRoute: () => readerRoute,
@@ -214,6 +221,7 @@ const routeTree = rootRoute.addChildren([
     editorialRoute,
     systemUsersRoute,
     systemThemesRoute,
+    systemPeregrinoRoute,
     communitiesRoute,
     communityRoute,
     listsRoute,

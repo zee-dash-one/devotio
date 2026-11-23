@@ -39,6 +39,7 @@ Visão técnica atual das camadas, contratos, persistência, caches e invariante
 | **Devocional e editorial** | `devotionals` | Registro único por `date` (`YYYY-MM-DD`), `selection` bíblica estruturada, textos, crédito, licença, `reviewedBy`, `publishedAt`, `audioUrl`, `withdrawn`, `imageSetId` e `imageRevision` | `by_date` |
 | | `editorialEvents` | Auditoria de publicações, correções e retiradas (`devotionalId`, `actor`, `reason`, `action`, `at`) | `by_devotional` |
 | | `globalSettings` | Singleton (`key: "main"`) com versículos e referências dos temas mensal e semanal | `by_key` |
+| | `integrationSecrets` | Chave do OpenRouter cifrada com AES-GCM. O cliente só recebe se ela existe | `by_provider` |
 | | `devotionalFavorites` | Até 3 snapshots JSON privados por usuário (`userId`, `date`, `snapshot`, `favoritedAt`) | `by_userId_and_date`, `by_userId` |
 | | `favoriteRestoreReceipts` | Recibo privado de uso único (`token`) para desfazer a última remoção de favorito | `by_userId`, `by_token` |
 | **Imagens editoriais** | `devotionalImageSets` | Conjunto renderizável por revisão (`devotionalId`, `revision`, `status`, `generation`, `attempts`, `expiresAt`, manifesto `files`) | `by_devotional_revision`, `by_status_updatedAt`, `by_expiresAt` |

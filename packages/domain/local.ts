@@ -188,6 +188,7 @@ export function createLocalRepository(storage: LocalCacheStorage, onExpired: () 
       case "sendQuote": case "sendMessage": case "createChecklist": case "updateScripture": case "removeMember":
         await invalidate(key => key.startsWith("community:" + input.id + ":") || (input.action === "removeMember" && (key === "communities" || key.startsWith("governance:")))); break;
       case "setUserStatus": case "deleteUser": break;
+      case "setOpenRouterKey": case "clearOpenRouterKey": break;
       case "setThemes":
         revision++;
         for (const date of Object.keys(cache.homes)) dirtyDates.add(date);
@@ -315,6 +316,20 @@ export function createLocalRepository(storage: LocalCacheStorage, onExpired: () 
       deleteUser: async (id, confirmEmail) => { await command({ action: "deleteUser", id, confirmEmail }); },
       getThemes: () => query({ query: "themes" }),
       setThemes: async (input) => { await command({ action: "setThemes", input }); },
+      peregrinoKeyStatus: () => query({ query: "peregrinoKeyStatus" }),
+      setOpenRouterKey: async (key) => { await command({ action: "setOpenRouterKey", key }); },
+      clearOpenRouterKey: async () => { await command({ action: "clearOpenRouterKey" }); },
+      peregrinoStatus: () => query({ query: "peregrinoStatus" }),
+      peregrinoSuggest: async (input) => {
+        const response = await fetch("/__local/peregrino", {
+          method: "POST", credentials: "same-origin", cache: "no-store",
+          headers: { "Content-Type": "application/json", "X-Devotio-Profile": profileId },
+          body: JSON.stringify(input), signal: AbortSignal.timeout(35000),
+        });
+        const value = await response.json() as { error?: string; reflection?: string; prayerSuggestion?: string; model?: string };
+        if (!response.ok) throw new Error(value.error ?? "O Peregrino não respondeu a tempo. Tente novamente em instantes.");
+        return value as { reflection?: string; prayerSuggestion?: string; model: string };
+      },
     },
     watchHome: date => watch("home:" + date, () => home(date)),
     watchCommunities: () => watch("communities", () => query<Community[]>({ query: "communities" })),

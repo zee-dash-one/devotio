@@ -1,0 +1,53 @@
+import { buildPeregrinoMessages, bibleQuote, canManageEditorial, canManageSystem, parsePeregrinoOutput, peregrinoErrorMessage, peregrinoMissingKey, peregrinoModel, peregrinoRateLimit, peregrinoTargetSchema, peregrinoTooLong, type BibleSelection, type PeregrinoTarget } from "../../domain/index";
+import { LocalDatabase, LocalError } from "./database.local";
+import { ZodError } from "zod";
+
+const attempts = new Map<string, number[]>();
+
+export async function suggestLocal(database: LocalDatabase, userId: string, input: { selection?: BibleSelection; date?: string; reflection?: string; prayerSuggestion?: string; target: PeregrinoTarget }) {
+  const user = database.profile(userId);
+  if (!canManageEditorial(user) && !canManageSystem(user)) throw new LocalError("Acesso exclusivo da gestão editorial.", 403);
+  const now = Date.now();
+  const recent = (attempts.get(userId) ?? []).filter(at => now - at < 600000);
+  if (recent.length >= 10) throw new LocalError(peregrinoRateLimit, 429);
+  recent.push(now);
+  attempts.set(userId, recent);
+  const key = database.openRouterKey();
+  if (!key) throw new LocalError(peregrinoMissingKey);
+  const target = peregrinoTargetSchema.parse(input.target);
+  let reference = "";
+  let scripture = "";
+  if (input.selection) {
+    const chapter = database.chapter(input.selection.book, input.selection.chapter, input.selection.version);
+    if (!chapter) throw new LocalError("Capítulo bíblico não encontrado.", 404);
+    const quote = bibleQuote({ ...chapter, version: input.selection.version }, input.selection);
+    reference = quote.reference;
+    scripture = quote.text;
+  } else if (input.date) {
+    const row = database.get<{ data: string }>("SELECT data FROM devotionals WHERE date=?", input.date);
+    if (!row) throw new LocalError("Devocional não encontrado.", 404);
+    const day = JSON.parse(row.data) as { reference: string; scripture: string };
+    reference = day.reference;
+    scripture = day.scripture;
+  } else throw new LocalError("Escolha o trecho bíblico antes de pedir auxílio.");
+  const messages = buildPeregrinoMessages({ reference, scripture, reflection: input.reflection, prayerSuggestion: input.prayerSuggestion, target });
+  const ask = async (extra?: string) => {
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json", "X-Title": "Devotio" },
+      body: JSON.stringify({ model: peregrinoModel, max_tokens: 700, temperature: 0.6, messages: extra ? [...messages, { role: "user", content: extra }] : messages }),
+      signal: AbortSignal.timeout(30000),
+    });
+    if (!response.ok) throw new LocalError(peregrinoErrorMessage(response.status), response.status);
+    const body = await response.json() as { choices?: { message?: { content?: string } }[] };
+    const content = body.choices?.[0]?.message?.content;
+    if (!content) throw new LocalError("O Peregrino devolveu uma resposta inesperada. Tente novamente.");
+    return content;
+  };
+  try { return parsePeregrinoOutput(await ask(), target); }
+  catch (error) {
+    if (!(error instanceof ZodError) && !(error instanceof SyntaxError)) throw error;
+    try { return parsePeregrinoOutput(await ask("Reduza a resposta para no máximo 512 caracteres em cada campo e devolva só o JSON."), target); }
+    catch { throw new LocalError(peregrinoTooLong); }
+  }
+}

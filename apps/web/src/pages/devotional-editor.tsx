@@ -22,6 +22,7 @@ import {
 import { useApp, useWriting } from "../context";
 import { RouteRedirect } from "../redirect";
 import { ConnectedDevotionalEditor } from "./connected-devotional-editor";
+import { PeregrinoPanel } from "./peregrino-panel";
 import { Dropdown } from "../dropdown";
 
 export function DevotionalEditorPage() {
@@ -306,10 +307,13 @@ function EditorForm({
         {error && <p role="alert">{error}</p>}
         {busy && <p role="status">Salvando devocional…</p>}
         {auxiliary && (
-          <p role="status">
-            Peregrino será o auxílio para preparar devocionais. Ainda não está
-            disponível; será desenvolvido na próxima tarefa.
-          </p>
+          <PeregrinoPanel
+            selection={draft.selection}
+            date={existing?.date}
+            reflection={draft.reflection}
+            prayerSuggestion={draft.prayerSuggestion}
+            onApply={patch => change(patch)}
+          />
         )}
         <div className="devotional-editor-actions">
           <Button type="submit" disabled={busy}>

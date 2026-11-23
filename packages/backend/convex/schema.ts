@@ -179,4 +179,11 @@ export default defineSchema({
     .index("by_item", ["itemId"])
     .index("by_pair", ["itemId", "userId"])
     .index("by_userId", ["userId"]),
+  integrationSecrets: defineTable({
+    provider: v.literal("openrouter"),
+    ciphertext: v.string(),
+    iv: v.string(),
+    updatedAt: v.number(),
+    updatedBy: v.id("users"),
+  }).index("by_provider", ["provider"]),
 });

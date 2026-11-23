@@ -12,6 +12,7 @@ import {
   UserRound,
   Users,
   CalendarDays,
+  KeyRound,
 } from "lucide-react";
 import { canPublish, initials } from "domain/core";
 import { useApp } from "./context";
@@ -123,6 +124,12 @@ export function AccountMenu({ name = "Minha conta" }: { name?: string }) {
             <Link className={linkAppearance} to="/sistema/temas">
               <CalendarDays size={16} />
               Temas do mês e da semana
+            </Link>
+          )}
+          {(app.localProfile?.superuser || app.pilotAccess?.superuser) && (
+            <Link className={linkAppearance} to="/sistema/peregrino">
+              <KeyRound size={16} />
+              Peregrino e chave do OpenRouter
             </Link>
           )}
           <Button variant="ghost" onClick={() => setSettingsOpen(true)}>

@@ -13,3 +13,4 @@
 - [x] Domínio, Convex, local e menu
 - [x] Testes locais e publicação da gestão de contas
 - [x] Temas mensal e semanal em `/sistema/temas`
+- [x] Peregrino no editor, modelo `openrouter/free`, chave só no servidor

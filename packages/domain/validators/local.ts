@@ -5,6 +5,7 @@ import { bibleVersionSchema, bibleSearchSchema } from "./bible";
 import { bibleSelectionSchema } from "../sharing";
 import { editorialMonthSchema } from "../editorial";
 import { themesInputSchema } from "../system";
+import { openRouterKeySchema } from "../peregrino";
 import { dateSchema, communitySchema, inviteSchema, messageSchema, scriptureSchema, checklistSchema, publicationSchema, scheduleSchema } from "./index";
 
 export const timeZoneSchema = z.string().max(100).refine(value => {
@@ -62,6 +63,8 @@ export const localCommandSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("setUserStatus"), id, status: z.enum(["approved", "disabled"]) }),
   z.object({ action: z.literal("deleteUser"), id, confirmEmail: z.string().trim().email("Informe o e-mail do cadastro.").max(160) }),
   z.object({ action: z.literal("setThemes"), input: themesInputSchema }),
+  z.object({ action: z.literal("setOpenRouterKey"), key: openRouterKeySchema }),
+  z.object({ action: z.literal("clearOpenRouterKey") }),
 ]);
 export const localQuerySchema = z.discriminatedUnion("query", [
   z.object({ query: z.literal("governance"), input: governanceQuerySchema }),
@@ -86,6 +89,8 @@ export const localQuerySchema = z.discriminatedUnion("query", [
   z.object({ query: z.literal("editorialCalendar"), month: editorialMonthSchema, today: dateSchema }),
   z.object({ query: z.literal("systemUsers") }),
   z.object({ query: z.literal("themes") }),
+  z.object({ query: z.literal("peregrinoStatus") }),
+  z.object({ query: z.literal("peregrinoKeyStatus") }),
 ]);
 export type LocalCommand = z.infer<typeof localCommandSchema>;
 export type LocalQuery = z.infer<typeof localQuerySchema>;

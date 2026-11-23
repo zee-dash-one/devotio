@@ -35,6 +35,7 @@ type Env = {
   readonly ADMIN_TOTP_SECRET: string | undefined;
   readonly DEVOTIONAL_IMAGES_ENABLED: string | undefined;
   readonly PILOT_EXISTING_USERS_BEFORE: string | undefined;
+  readonly INTEGRATION_ENCRYPTION_KEY: string | undefined;
 };
 
 /**
