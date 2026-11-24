@@ -78,6 +78,14 @@ function ReadingSelection({ reading, entryMode }: { reading: Pick<ReadingReposit
     setError("");
     setFeedback("");
   }
+  const favoriteIndex = showingFavorites && date ? dates.indexOf(date) : -1;
+  function stepFavorite(offset: -1 | 1) {
+    const next = dates[favoriteIndex + offset];
+    if (!next) return;
+    setSelectedFavorite(next);
+    setError("");
+    setFeedback("");
+  }
   const snapshot = favorites.find((f) => f.devotional.date === date);
   const currentRecent = state.data.recent.find(item => item.date === date);
   async function toggle() {
@@ -212,6 +220,15 @@ function ReadingSelection({ reading, entryMode }: { reading: Pick<ReadingReposit
             <div className="field">
               <span id="reading-date-label">Sua cópia pessoal</span>
               <div className="reading-select-row">
+                <IconButton
+                  type="button"
+                  title="Favorito anterior"
+                  aria-label="Favorito anterior"
+                  disabled={favoriteIndex < 0 || favoriteIndex >= dates.length - 1}
+                  onClick={() => stepFavorite(1)}
+                >
+                  <ChevronLeft size={18} aria-hidden="true" />
+                </IconButton>
                 <Dropdown
                   id="reading-date"
                   labelledBy="reading-date-label"
@@ -226,6 +243,15 @@ function ReadingSelection({ reading, entryMode }: { reading: Pick<ReadingReposit
                     label: formatDate(day),
                   }))}
                 />
+                <IconButton
+                  type="button"
+                  title="Favorito seguinte"
+                  aria-label="Favorito seguinte"
+                  disabled={favoriteIndex <= 0}
+                  onClick={() => stepFavorite(-1)}
+                >
+                  <ChevronRight size={18} aria-hidden="true" />
+                </IconButton>
               </div>
             </div>
           </div>
