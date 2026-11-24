@@ -331,7 +331,12 @@ describe("entrada local integrada", () => {
     fireEvent.click(screen.getAllByRole("link", { name: "Bíblia" })[0]);
     await screen.findByText("Versículo bíblico de teste");
     fireEvent.click(screen.getByRole("combobox", { name: "Capítulo" }));
+    const controls = document.querySelector(".bible-controls") as HTMLElement;
+    vi.spyOn(controls, "getBoundingClientRect").mockReturnValue({ top: -700, height: 48, bottom: -652, left: 0, right: 0, width: 0, x: 0, y: -700, toJSON() { return {}; } });
+    const bibleScroll = vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+    bibleScroll.mockClear();
     fireEvent.click(screen.getByRole("option", { name: /^3$/ }));
+    expect(bibleScroll).toHaveBeenCalled();
     await waitFor(() => expect(new URL(window.location.href).searchParams.get("chapter")).toBe("3"));
     await screen.findByText("Versículo bíblico de teste");
     expect(screen.getByRole("combobox", { name: "Capítulo" }).textContent).toBe("3");
