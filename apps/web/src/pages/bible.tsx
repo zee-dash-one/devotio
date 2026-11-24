@@ -1,5 +1,5 @@
 import { BiblePickerButton } from "../ui/bible-picker-button";
-import { Button } from "../ui/button";
+import { Button, IconButton } from "../ui/button";
 import { useEffect, useLayoutEffect, useMemo, useState, useRef } from "react";
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import {
@@ -474,23 +474,46 @@ function BibleReader({ reading, version }: { reading: BibleReaderRepository; ver
             </div>
             <div className="field">
               <span>Capítulo</span>
-              <Dropdown
-                label="Capítulo"
-                value={String(params.chapter)}
-                onChange={(value) => open(params.book, Number(value))}
-                options={Array.from(
-                  {
-                    length:
-                      catalog.data.books.find(
-                        (book) => book.abbrev === params.book,
-                      )?.chapters ?? 1,
-                  },
-                  (_, index) => ({
-                    value: String(index + 1),
-                    label: String(index + 1),
-                  }),
-                )}
-              />
+              <div className="bible-chapter-step">
+                <IconButton
+                  type="button"
+                  title="Capítulo anterior"
+                  aria-label="Capítulo anterior"
+                  disabled={params.chapter <= 1}
+                  onClick={() => open(params.book, params.chapter - 1)}
+                >
+                  <ChevronLeft size={18} aria-hidden="true" />
+                </IconButton>
+                <Dropdown
+                  label="Capítulo"
+                  value={String(params.chapter)}
+                  onChange={(value) => open(params.book, Number(value))}
+                  options={Array.from(
+                    {
+                      length:
+                        catalog.data.books.find(
+                          (book) => book.abbrev === params.book,
+                        )?.chapters ?? 1,
+                    },
+                    (_, index) => ({
+                      value: String(index + 1),
+                      label: String(index + 1),
+                    }),
+                  )}
+                />
+                <IconButton
+                  type="button"
+                  title="Capítulo seguinte"
+                  aria-label="Capítulo seguinte"
+                  disabled={
+                    params.chapter >=
+                    (catalog.data.books.find((book) => book.abbrev === params.book)?.chapters ?? 1)
+                  }
+                  onClick={() => open(params.book, params.chapter + 1)}
+                >
+                  <ChevronRight size={18} aria-hidden="true" />
+                </IconButton>
+              </div>
             </div>
           </div>
           <form

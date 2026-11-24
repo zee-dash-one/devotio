@@ -330,6 +330,9 @@ describe("entrada local integrada", () => {
     expect(fetcher.mock.calls).toHaveLength(before);
     fireEvent.click(screen.getAllByRole("link", { name: "Bíblia" })[0]);
     await screen.findByText("Versículo bíblico de teste");
+    expect(screen.getByRole("button", { name: "Capítulo anterior" }).hasAttribute("disabled")).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Capítulo seguinte" }));
+    await waitFor(() => expect(new URL(window.location.href).searchParams.get("chapter")).toBe("2"));
     fireEvent.click(screen.getByRole("combobox", { name: "Capítulo" }));
     const controls = document.querySelector(".bible-controls") as HTMLElement;
     vi.spyOn(controls, "getBoundingClientRect").mockReturnValue({ top: -700, height: 48, bottom: -652, left: 0, right: 0, width: 0, x: 0, y: -700, toJSON() { return {}; } });
