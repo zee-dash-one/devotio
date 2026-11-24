@@ -137,12 +137,17 @@ export const prepare = internalQuery({
 });
 
 async function complete(key: string, messages: { role: "system" | "user"; content: string }[]) {
-  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json", "X-Title": "Devotio" },
-    body: JSON.stringify({ model: peregrinoModel, max_tokens: 700, temperature: 0.6, messages }),
-    signal: AbortSignal.timeout(30000),
-  });
+  let response: Response;
+  try {
+    response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json", "X-Title": "Devotio" },
+      body: JSON.stringify({ model: peregrinoModel, max_tokens: 700, temperature: 0.6, messages }),
+      signal: AbortSignal.timeout(30000),
+    });
+  } catch {
+    throw new ConvexError("O Peregrino não respondeu a tempo. Tente novamente em instantes.");
+  }
   if (!response.ok) throw new ConvexError(peregrinoErrorMessage(response.status));
   const body = await response.json() as { choices?: { message?: { content?: string } }[] };
   const content = body.choices?.[0]?.message?.content;
