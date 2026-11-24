@@ -319,6 +319,11 @@ describe("entrada local integrada", () => {
     fireEvent.click(screen.getByRole("button", { name: "Devocional seguinte" }));
     expect(screen.getByRole("button", { name: `Devocional ${newestLabel}` }).getAttribute("aria-pressed")).toBe("true");
     expect(screen.getByRole("button", { name: "Devocional seguinte" }).hasAttribute("disabled")).toBe(true);
+    const tools = document.querySelector(".reading-tools") as HTMLElement;
+    vi.spyOn(tools, "getBoundingClientRect").mockReturnValue({ top: -480, height: 48, bottom: -432, left: 0, right: 0, width: 0, x: 0, y: -480, toJSON() { return {}; } });
+    const scroll = vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+    fireEvent.click(screen.getByRole("button", { name: "Devocional anterior" }));
+    expect(scroll).toHaveBeenCalled();
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(screen.queryByText("Deixe o ruído lá fora. Acolha a Palavra aqui.")).toBeNull();
     await screen.findByText("Leitura integrada de teste");
