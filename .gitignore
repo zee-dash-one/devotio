@@ -12,6 +12,7 @@ dist
 artifacts
 coverage
 .data
+docs/bibles/licensed/
 .agents/
 .claude/
 docs/adr/client_secret_*

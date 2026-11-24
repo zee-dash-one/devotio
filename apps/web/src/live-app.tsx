@@ -13,8 +13,9 @@ import {
 } from "domain/convex";
 import { loginDestination } from "domain/core";
 import { App } from "./router";
-import { useMemo } from "react";
-import { createWebBible } from "./bible-repository";
+import { useEffect, useMemo, useState } from "react";
+import { createWebBible, licensedEditions } from "./bible-repository";
+import type { BibleVersion } from "domain/core";
 
 /** Load the connected adapter only when both public service URLs are configured. */
 export function createLiveApp(url: string, site: string) {
@@ -31,9 +32,11 @@ export function createLiveApp(url: string, site: string) {
     const { isAuthenticated, isLoading } = useConvexAuth();
     const session = auth.useSession();
     const owner = session.data?.user.id;
+    const [licensed, setLicensed] = useState<{ version: BibleVersion; base: string }[]>([]);
+    useEffect(() => { void licensedEditions().then(setLicensed); }, []);
     const connected = useMemo(
-      () => owner ? { ...repository, bible: createWebBible(owner) } : null,
-      [owner],
+      () => owner ? { ...repository, bible: createWebBible(owner, undefined, licensed) } : null,
+      [owner, licensed],
     );
     const access = usePilotAccess(
       client,

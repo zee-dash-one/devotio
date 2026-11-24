@@ -34,6 +34,8 @@ export function shiftEditorialMonth(month: string, offset: number) {
 }
 export const scriptureLicense = "ARC1911 · arquivo fornecido pelo mantenedor; inclusão pública autorizada em 09/10/2026.";
 export const localAaLicense = "AA · ABíbliaDigital; uso no ambiente local. Distribuição pública depende de validação de licença.";
-export function scriptureLicenseForVersion(version: "aa" | "alm1911") {
-  return version === "alm1911" ? scriptureLicense : localAaLicense;
+export function scriptureLicenseForVersion(version: "aa" | "alm1911" | "ara" | "arc" | "nvi") {
+  if (version === "alm1911") return scriptureLicense;
+  if (version === "aa") return localAaLicense;
+  return "Texto sob licença restrita ao teste fechado; não distribuir.";
 }
