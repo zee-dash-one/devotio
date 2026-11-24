@@ -87,6 +87,7 @@ function server(loggedIn: boolean, actor = profile, conflict = false, manages = 
     if (input.query === "communityMessage") return new Response(JSON.stringify(messages.find(message => message.id === input.messageId)));
     if (input.query === "notificationSummary") return new Response(JSON.stringify({ unread: notices.filter(item => item.readAt === null).length, revision }));
     if (input.query === "notifications") return new Response(JSON.stringify({ items: notices, nextCursor: null }));
+    if (input.query === "peregrinoKeyStatus") return new Response(JSON.stringify({ configured: false }));
     if (input.query === "editorial") return new Response(JSON.stringify(entries));
     if (input.query === "editorialCalendar") return new Response(JSON.stringify(availableEditorialDates(input.month, entries.map(entry => entry.devotional.date), input.today)));
     if (input.query === "bible") return new Response(JSON.stringify({ books: [book], version: "aa", verses: 1, importedAt: 1, source: "Fixture" }));
@@ -752,6 +753,17 @@ describe("entrada local integrada", () => {
     const searches = fetcher.mock.calls.filter(([path]) => path.includes('search%22'));
     expect(searches).toHaveLength(1);
     expect(decodeURIComponent(searches[0][0])).toContain('"text":"amor de"');
+  });
+  it("explica como guardar a chave e qual modelo o Peregrino envia", async () => {
+    window.history.replaceState(null, "", "/sistema/peregrino");
+    server(true, { ...manager, superuser: true });
+    render(<StrictMode><LocalApp /></StrictMode>);
+    expect(await screen.findByRole("heading", { name: "Peregrino e chave do OpenRouter" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "openrouter.ai/keys" }).getAttribute("href")).toBe("https://openrouter.ai/keys");
+    expect((screen.getByLabelText("Modelo") as HTMLInputElement).value).toBe("openrouter/free");
+    expect((screen.getByLabelText("Modelo") as HTMLInputElement).readOnly).toBe(true);
+    expect(screen.getByText("Nenhuma chave salva. O Auxílio fica indisponível até você salvar uma.")).toBeTruthy();
+    expect(screen.getByLabelText("Chave da API")).toBeTruthy();
   });
   it("bloqueia a tela de cadastro para membro, sem consultar dados editoriais", async () => {
     window.history.replaceState(null, "", "/editorial/cadastro");
