@@ -61,6 +61,9 @@ describe("Bíblia na web conectada", () => {
     await waitFor(() => expect(JSON.parse(localStorage.getItem("devotio:preferences:v1:public-reader")!).bibleVersion).toBe("alm1911"));
     fireEvent.change(screen.getByRole("textbox", { name: /Buscar/ }), { target: { value: "pri" } });
     expect(screen.getByText("Digite ao menos 4 caracteres.")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Limpar busca" }));
+    expect((screen.getByRole("textbox", { name: /Buscar/ }) as HTMLInputElement).value).toBe("");
+    expect(screen.queryByRole("button", { name: "Limpar busca" })).toBeNull();
     fireEvent.change(screen.getByRole("textbox", { name: /Buscar/ }), { target: { value: "principio" } });
     expect(screen.queryByText("Digite ao menos 4 caracteres.")).toBeNull();
     await screen.findByText("Encontros na Palavra");

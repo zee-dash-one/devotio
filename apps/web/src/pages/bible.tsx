@@ -8,6 +8,7 @@ import {
   ChevronRight,
   Send,
   ArrowLeft,
+  X,
 } from "lucide-react";
 import { useRepository, useWatch } from "domain/react";
 import {
@@ -539,6 +540,11 @@ function BibleReader({ reading, version }: { reading: BibleReaderRepository; ver
                 setSearch(null);
               }}
             />
+            {text.trim().length > 0 && (
+              <IconButton type="button" aria-label="Limpar busca" title="Limpar busca" onClick={() => { setText(""); setSearch(null); }}>
+                <X size={18} aria-hidden="true" />
+              </IconButton>
+            )}
           </form>
           {text.trim().length > 0 && text.trim().length < 4 && (
             <p role="status" className="caption">Digite ao menos 4 caracteres.</p>
