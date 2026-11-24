@@ -5,7 +5,7 @@
 - O papel é o campo opcional `users.superuser`, independente do painel `/gestao-acesso` e da capacidade editorial.
 - A tela `/sistema/usuarios` fica no menu da conta e autoriza no servidor: aprovar, desativar e excluir.
 - Exclusão só ocorre sem comunidade, administração, recado ou envio. Caso contrário a conta é desativada.
-- A promoção inicial não guarda e-mail no repositório. No acesso, se existir exatamente uma conta aprovada cujo nome é Hilderney, ela recebe `superuser` e `editorial`.
+- A promoção não guarda e-mail no repositório. Se existir exatamente uma conta aprovada cujo nome, sem acentos, é Hilderney, ela recebe `superuser` e `editorial`.
 - No local, Ester e o perfil Hilderney já nascem superusuários. Perfis de demonstração não são excluídos.
 
 ## Checklist
