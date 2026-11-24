@@ -358,6 +358,8 @@ describe("entrada local integrada", () => {
     fireEvent.click(screen.getByRole("button", { name: "Favoritos" }));
     await screen.findByText(/Cópia pessoal salva em/);
     expect(screen.getByRole("combobox", { name: "Sua cópia pessoal" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Favorito anterior" }).hasAttribute("disabled")).toBe(true);
+    expect(screen.getByRole("button", { name: "Favorito seguinte" }).hasAttribute("disabled")).toBe(true);
     fireEvent.click(screen.getByRole("button", { name: `Devocional ${label}` }));
     expect(screen.getByRole("button", { name: `Devocional ${label}` }).getAttribute("aria-pressed")).toBe("true");
     fireEvent.click(await screen.findByRole("button", { name: "Remover dos favoritos" }));
