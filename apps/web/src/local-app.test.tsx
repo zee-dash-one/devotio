@@ -313,8 +313,12 @@ describe("entrada local integrada", () => {
     expect(choices[1].textContent).toContain("Salmos 23:1");
     expect(choices[1].textContent).toContain("Leitura integrada de teste");
     const older = choices[1], label = older.getAttribute("aria-label")!.replace("Ler devocional de ", "");
+    const newestLabel = choices[0].getAttribute("aria-label")!.replace("Ler devocional de ", "");
     fireEvent.click(older);
     expect(screen.getByRole("button", { name: `Devocional ${label}` }).getAttribute("aria-pressed")).toBe("true");
+    fireEvent.click(screen.getByRole("button", { name: "Devocional seguinte" }));
+    expect(screen.getByRole("button", { name: `Devocional ${newestLabel}` }).getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByRole("button", { name: "Devocional seguinte" }).hasAttribute("disabled")).toBe(true);
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(screen.queryByText("Deixe o ruído lá fora. Acolha a Palavra aqui.")).toBeNull();
     await screen.findByText("Leitura integrada de teste");
