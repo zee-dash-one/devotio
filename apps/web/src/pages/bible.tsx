@@ -540,6 +540,9 @@ function BibleReader({ reading, version }: { reading: BibleReaderRepository; ver
               }}
             />
           </form>
+          {text.trim().length > 0 && text.trim().length < 4 && (
+            <p role="status" className="caption">Digite ao menos 4 caracteres.</p>
+          )}
           {search && search.query === text.trim() ? (
             <BibleSearch
               pick={picker?.target.kind}

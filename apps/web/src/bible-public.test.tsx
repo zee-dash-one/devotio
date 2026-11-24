@@ -59,7 +59,10 @@ describe("Bíblia na web conectada", () => {
     fireEvent.click(screen.getByRole("option", { name: /ARC1911/ }));
     fireEvent.click(screen.getByRole("button", { name: "Fechar" }));
     await waitFor(() => expect(JSON.parse(localStorage.getItem("devotio:preferences:v1:public-reader")!).bibleVersion).toBe("alm1911"));
+    fireEvent.change(screen.getByRole("textbox", { name: /Buscar/ }), { target: { value: "pri" } });
+    expect(screen.getByText("Digite ao menos 4 caracteres.")).toBeTruthy();
     fireEvent.change(screen.getByRole("textbox", { name: /Buscar/ }), { target: { value: "principio" } });
+    expect(screen.queryByText("Digite ao menos 4 caracteres.")).toBeNull();
     await screen.findByText("Encontros na Palavra");
     await screen.findByText("Gênesis 1:1");
     expect(load.mock.calls.some(([p]) => p.endsWith("search.json"))).toBe(true);
