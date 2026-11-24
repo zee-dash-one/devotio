@@ -1,5 +1,5 @@
 import { Button, IconButton } from "../ui/button";
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Heart, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useLocalDate, useRepository, useWatch } from "domain/react";
@@ -108,6 +108,7 @@ function ReadingSelection({ reading, entryMode }: { reading: Pick<ReadingReposit
   }
   return (
     <>
+      <ReadingScroll date={date} />
       <section className="reading-tools" aria-label="Escolher leitura">
         {showingFavorites && <h1 className="reading-mode-title">Devocionais Favoritos</h1>}
         <div className="reading-tabs">
@@ -299,6 +300,23 @@ function ReadingSelection({ reading, entryMode }: { reading: Pick<ReadingReposit
       )}
     </>
   );
+}
+function ReadingScroll({ date }: { date: string | undefined }) {
+  const shownDate = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (!date) return;
+    const previous = shownDate.current;
+    shownDate.current = date;
+    if (!previous || previous === date) return;
+    const tools = document.querySelector(".reading-tools");
+    if (!tools) return;
+    const rect = tools.getBoundingClientRect();
+    if (rect.top >= 0 && rect.top < 120) return;
+    const reduce = typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const top = window.scrollY + rect.top - 16;
+    window.scrollTo({ top: Math.max(0, top), behavior: reduce ? "auto" : "smooth" });
+  }, [date]);
+  return null;
 }
 function FavoriteButton({
   saved,
