@@ -326,6 +326,10 @@ describe("entrada local integrada", () => {
     await waitFor(() => expect(new URL(window.location.href).searchParams.get("chapter")).toBe("3"));
     await screen.findByText("Versículo bíblico de teste");
     expect(screen.getByRole("combobox", { name: "Capítulo" }).textContent).toBe("3");
+    fireEvent.click(screen.getAllByRole("link", { name: "Devocional" })[0]);
+    await screen.findByText("Leitura integrada de teste");
+    fireEvent.click(screen.getAllByRole("link", { name: "Bíblia" })[0]);
+    await waitFor(() => expect(new URL(window.location.href).searchParams.get("chapter")).toBe("3"));
   });
   it("favorita a leitura exibida, preserva a data ao voltar e remove a cópia pessoal", async () => {
     server(true);

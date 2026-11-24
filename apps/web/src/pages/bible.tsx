@@ -25,6 +25,7 @@ import {
 } from "domain/core";
 import { usePreferences } from "../preferences";
 import { useBiblePageGestures } from "../bible-page-gestures";
+import { rememberBiblePlace } from "../bible-place";
 import { Dropdown } from "../dropdown";
 import { useWriting } from "../context";
 import { useVerseSelection, useReadingSurface } from "../verse-selection";
@@ -76,6 +77,9 @@ function BibleReader({ reading, version }: { reading: BibleReaderRepository; ver
   const { selection: storedSelection, setSelection: setSelected, cancel: cancelGesture } = selection;
   const selected = storedSelection?.version === version ? storedSelection : null;
   useReadingSurface();
+  useEffect(() => {
+    if (!params.pick) rememberBiblePlace(params.book, params.chapter);
+  }, [params.book, params.chapter, params.pick]);
   const catalog = useWatch(useMemo(() => reading.watchBible(), [reading]));
   const scrollAnchor = useRef<{ id: string; top: number } | null>(null);
   const captureAnchor = () => {
