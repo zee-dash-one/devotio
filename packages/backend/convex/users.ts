@@ -20,10 +20,13 @@ const accessValidator = v.object({
   canCreateCommunity: v.optional(v.boolean()),
   communityLimit: v.optional(v.number()),
 });
+async function approvedNamedOwners(ctx: MutationCtx) {
+  const rows = await ctx.db.query("users").take(200);
+  return rows.filter((row) => isNamedOwner(row.name) && hasApprovedAccess(row.status));
+}
 async function promoteNamedOwner(ctx: MutationCtx, user: NonNullable<Awaited<ReturnType<typeof registerUser>>>) {
   if (!isNamedOwner(user.name) || !hasApprovedAccess(user.status)) return user;
-  const named = await ctx.db.query("users").withIndex("by_normalizedName", (q) => q.gte("normalizedName", "hilderney").lt("normalizedName", "hildernez")).take(8);
-  const approved = named.filter((row) => isNamedOwner(row.name) && hasApprovedAccess(row.status));
+  const approved = await approvedNamedOwners(ctx);
   if (approved.length !== 1 || approved[0]._id !== user._id || (user.superuser === true && user.editorial === true)) return user;
   await ctx.db.patch(user._id, { superuser: true, editorial: true });
   await ctx.db.insert("userAdminEvents", { actor: "system:promoteNamedOwner", target: user._id, action: "superuser:true", at: Date.now() });
@@ -39,6 +42,19 @@ export const bootstrap = mutation({
       editorial: user.editorial === true,
       superuser: user.superuser === true,
     };
+  },
+});
+export const grantNamedOwner = internalMutation({
+  args: {},
+  returns: v.object({ matches: v.number(), promoted: v.boolean(), already: v.boolean() }),
+  handler: async (ctx) => {
+    const approved = await approvedNamedOwners(ctx);
+    if (approved.length !== 1) return { matches: approved.length, promoted: false, already: false };
+    const user = approved[0];
+    if (user.superuser === true && user.editorial === true) return { matches: 1, promoted: false, already: true };
+    await ctx.db.patch(user._id, { superuser: true, editorial: true });
+    await ctx.db.insert("userAdminEvents", { actor: "system:promoteNamedOwner", target: user._id, action: "superuser:true", at: Date.now() });
+    return { matches: 1, promoted: true, already: false };
   },
 });
 export const access = query({
