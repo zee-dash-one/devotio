@@ -32,13 +32,13 @@ export const peregrinoPrayerLimit = 250;
 const voice = "Escreva em primeira pessoa e fale diretamente ao leitor. A visão é pastoral e reformada: a Escritura conduz, Cristo está no centro e a graça não é mérito. Ajude a meditar na mensagem do trecho. Não invente versículo, número, citação ou fato. Uma frase breve de um Pai da Igreja ou de um pregador só entra se a autoria for certa; se houver dúvida, omita. Não copie trecho de livro.";
 
 export function peregrinoThinking(stage: PeregrinoStage, field: PeregrinoField) {
-  const label = field === "reflection" ? "a meditação" : "a oração";
+  const label = field === "reflection" ? "meditação" : "oração";
   const line = {
-    draft: `Deixe-me escrever ${label}, em primeira pessoa, falando com você, como um pastor reformado leria este trecho.`,
-    verify: `Deixe-me verificar as fontes de ${label}: o que o trecho sustenta e o que preciso retirar.`,
-    humanize: `Deixe-me humanizar ${label}, tirando o jeito de texto automático sem perder o que já conferi.`,
-    critique: `Deixe-me reler ${label} como um cristão reformado analisaria: a Escritura conduz, Cristo está no centro e a graça não é mérito?`,
-    revise: `Deixe-me aplicar só as correções pontuais e fechar ${label}.`,
+    draft: `Escrevendo a ${label}`,
+    verify: `Conferindo fontes da ${label}`,
+    humanize: `Humanizando a ${label}`,
+    critique: `Crítica reformada da ${label}`,
+    revise: `Corrigindo a ${label}`,
   }[stage];
   return line;
 }
@@ -49,8 +49,9 @@ export function peregrinoStageName(stage: PeregrinoStage) {
 
 export function peregrinoStageFailure(stage: PeregrinoStage, field: PeregrinoField, kind: "call" | "answer", detail?: string) {
   const where = `${peregrinoStageName(stage)} da ${field === "reflection" ? "meditação" : "oração"}`;
-  const what = kind === "call" ? "A chamada ao modelo falhou" : "A resposta do modelo não serviu";
-  return [what, "na", where + ".", detail].filter(Boolean).join(" ");
+  const what = kind === "call" ? "chamada ao modelo" : "resposta fora do formato";
+  const extra = detail && /500|250|Amém/.test(detail) ? detail : "";
+  return `Parou na ${where}: ${what}.${extra ? ` ${extra}` : ""}`;
 }
 export function peregrinoLimit(field: PeregrinoField) {
   return field === "reflection" ? peregrinoReflectionLimit : peregrinoPrayerLimit;
@@ -80,20 +81,26 @@ export function peregrinoStageMessages(input: {
   ];
 }
 
-const stageSchema = z.object({
-  text: z.string().trim().min(1, "O Peregrino devolveu uma resposta inesperada. Tente novamente."),
-  notes: z.string().trim().optional(),
-});
-
 export function parsePeregrinoStage(raw: string, field: PeregrinoField, stage: PeregrinoStage) {
-  const start = raw.indexOf("{");
-  const end = raw.lastIndexOf("}");
-  if (start < 0 || end <= start) throw new Error("O Peregrino devolveu uma resposta inesperada. Tente novamente.");
-  const parsed = stageSchema.parse(JSON.parse(raw.slice(start, end + 1)));
+  const cleaned = raw.replace(/```(?:json)?/gi, "").trim();
+  let text = "";
+  let notes: string | undefined;
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+  if (start >= 0 && end > start) {
+    try {
+      const value = JSON.parse(cleaned.slice(start, end + 1)) as { text?: unknown; notes?: unknown; reflection?: unknown; prayerSuggestion?: unknown };
+      const picked = typeof value.text === "string" ? value.text : field === "prayer" && typeof value.prayerSuggestion === "string" ? value.prayerSuggestion : typeof value.reflection === "string" ? value.reflection : "";
+      text = picked.trim();
+      notes = typeof value.notes === "string" ? value.notes.trim() : undefined;
+    } catch { text = ""; }
+  }
+  if (!text) text = cleaned.trim();
+  if (!text) throw new Error("resposta vazia");
   const limit = peregrinoLimit(field);
-  if (parsed.text.length > limit) throw new Error(field === "reflection" ? "A meditação passou de 500 caracteres." : "A oração passou de 250 caracteres.");
-  if (stage === "revise" && field === "prayer" && !/amém\.?$/i.test(parsed.text)) throw new Error("A oração precisa terminar com Amém.");
-  return parsed;
+  if (text.length > limit) throw new Error(field === "reflection" ? "passou de 500 caracteres" : "passou de 250 caracteres");
+  if (stage === "revise" && field === "prayer" && !/amém\.?$/i.test(text)) throw new Error("precisa terminar com Amém");
+  return { text, notes };
 }
 
 export async function runPeregrinoField(

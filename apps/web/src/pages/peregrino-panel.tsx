@@ -95,7 +95,7 @@ export function PeregrinoPanel({ selection, date, reflection, prayerSuggestion, 
           )}
           {configured && ready && !draft && !busy && (
             <>
-              <p>O que você quer que eu prepare? A meditação fica em até 500 caracteres e a oração em até 250.</p>
+              <p>Meditação até 500. Oração até 250.</p>
               {!trace.length && (
                 <ol className="peregrino-trace" aria-label="Caminho do Peregrino">
                   {peregrinoStages.map((stage) => <li key={stage}>{peregrinoStageName(stage)}</li>)}
@@ -112,13 +112,10 @@ export function PeregrinoPanel({ selection, date, reflection, prayerSuggestion, 
               </label>
             </>
           )}
-          {busy && <p role="status">Estou no meio do caminho. Cada linha abaixo é uma etapa.</p>}
           {!!trace.length && (
             <ol className="peregrino-trace" aria-live="polite" aria-label="Caminho do Peregrino">
               {trace.map((item, index) => (
-                <li key={index} data-state={item.state}>
-                  <strong>{item.state === "run" ? "Agora" : item.state === "error" ? "Parou" : "Feito"}.</strong> {item.thinking}
-                </li>
+                <li key={index} data-state={item.state}>{item.thinking}</li>
               ))}
             </ol>
           )}
