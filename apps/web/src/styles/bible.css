@@ -16,9 +16,19 @@
 
 .bible-controls {
   display: grid;
-  grid-template-columns: 1fr 130px;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 20px;
   margin: 24px 0 20px;
+}
+
+.bible-chapter-step {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.bible-chapter-step .dropdown {
+  min-width: 72px;
 }
 
 .bible-controls .field {
