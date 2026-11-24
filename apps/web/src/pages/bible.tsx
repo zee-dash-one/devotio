@@ -330,6 +330,14 @@ function BibleReader({ reading, version }: { reading: BibleReaderRepository; ver
   }, [chapterReady, params.book, params.chapter, params.verse]);
   const open = (book: string, chapter: number) => {
     cancelGesture();
+    const controls = document.querySelector(".bible-controls");
+    if (controls) {
+      const rect = controls.getBoundingClientRect();
+      if (rect.top < 0 || rect.top >= 80) {
+        const reduce = typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        window.scrollTo({ top: Math.max(0, window.scrollY + rect.top - 12), behavior: reduce ? "auto" : "smooth" });
+      }
+    }
     setSearch(null);
     setText("");
     setSelected(null);
