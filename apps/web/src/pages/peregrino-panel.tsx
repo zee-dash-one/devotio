@@ -75,7 +75,7 @@ export function PeregrinoPanel({ selection, date, reflection, prayerSuggestion, 
           )}
           {configured && ready && !draft && !busy && (
             <>
-              <p>O que você quer que eu prepare? Revise o texto antes de salvar.</p>
+              <p>O que você quer que eu prepare? A meditação fica em até 500 caracteres e a oração em até 250. O texto passa por escrita, conferência, humanização e revisão antes de chegar aqui.</p>
               <div className="peregrino-questions">
                 {questions.map(question => (
                   <Button key={question.target} type="button" variant="secondary" onClick={() => void suggest(question.target)}>{question.label}</Button>

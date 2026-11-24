@@ -3,14 +3,13 @@ import { RateLimiter, MINUTE } from "@convex-dev/rate-limiter";
 import type { ComponentApi } from "@convex-dev/rate-limiter/_generated/component.js";
 import { componentsGeneric, makeFunctionReference } from "convex/server";
 import {
-  buildPeregrinoMessages, openRouterKeySchema, parsePeregrinoOutput, peregrinoErrorMessage, peregrinoMissingKey, peregrinoModel, peregrinoRateLimit, peregrinoTooLong, peregrinoTargetSchema,
+  openRouterKeySchema, peregrinoErrorMessage, peregrinoMissingKey, peregrinoModel, peregrinoRateLimit, peregrinoTargetSchema, runPeregrinoPipeline,
 } from "domain/core";
 import { action, internalMutation, internalQuery, mutation, query, env } from "./_generated/server";
 import type { MutationCtx, QueryCtx } from "./server";
 import { findUser } from "./access";
 import { editorialScripture } from "./scriptures";
 import { scriptureSelectionValidator } from "./scriptureValidators";
-import { ZodError } from "zod";
 
 const components = componentsGeneric() as unknown as { rateLimiter: ComponentApi };
 const limiter = new RateLimiter(components.rateLimiter, {
@@ -172,14 +171,6 @@ export const suggest = action({
     }>("peregrino:prepare"), args);
     const target = peregrinoTargetSchema.parse(prepared.target);
     const key = await open(prepared.ciphertext, prepared.iv);
-    const base = buildPeregrinoMessages({ ...prepared, target });
-    let text = await complete(key, base);
-    try { return parsePeregrinoOutput(text, target); }
-    catch (error) {
-      if (!(error instanceof ZodError) && !(error instanceof SyntaxError)) throw new ConvexError("O Peregrino devolveu uma resposta inesperada. Tente novamente.");
-      text = await complete(key, [...base, { role: "user", content: "Reduza a resposta para no máximo 512 caracteres em cada campo e devolva só o JSON." }]);
-      try { return parsePeregrinoOutput(text, target); }
-      catch { throw new ConvexError(peregrinoTooLong); }
-    }
+    return await runPeregrinoPipeline((messages) => complete(key, messages), { reference: prepared.reference, scripture: prepared.scripture, focus: prepared.focus, target });
   },
 });

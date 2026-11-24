@@ -1,6 +1,5 @@
-import { buildPeregrinoMessages, bibleQuote, canManageEditorial, canManageSystem, parsePeregrinoOutput, peregrinoErrorMessage, peregrinoMissingKey, peregrinoModel, peregrinoRateLimit, peregrinoTargetSchema, peregrinoTooLong, type BibleSelection, type PeregrinoTarget } from "../../domain/index";
+import { bibleQuote, canManageEditorial, canManageSystem, peregrinoErrorMessage, peregrinoMissingKey, peregrinoModel, peregrinoRateLimit, peregrinoTargetSchema, runPeregrinoPipeline, type BibleSelection, type PeregrinoTarget } from "../../domain/index";
 import { LocalDatabase, LocalError } from "./database.local";
-import { ZodError } from "zod";
 
 const attempts = new Map<string, number[]>();
 
@@ -30,24 +29,23 @@ export async function suggestLocal(database: LocalDatabase, userId: string, inpu
     reference = day.reference;
     scripture = day.scripture;
   } else throw new LocalError("Escolha o trecho bíblico antes de pedir auxílio.");
-  const messages = buildPeregrinoMessages({ reference, scripture, reflection: input.reflection, prayerSuggestion: input.prayerSuggestion, focus: input.focus, target });
-  const ask = async (extra?: string) => {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json", "X-Title": "Devotio" },
-      body: JSON.stringify({ model: peregrinoModel, max_tokens: 700, temperature: 0.6, messages: extra ? [...messages, { role: "user", content: extra }] : messages }),
-      signal: AbortSignal.timeout(30000),
-    });
+  const complete = async (messages: { role: "system" | "user"; content: string }[]) => {
+    let response: Response;
+    try {
+      response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json", "X-Title": "Devotio" },
+        body: JSON.stringify({ model: peregrinoModel, max_tokens: 700, temperature: 0.4, messages }),
+        signal: AbortSignal.timeout(30000),
+      });
+    } catch {
+      throw new LocalError("O Peregrino não respondeu a tempo. Tente novamente em instantes.");
+    }
     if (!response.ok) throw new LocalError(peregrinoErrorMessage(response.status), response.status);
     const body = await response.json() as { choices?: { message?: { content?: string } }[] };
     const content = body.choices?.[0]?.message?.content;
     if (!content) throw new LocalError("O Peregrino devolveu uma resposta inesperada. Tente novamente.");
     return content;
   };
-  try { return parsePeregrinoOutput(await ask(), target); }
-  catch (error) {
-    if (!(error instanceof ZodError) && !(error instanceof SyntaxError)) throw error;
-    try { return parsePeregrinoOutput(await ask("Reduza a resposta para no máximo 512 caracteres em cada campo e devolva só o JSON."), target); }
-    catch { throw new LocalError(peregrinoTooLong); }
-  }
+  return runPeregrinoPipeline(complete, { reference, scripture, focus: input.focus, target });
 }
