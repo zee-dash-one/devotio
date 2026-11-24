@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
 import { Link, Outlet, useLocation, useMatches } from "@tanstack/react-router";
 import { BookOpen, BookText, Users, ArrowUpRight, Leaf } from "lucide-react";
 import { RepositoryProvider, useHome, useLocalDate } from "domain/react";
@@ -8,6 +8,7 @@ import { Brand, AudioPlayer } from "./components";
 import { RouteRedirect } from "./redirect";
 import { NotificationsBell } from "./notifications";
 import { useCompactHeader } from "./compact-header";
+import { defaultBiblePlace, rememberedBiblePlace, subscribeBiblePlace } from "./bible-place";
 import { AccountMenu } from "./account-menu";
 
 export function ReaderLayout() {
@@ -38,6 +39,7 @@ function ReaderShell() {
   const mobileNavigation = useRef<HTMLElement>(null);
   const [navigationHeight, setNavigationHeight] = useState(70);
   const headerState = useCompactHeader(masthead);
+  const biblePlace = useSyncExternalStore(subscribeBiblePlace, rememberedBiblePlace, () => defaultBiblePlace);
   useEffect(() => {
     const navigation = mobileNavigation.current;
     if (!navigation || typeof ResizeObserver === "undefined") return;
@@ -106,7 +108,7 @@ function ReaderShell() {
                         to="/biblia"
                         aria-label="Bíblia"
                         title="Bíblia"
-                        search={{ book: "jo", chapter: 1 }}
+                        search={biblePlace}
                         activeProps={{ className: "active" }}
                       >
                         <BookText size={17} />
@@ -193,7 +195,7 @@ function ReaderShell() {
             {(app.repository?.bible || app.repository?.reading) && (
               <Link
                 to="/biblia"
-                search={{ book: "jo", chapter: 1 }}
+                search={biblePlace}
                 activeProps={{ className: "active" }}
               >
                 <BookText size={21} />

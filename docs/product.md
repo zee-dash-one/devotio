@@ -33,6 +33,7 @@ Resumo consolidado de todas as funcionalidades e regras de negócio implementada
   - **Almeida 1911 (`alm1911`):** 66 livros, 1.189 capítulos e 31.101 versículos, disponível nos modos local e publicado por pacotes estáticos gerados no build.
   - **Almeida Atualizada (`aa`):** 66 livros, 1.189 capítulos e 31.104 versículos, disponível no SQLite de desenvolvimento local.
   - **ARA, ARC e NVI:** aparecem na leitura somente no teste fechado, quando o arquivo correspondente já está em `docs/bibles/licensed/` e o pacote é gerado com `DEVOTIO_CLOSED_TEST=1`. O build público esconde essas edições. Novas citações no ambiente conectado continuam em `alm1911`.
+- **Retorno:** o atalho Bíblia do menu reabre o último livro e capítulo lidos neste dispositivo. A escolha de trecho para um devocional ou recado não altera esse ponto.
 - **Modos de leitura e navegação:**
   - **Paginado:** um capítulo por vez, com botões anterior/próximo e gesto horizontal longo (arraste à esquerda volta um capítulo; à direita avança).
   - **Contínuo:** rolagem vertical com janela renderizada de até 3 capítulos (anterior, atual e próximo) e preservação de âncora visual sem saltos.
