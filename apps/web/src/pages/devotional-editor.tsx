@@ -94,7 +94,6 @@ function EditorForm({
   const draft = writing.editors[key] ?? editorialDraft(existing);
   const change = (patch: Partial<EditorialDraft>) =>
     writing.setEditor(key, { ...draft, ...patch });
-  const [auxiliary, setAuxiliary] = useState(false);
   const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   const today = dateInZone("America/Sao_Paulo");
@@ -306,15 +305,6 @@ function EditorForm({
         )}
         {error && <p role="alert">{error}</p>}
         {busy && <p role="status">Salvando devocional…</p>}
-        {auxiliary && (
-          <PeregrinoPanel
-            selection={draft.selection}
-            date={existing?.date}
-            reflection={draft.reflection}
-            prayerSuggestion={draft.prayerSuggestion}
-            onApply={patch => change(patch)}
-          />
-        )}
         <div className="devotional-editor-actions">
           <Button type="submit" disabled={busy}>
             Programar
@@ -327,16 +317,15 @@ function EditorForm({
           >
             Cancelar
           </Button>
-          <Button
-            variant="ghost"
-            type="button"
-            aria-expanded={auxiliary}
-            onClick={() => setAuxiliary((value) => !value)}
-          >
-            Auxílio
-          </Button>
         </div>
       </form>
+      <PeregrinoPanel
+        selection={draft.selection}
+        date={existing?.date}
+        reflection={draft.reflection}
+        prayerSuggestion={draft.prayerSuggestion}
+        onApply={patch => change(patch)}
+      />
       <BiblePickerButton
         type="button"
         aria-label="Rever seleção na Bíblia"

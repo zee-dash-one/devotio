@@ -1,9 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { peregrinoModel, validationMessage, type BibleSelection } from "domain/core";
+import { Feather } from "lucide-react";
+import { validationMessage, type BibleSelection, type PeregrinoTarget } from "domain/core";
 import { useApp } from "../context";
 import { ErrorMessage } from "../components";
-import { Button } from "../ui/button";
+import { Button, IconButton } from "../ui/button";
+
+const questions: { target: PeregrinoTarget; label: string }[] = [
+  { target: "reflection", label: "Prepara a meditação" },
+  { target: "prayer", label: "Prepara a oração" },
+  { target: "both", label: "Prepara os dois" },
+];
 
 export function PeregrinoPanel({ selection, date, reflection, prayerSuggestion, onApply }: {
   selection?: BibleSelection;
@@ -14,46 +21,89 @@ export function PeregrinoPanel({ selection, date, reflection, prayerSuggestion, 
 }) {
   const app = useApp();
   const system = app.repository?.system;
+  const titleId = useId();
+  const dockRef = useRef<HTMLDivElement>(null);
+  const balloonRef = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false);
   const [configured, setConfigured] = useState<boolean | null>(null);
+  const [focus, setFocus] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [draft, setDraft] = useState<{ reflection?: string; prayerSuggestion?: string } | null>(null);
+  const ready = Boolean(selection || date);
   useEffect(() => {
     if (!system) return;
     let active = true;
     system.peregrinoStatus().then(value => { if (active) setConfigured(value.configured); }).catch(() => { if (active) setConfigured(null); });
     return () => { active = false; };
   }, [system]);
-  if (!system || configured === null) return null;
-  async function suggest(target: "both" | "reflection" | "prayer") {
+  useEffect(() => {
+    if (!open) return;
+    balloonRef.current?.querySelector<HTMLElement>("button, textarea, a")?.focus();
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      setOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      dockRef.current?.querySelector<HTMLButtonElement>(".peregrino-launcher")?.focus();
+    };
+  }, [open]);
+  if (!system) return null;
+  async function suggest(target: PeregrinoTarget) {
     setBusy(true); setError(""); setDraft(null);
-    try { setDraft(await system!.peregrinoSuggest({ selection, date, reflection, prayerSuggestion, target })); }
-    catch (cause) { setError(validationMessage(cause)); }
+    try {
+      setDraft(await system!.peregrinoSuggest({
+        selection, date, reflection, prayerSuggestion, target,
+        ...(focus.trim() ? { focus: focus.trim() } : {}),
+      }));
+    } catch (cause) { setError(validationMessage(cause)); }
     finally { setBusy(false); }
   }
   return (
-    <section aria-label="Peregrino">
-      <p>O Peregrino sugere um rascunho. Revise antes de salvar. Modelo: {peregrinoModel}.</p>
-      {!configured && <p role="status">O Peregrino ainda não foi configurado. {app.localProfile?.superuser || app.pilotAccess?.superuser ? <Link to="/sistema/peregrino">Informar a chave</Link> : "Peça a um superusuário para informar a chave do OpenRouter."}</p>}
-      {configured && (
-        <div className="devotional-editor-actions">
-          <Button type="button" disabled={busy} onClick={() => void suggest("both")}>Sugerir reflexão e oração</Button>
-          <Button type="button" variant="secondary" disabled={busy} onClick={() => void suggest("reflection")}>Sugerir só a reflexão</Button>
-          <Button type="button" variant="ghost" disabled={busy} onClick={() => void suggest("prayer")}>Sugerir só a oração</Button>
+    <div className="peregrino-dock" ref={dockRef}>
+      {open && (
+        <div className="peregrino-balloon" role="dialog" aria-labelledby={titleId} ref={balloonRef}>
+          <p id={titleId} className="peregrino-greeting">Peregrino</p>
+          {configured === false && (
+            <p role="status">Ainda não há chave. {app.localProfile?.superuser || app.pilotAccess?.superuser ? <Link to="/sistema/peregrino">Informar a chave</Link> : "Peça a um superusuário para informar a chave do OpenRouter."}</p>
+          )}
+          {configured !== false && !ready && (
+            <p role="status">Escolha o trecho na Bíblia. Eu preparo a meditação e a oração a partir dele.</p>
+          )}
+          {configured && ready && !draft && !busy && (
+            <>
+              <p>O que você quer que eu prepare? Revise o texto antes de salvar.</p>
+              <div className="peregrino-questions">
+                {questions.map(question => (
+                  <Button key={question.target} type="button" variant="secondary" onClick={() => void suggest(question.target)}>{question.label}</Button>
+                ))}
+              </div>
+              <label className="field">
+                <span>Enfoque, se quiser</span>
+                <textarea rows={2} maxLength={160} value={focus} placeholder="Por exemplo: acolher quem está cansado" onChange={event => setFocus(event.target.value)} />
+              </label>
+            </>
+          )}
+          {busy && <p role="status">Estou lendo o trecho e preparando o rascunho.</p>}
+          {error && <ErrorMessage message={error} />}
+          {draft && (
+            <>
+              {draft.reflection && <p>{draft.reflection}</p>}
+              {draft.prayerSuggestion && <p>{draft.prayerSuggestion}</p>}
+              <div className="peregrino-questions">
+                <Button type="button" onClick={() => { onApply(draft); setDraft(null); setOpen(false); }}>Usar sugestão</Button>
+                <Button type="button" variant="ghost" onClick={() => setDraft(null)}>Pedir de outro jeito</Button>
+              </div>
+            </>
+          )}
         </div>
       )}
-      {busy && <p role="status">O Peregrino está preparando o rascunho…</p>}
-      {error && <ErrorMessage message={error} />}
-      {draft && (
-        <div>
-          {draft.reflection && <p>{draft.reflection}</p>}
-          {draft.prayerSuggestion && <p>{draft.prayerSuggestion}</p>}
-          <div className="devotional-editor-actions">
-            <Button type="button" onClick={() => { onApply(draft); setDraft(null); }}>Usar sugestão</Button>
-            <Button type="button" variant="ghost" onClick={() => setDraft(null)}>Descartar</Button>
-          </div>
-        </div>
-      )}
-    </section>
+      <IconButton type="button" className="peregrino-launcher" aria-label="Peregrino" aria-expanded={open} onClick={() => setOpen(value => !value)}>
+        <Feather size={22} aria-hidden="true" />
+      </IconButton>
+    </div>
   );
 }

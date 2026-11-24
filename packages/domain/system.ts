@@ -71,5 +71,5 @@ export interface SystemRepository {
   setOpenRouterKey(key: string): Promise<void>;
   clearOpenRouterKey(): Promise<void>;
   peregrinoStatus(): Promise<{ configured: boolean; model: string }>;
-  peregrinoSuggest(input: { selection?: import("./sharing").BibleSelection; date?: string; reflection?: string; prayerSuggestion?: string; target: import("./peregrino").PeregrinoTarget }): Promise<{ reflection?: string; prayerSuggestion?: string; model: string }>;
+  peregrinoSuggest(input: { selection?: import("./sharing").BibleSelection; date?: string; reflection?: string; prayerSuggestion?: string; focus?: string; target: import("./peregrino").PeregrinoTarget }): Promise<{ reflection?: string; prayerSuggestion?: string; model: string }>;
 }

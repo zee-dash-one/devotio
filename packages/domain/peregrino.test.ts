@@ -7,6 +7,8 @@ describe("Peregrino", () => {
     expect(messages[0].content).toContain("JSON");
     expect(messages[1].content).toContain("No princípio");
     expect(messages[1].content).not.toContain("ignore");
+    const focused = buildPeregrinoMessages({ reference: "João 1:1", scripture: "1 - No princípio", target: "reflection", focus: "cansaço" });
+    expect(focused[1].content).toContain("cansaço");
   });
   it("reads one JSON object and drops the field that was not requested", () => {
     const value = parsePeregrinoOutput("nota {\"reflection\":\"Uma pausa.\",\"prayerSuggestion\":\"Senhor, acolhe. Amém.\"}", "reflection");
