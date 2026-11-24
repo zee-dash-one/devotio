@@ -1,6 +1,24 @@
 .admin-page {
   max-width: 1100px;
 }
+.peregrino-page {
+  max-width: 40rem;
+}
+.peregrino-steps {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 24px;
+  padding-left: 1.25rem;
+}
+.peregrino-steps a {
+  text-decoration: underline;
+}
+.peregrino-page .field input[readonly] {
+  background: var(--wash);
+}
+.peregrino-page .caption {
+  margin-top: 0;
+}
 .admin-page h1 {
   margin-block: 1.5rem;
 }

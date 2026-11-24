@@ -23,16 +23,32 @@ function KeyForm() {
     return () => { active = false; };
   }, [system]);
   return (
-    <form className="page" onSubmit={event => {
+    <form className="page peregrino-page" onSubmit={event => {
       event.preventDefault();
       const parsed = openRouterKeySchema.safeParse(key);
       if (!parsed.success) { setError(validationMessage(parsed.error)); return; }
       setBusy(true); setError(""); setNotice("");
       void system.setOpenRouterKey(parsed.data).then(() => { setKey(""); setConfigured(true); setNotice("Chave salva. Ela não volta a ser exibida."); }).catch(cause => setError(validationMessage(cause))).finally(() => setBusy(false));
     }}>
-      <h1>Peregrino</h1>
-      <p>Modelo: {peregrinoModel}. A chave fica só no servidor. {configured ? "Há uma chave configurada." : "Nenhuma chave configurada."}</p>
-      <label>Chave do OpenRouter<input type="password" autoComplete="off" value={key} onChange={event => setKey(event.target.value)} /></label>
+      <h1>Peregrino e chave do OpenRouter</h1>
+      <p>O botão <strong>Auxílio</strong>, no cadastro e na edição do devocional, pede um rascunho de Meditar e Oração. Esta tela é só para o superusuário guardar a chave.</p>
+      <ol className="peregrino-steps">
+        <li>Abra <a href="https://openrouter.ai/keys" target="_blank" rel="noreferrer">openrouter.ai/keys</a> e entre na conta do OpenRouter.</li>
+        <li>Crie uma chave. Ela começa com <strong>sk-or-</strong>. Copie na hora: o OpenRouter não mostra a chave inteira outra vez.</li>
+        <li>Cole a chave no campo abaixo, sem aspas e sem espaço, e toque em <strong>Salvar chave</strong>. O Devotio guarda a chave só no servidor.</li>
+        <li>O modelo não se escolhe aqui. O Auxílio sempre envia <strong>{peregrinoModel}</strong>, a rota gratuita do OpenRouter. Se essa rota estiver fora do ar, o Auxílio pede para tentar de novo.</li>
+      </ol>
+      <label className="field">
+        <span>Modelo</span>
+        <input readOnly value={peregrinoModel} aria-describedby="peregrino-model-help" />
+      </label>
+      <p id="peregrino-model-help" className="caption">Para usar outro modelo é preciso alterar o aplicativo. Nesta tela você troca a chave; o modelo continua {peregrinoModel}.</p>
+      <label className="field">
+        <span>Chave da API</span>
+        <input type="password" autoComplete="off" placeholder="sk-or-…" value={key} aria-describedby="peregrino-key-help" onChange={event => setKey(event.target.value)} />
+      </label>
+      <p id="peregrino-key-help" className="caption">A chave tem pelo menos 20 caracteres e começa com sk-or-. Salvar de novo substitui a chave anterior. Ela não volta para esta tela.</p>
+      <p role="status">{configured ? "Há uma chave salva. O Auxílio já pode ser usado." : "Nenhuma chave salva. O Auxílio fica indisponível até você salvar uma."}</p>
       {error && <ErrorMessage message={error} />}
       {notice && <p role="status">{notice}</p>}
       <div className="devotional-editor-actions">
