@@ -1,6 +1,6 @@
 import { Button, IconButton } from "../ui/button";
 import { useContext, useEffect, useMemo, useState } from "react";
-import { Heart, ChevronDown } from "lucide-react";
+import { Heart, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useLocalDate, useRepository, useWatch } from "domain/react";
 import {
@@ -68,6 +68,16 @@ function ReadingSelection({ reading, entryMode }: { reading: Pick<ReadingReposit
   const recentDate = state.data.dates.includes(selectedRecent)
     ? selectedRecent
     : state.data.dates[0];
+  const recentIndex = recentDate ? state.data.dates.indexOf(recentDate) : -1;
+  function stepRecent(offset: -1 | 1) {
+    const next = state.data?.dates[recentIndex + offset];
+    if (!next) return;
+    setSelectedRecent(next);
+    setMode("recent");
+    setRemovedFavorite(null);
+    setError("");
+    setFeedback("");
+  }
   const snapshot = favorites.find((f) => f.devotional.date === date);
   const currentRecent = state.data.recent.find(item => item.date === date);
   async function toggle() {
@@ -102,6 +112,15 @@ function ReadingSelection({ reading, entryMode }: { reading: Pick<ReadingReposit
         {showingFavorites && <h1 className="reading-mode-title">Devocionais Favoritos</h1>}
         <div className="reading-tabs">
           <div className="reading-devotional-group">
+            <IconButton
+              type="button"
+              title="Devocional anterior"
+              aria-label="Devocional anterior"
+              disabled={recentIndex < 0 || recentIndex >= state.data.dates.length - 1}
+              onClick={() => stepRecent(1)}
+            >
+              <ChevronLeft size={18} aria-hidden="true" />
+            </IconButton>
             <Button
               type="button"
               variant="ghost"
@@ -126,6 +145,15 @@ function ReadingSelection({ reading, entryMode }: { reading: Pick<ReadingReposit
               onClick={() => setRecentOpen(true)}
             >
               <ChevronDown size={18} aria-hidden="true" />
+            </IconButton>
+            <IconButton
+              type="button"
+              title="Devocional seguinte"
+              aria-label="Devocional seguinte"
+              disabled={recentIndex <= 0}
+              onClick={() => stepRecent(-1)}
+            >
+              <ChevronRight size={18} aria-hidden="true" />
             </IconButton>
           </div>
           <div className="reading-favorites-group">
