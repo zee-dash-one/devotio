@@ -3,7 +3,7 @@ import { RateLimiter, MINUTE } from "@convex-dev/rate-limiter";
 import type { ComponentApi } from "@convex-dev/rate-limiter/_generated/component.js";
 import { componentsGeneric, makeFunctionReference } from "convex/server";
 import {
-  openRouterKeySchema, peregrinoErrorMessage, peregrinoMissingKey, peregrinoModel, peregrinoRateLimit, peregrinoTargetSchema, runPeregrinoPipeline,
+  openRouterKeySchema, parsePeregrinoStage, peregrinoErrorMessage, peregrinoMissingKey, peregrinoModel, peregrinoRateLimit, peregrinoStageFailure, peregrinoStageMessages, peregrinoTargetSchema, peregrinoThinking, runPeregrinoPipeline,
 } from "domain/core";
 import { action, internalMutation, internalQuery, mutation, query, env } from "./_generated/server";
 import type { MutationCtx, QueryCtx } from "./server";
@@ -172,5 +172,40 @@ export const suggest = action({
     const target = peregrinoTargetSchema.parse(prepared.target);
     const key = await open(prepared.ciphertext, prepared.iv);
     return await runPeregrinoPipeline((messages) => complete(key, messages), { reference: prepared.reference, scripture: prepared.scripture, focus: prepared.focus, target });
+  },
+});
+
+export const step = action({
+  args: {
+    selection: v.optional(scriptureSelectionValidator),
+    date: v.optional(v.string()),
+    focus: v.optional(v.string()),
+    field: v.union(v.literal("reflection"), v.literal("prayer")),
+    stage: v.union(v.literal("draft"), v.literal("verify"), v.literal("humanize"), v.literal("critique"), v.literal("revise")),
+    text: v.optional(v.string()),
+    notes: v.optional(v.string()),
+  },
+  returns: v.object({ text: v.string(), notes: v.string(), thinking: v.string() }),
+  handler: async (ctx, args) => {
+    if (args.stage === "draft") await ctx.runMutation(makeFunctionReference<"mutation">("peregrino:consume"), {});
+    const prepared = await ctx.runQuery(makeFunctionReference<"query", { selection?: typeof args.selection; date?: string; target: "reflection" | "prayer" }, {
+      reference: string; scripture: string; ciphertext: string; iv: string;
+    }>("peregrino:prepare"), { selection: args.selection, date: args.date, target: args.field });
+    const key = await open(prepared.ciphertext, prepared.iv);
+    const thinking = peregrinoThinking(args.stage, args.field);
+    let raw = "";
+    try {
+      raw = await complete(key, peregrinoStageMessages({ stage: args.stage, field: args.field, reference: prepared.reference, scripture: prepared.scripture, focus: args.focus, text: args.text, notes: args.notes }));
+    } catch (error) {
+      const detail = error instanceof ConvexError && typeof error.data === "string" ? error.data : undefined;
+      throw new ConvexError(peregrinoStageFailure(args.stage, args.field, "call", detail));
+    }
+    try {
+      const parsed = parsePeregrinoStage(raw, args.field, args.stage);
+      return { text: parsed.text, notes: parsed.notes ?? "", thinking };
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : undefined;
+      throw new ConvexError(peregrinoStageFailure(args.stage, args.field, "answer", detail));
+    }
   },
 });

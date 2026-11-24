@@ -138,6 +138,7 @@ export function createConvexRepository(client: ConvexReactClient): Repository {
       clearOpenRouterKey: async () => { await safe(client.mutation(makeFunctionReference<"mutation", Record<string, never>, null>("peregrino:clearKey"), {})); },
       peregrinoStatus: () => safe(client.query(makeFunctionReference<"query", Record<string, never>, { configured: boolean; model: string }>("peregrino:status"), {})),
       peregrinoSuggest: (input) => safe(client.action(makeFunctionReference<"action", typeof input, { reflection?: string; prayerSuggestion?: string; model: string }>("peregrino:suggest"), input)),
+      peregrinoStep: (input) => safe(client.action(makeFunctionReference<"action", typeof input, { text: string; notes: string; thinking: string }>("peregrino:step"), input)),
     },
     async setTick(itemId, checked) {
       await safe(client.mutation(refs.tick, { itemId, checked }));

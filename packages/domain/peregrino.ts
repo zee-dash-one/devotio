@@ -17,11 +17,41 @@ export type PeregrinoTarget = z.infer<typeof peregrinoTargetSchema>;
 export const peregrinoStages = ["draft", "verify", "humanize", "critique", "revise"] as const;
 export type PeregrinoStage = typeof peregrinoStages[number];
 export type PeregrinoField = "reflection" | "prayer";
+export const peregrinoStepSchema = z.object({
+  selection: bibleSelectionSchema.optional(),
+  date: dateSchema.optional(),
+  focus: z.string().trim().max(160, "Use até 160 caracteres no enfoque.").optional(),
+  field: z.enum(["reflection", "prayer"]),
+  stage: z.enum(peregrinoStages),
+  text: z.string().max(500).optional(),
+  notes: z.string().max(1000).optional(),
+});
 export const peregrinoReflectionLimit = 500;
 export const peregrinoPrayerLimit = 250;
 
 const voice = "Escreva em primeira pessoa e fale diretamente ao leitor. A visão é pastoral e reformada: a Escritura conduz, Cristo está no centro e a graça não é mérito. Ajude a meditar na mensagem do trecho. Não invente versículo, número, citação ou fato. Uma frase breve de um Pai da Igreja ou de um pregador só entra se a autoria for certa; se houver dúvida, omita. Não copie trecho de livro.";
 
+export function peregrinoThinking(stage: PeregrinoStage, field: PeregrinoField) {
+  const label = field === "reflection" ? "a meditação" : "a oração";
+  const line = {
+    draft: `Deixe-me escrever ${label}, em primeira pessoa, falando com você, como um pastor reformado leria este trecho.`,
+    verify: `Deixe-me verificar as fontes de ${label}: o que o trecho sustenta e o que preciso retirar.`,
+    humanize: `Deixe-me humanizar ${label}, tirando o jeito de texto automático sem perder o que já conferi.`,
+    critique: `Deixe-me reler ${label} como um cristão reformado analisaria: a Escritura conduz, Cristo está no centro e a graça não é mérito?`,
+    revise: `Deixe-me aplicar só as correções pontuais e fechar ${label}.`,
+  }[stage];
+  return line;
+}
+
+export function peregrinoStageName(stage: PeregrinoStage) {
+  return { draft: "escrita", verify: "conferência das fontes", humanize: "humanização", critique: "crítica reformada", revise: "correção" }[stage];
+}
+
+export function peregrinoStageFailure(stage: PeregrinoStage, field: PeregrinoField, kind: "call" | "answer", detail?: string) {
+  const where = `${peregrinoStageName(stage)} da ${field === "reflection" ? "meditação" : "oração"}`;
+  const what = kind === "call" ? "A chamada ao modelo falhou" : "A resposta do modelo não serviu";
+  return [what, "na", where + ".", detail].filter(Boolean).join(" ");
+}
 export function peregrinoLimit(field: PeregrinoField) {
   return field === "reflection" ? peregrinoReflectionLimit : peregrinoPrayerLimit;
 }
@@ -76,7 +106,15 @@ export async function runPeregrinoField(
   for (const stage of peregrinoStages) {
     let correction = "";
     for (let attempt = 0; attempt < 2; attempt += 1) {
-      const raw = await complete(peregrinoStageMessages({ stage, field, ...context, text, notes: [notes, correction].filter(Boolean).join(" ") }));
+      let raw = "";
+      try {
+        raw = await complete(peregrinoStageMessages({ stage, field, ...context, text, notes: [notes, correction].filter(Boolean).join(" ") }));
+      } catch (error) {
+        const detail = error instanceof Error ? error.message : undefined;
+        correction = detail ?? "A chamada ao modelo falhou.";
+        if (attempt === 1) throw new Error(peregrinoStageFailure(stage, field, "call", detail));
+        continue;
+      }
       try {
         const parsed = parsePeregrinoStage(raw, field, stage);
         text = parsed.text;
@@ -84,8 +122,9 @@ export async function runPeregrinoField(
         correction = "";
         break;
       } catch (error) {
-        correction = error instanceof Error ? error.message : "Corrija o JSON e o tamanho.";
-        if (attempt === 1) throw error;
+        const detail = error instanceof Error ? error.message : "Corrija o JSON e o tamanho.";
+        correction = detail;
+        if (attempt === 1) throw new Error(peregrinoStageFailure(stage, field, "answer", detail));
       }
     }
   }
