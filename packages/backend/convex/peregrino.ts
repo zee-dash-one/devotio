@@ -110,10 +110,11 @@ export const prepare = internalQuery({
     date: v.optional(v.string()),
     reflection: v.optional(v.string()),
     prayerSuggestion: v.optional(v.string()),
+    focus: v.optional(v.string()),
     target: v.union(v.literal("both"), v.literal("reflection"), v.literal("prayer")),
   },
   returns: v.object({
-    reference: v.string(), scripture: v.string(), reflection: v.optional(v.string()), prayerSuggestion: v.optional(v.string()), target: v.string(), ciphertext: v.string(), iv: v.string(),
+    reference: v.string(), scripture: v.string(), reflection: v.optional(v.string()), prayerSuggestion: v.optional(v.string()), focus: v.optional(v.string()), target: v.string(), ciphertext: v.string(), iv: v.string(),
   }),
   handler: async (ctx, args) => {
     await requireWriter(ctx);
@@ -131,7 +132,7 @@ export const prepare = internalQuery({
       reference = day.reference;
       scripture = day.scripture;
     } else throw new ConvexError("Escolha o trecho bíblico antes de pedir auxílio.");
-    return { reference, scripture, reflection: args.reflection, prayerSuggestion: args.prayerSuggestion, target: args.target, ciphertext: secret.ciphertext, iv: secret.iv };
+    return { reference, scripture, reflection: args.reflection, prayerSuggestion: args.prayerSuggestion, focus: args.focus, target: args.target, ciphertext: secret.ciphertext, iv: secret.iv };
   },
 });
 
@@ -155,13 +156,14 @@ export const suggest = action({
     date: v.optional(v.string()),
     reflection: v.optional(v.string()),
     prayerSuggestion: v.optional(v.string()),
+    focus: v.optional(v.string()),
     target: v.union(v.literal("both"), v.literal("reflection"), v.literal("prayer")),
   },
   returns: v.object({ reflection: v.optional(v.string()), prayerSuggestion: v.optional(v.string()), model: v.string() }),
   handler: async (ctx, args) => {
     await ctx.runMutation(makeFunctionReference<"mutation">("peregrino:consume"), {});
     const prepared = await ctx.runQuery(makeFunctionReference<"query", typeof args, {
-      reference: string; scripture: string; reflection?: string; prayerSuggestion?: string; target: string; ciphertext: string; iv: string;
+      reference: string; scripture: string; reflection?: string; prayerSuggestion?: string; focus?: string; target: string; ciphertext: string; iv: string;
     }>("peregrino:prepare"), args);
     const target = peregrinoTargetSchema.parse(prepared.target);
     const key = await open(prepared.ciphertext, prepared.iv);

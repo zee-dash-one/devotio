@@ -91,6 +91,54 @@ body:has(.devotional-editor) {
   color: var(--error);
 }
 
+.peregrino-dock {
+  position: fixed;
+  z-index: 40;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: calc(var(--mobile-nav-height, 16px) + 16px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.peregrino-launcher {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--surface);
+  border-color: var(--line);
+  box-shadow: 0 4px 18px color-mix(in srgb, var(--ink) 12%, transparent);
+}
+
+.peregrino-balloon {
+  width: min(22rem, calc(100vw - 32px));
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 12px 40px color-mix(in srgb, var(--ink) 12%, transparent);
+}
+
+.peregrino-greeting {
+  margin: 0 0 8px;
+  font-weight: 600;
+}
+
+.peregrino-balloon p {
+  margin: 0 0 12px;
+}
+
+.peregrino-questions {
+  display: grid;
+  gap: 8px;
+}
+
+.peregrino-balloon .field {
+  margin-top: 12px;
+}
+
 @media (max-width: 600px) {
   .devotional-editor {
     padding: 24px 16px;

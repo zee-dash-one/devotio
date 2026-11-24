@@ -4,7 +4,7 @@ import { ZodError } from "zod";
 
 const attempts = new Map<string, number[]>();
 
-export async function suggestLocal(database: LocalDatabase, userId: string, input: { selection?: BibleSelection; date?: string; reflection?: string; prayerSuggestion?: string; target: PeregrinoTarget }) {
+export async function suggestLocal(database: LocalDatabase, userId: string, input: { selection?: BibleSelection; date?: string; reflection?: string; prayerSuggestion?: string; focus?: string; target: PeregrinoTarget }) {
   const user = database.profile(userId);
   if (!canManageEditorial(user) && !canManageSystem(user)) throw new LocalError("Acesso exclusivo da gestão editorial.", 403);
   const now = Date.now();
@@ -30,7 +30,7 @@ export async function suggestLocal(database: LocalDatabase, userId: string, inpu
     reference = day.reference;
     scripture = day.scripture;
   } else throw new LocalError("Escolha o trecho bíblico antes de pedir auxílio.");
-  const messages = buildPeregrinoMessages({ reference, scripture, reflection: input.reflection, prayerSuggestion: input.prayerSuggestion, target });
+  const messages = buildPeregrinoMessages({ reference, scripture, reflection: input.reflection, prayerSuggestion: input.prayerSuggestion, focus: input.focus, target });
   const ask = async (extra?: string) => {
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",

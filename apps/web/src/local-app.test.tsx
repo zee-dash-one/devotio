@@ -88,6 +88,7 @@ function server(loggedIn: boolean, actor = profile, conflict = false, manages = 
     if (input.query === "notificationSummary") return new Response(JSON.stringify({ unread: notices.filter(item => item.readAt === null).length, revision }));
     if (input.query === "notifications") return new Response(JSON.stringify({ items: notices, nextCursor: null }));
     if (input.query === "peregrinoKeyStatus") return new Response(JSON.stringify({ configured: false }));
+    if (input.query === "peregrinoStatus") return new Response(JSON.stringify({ configured: false, model: "openrouter/free" }));
     if (input.query === "editorial") return new Response(JSON.stringify(entries));
     if (input.query === "editorialCalendar") return new Response(JSON.stringify(availableEditorialDates(input.month, entries.map(entry => entry.devotional.date), input.today)));
     if (input.query === "bible") return new Response(JSON.stringify({ books: [book], version: "aa", verses: 1, importedAt: 1, source: "Fixture" }));
@@ -762,7 +763,7 @@ describe("entrada local integrada", () => {
     expect(screen.getByRole("link", { name: "openrouter.ai/keys" }).getAttribute("href")).toBe("https://openrouter.ai/keys");
     expect((screen.getByLabelText("Modelo") as HTMLInputElement).value).toBe("openrouter/free");
     expect((screen.getByLabelText("Modelo") as HTMLInputElement).readOnly).toBe(true);
-    expect(screen.getByText("Nenhuma chave salva. O Auxílio fica indisponível até você salvar uma.")).toBeTruthy();
+    expect(screen.getByText("Nenhuma chave salva. O Peregrino fica indisponível até você salvar uma.")).toBeTruthy();
     expect(screen.getByLabelText("Chave da API")).toBeTruthy();
   });
   it("bloqueia a tela de cadastro para membro, sem consultar dados editoriais", async () => {
@@ -780,8 +781,8 @@ describe("entrada local integrada", () => {
     await screen.findByLabelText("Palavra");
     expect((screen.getByLabelText("Palavra") as HTMLTextAreaElement).readOnly).toBe(true);
     const before = fetcher.mock.calls.length;
-    fireEvent.click(screen.getByRole("button", { name: "Auxílio" }));
-    expect(screen.getByRole("status").textContent).toContain("Peregrino");
+    fireEvent.click(screen.getByRole("button", { name: "Peregrino" }));
+    expect(screen.getByRole("dialog", { name: "Peregrino" }).textContent).toContain("chave");
     expect(fetcher.mock.calls).toHaveLength(before);
     fireEvent.change(screen.getByLabelText("Reflexão"), { target: { value: "Reflexão preparada" } });
     fireEvent.change(screen.getByLabelText("Sugestão de oração"), { target: { value: "Oração preparada" } });
