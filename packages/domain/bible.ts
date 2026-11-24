@@ -6,18 +6,21 @@ import { alm1911Base, bibleCatalogSchema, bibleChapterSchema, bibleSearchSchema,
 
 export interface BibleCacheStorage { read(): unknown; write(chapters: BibleChapter[]): void }
 export interface BibleTransport { load(path: string): Promise<unknown>; storage?: BibleCacheStorage }
-export function createBibleRepository(transport: BibleTransport, legacy?: BibleReaderRepository): BibleRepository {
+function staticEdition(transport: BibleTransport, version: BibleVersion, base: string, persistChapters: boolean): BibleReaderRepository {
   const chapters = new Map<string, BibleChapter>();
   const pending = new Map<string, Promise<BibleChapter | null>>();
   let pinned: string[] = [];
   let catalog: Promise<BibleCatalog> | undefined;
   let searchIndex: Promise<z.infer<typeof bibleSearchIndexSchema>> | undefined;
   let searches = 0;
-  try {
-    const saved = z.array(bibleChapterSchema).max(6).parse(transport.storage?.read() ?? []);
-    for (const c of saved) if (c.version === "alm1911") chapters.set(`${c.book.abbrev}:${c.chapter}`, c);
-  } catch { /* Corrupt or unavailable cache never blocks reading. */ }
+  if (persistChapters) {
+    try {
+      const saved = z.array(bibleChapterSchema).max(6).parse(transport.storage?.read() ?? []);
+      for (const c of saved) if (c.version === version) chapters.set(`${c.book.abbrev}:${c.chapter}`, c);
+    } catch { /* Corrupt or unavailable cache never blocks reading. */ }
+  }
   const persist = () => {
+    if (!persistChapters) return;
     while (chapters.size > 6) {
       const removable = [...chapters.keys()].find(k => !pinned.includes(k));
       if (!removable) break;
@@ -26,9 +29,9 @@ export function createBibleRepository(transport: BibleTransport, legacy?: BibleR
     try { transport.storage?.write([...chapters.values()]); } catch { /* Continue in memory. */ }
   };
   function getCatalog(): Promise<BibleCatalog> {
-    return catalog ??= transport.load(`${alm1911Base}/catalog.json`).then(raw => {
+    return catalog ??= transport.load(`${base}/catalog.json`).then(raw => {
       const data = bibleCatalogSchema.parse(raw);
-      if (data.version !== "alm1911") throw new Error("Edição bíblica divergente.");
+      if (data.version !== version) throw new Error("Edição bíblica divergente.");
       return data;
     }).catch(error => { catalog = undefined; throw error; });
   }
@@ -42,8 +45,8 @@ export function createBibleRepository(transport: BibleTransport, legacy?: BibleR
       const data = await getCatalog();
       const entry = data.books.find(b => b.abbrev === book);
       if (!entry || !Number.isInteger(number) || number < 1 || number > entry.chapters) return null;
-      const value = bibleChapterSchema.parse(await transport.load(`${alm1911Base}/${book}/${number}.json`));
-      if (value.version !== "alm1911" || value.book.abbrev !== book || value.chapter !== number ||
+      const value = bibleChapterSchema.parse(await transport.load(`${base}/${book}/${number}.json`));
+      if (value.version !== version || value.book.abbrev !== book || value.chapter !== number ||
           value.verses.some((v, i) => v.number !== i + 1 || v.abbrev !== book || v.chapter !== number))
         throw new Error("Capítulo bíblico divergente.");
       chapters.set(key, value); persist(); return value;
@@ -58,7 +61,7 @@ export function createBibleRepository(transport: BibleTransport, legacy?: BibleR
     });
     return () => { if (active) { active = false; release?.(); } };
   };
-  const staticReader: BibleReaderRepository = {
+  return {
     watchBible: () => watch(getCatalog),
     watchChapter: (book, number, preload = false) => watch(async () => {
       if (!preload) {
@@ -73,7 +76,7 @@ export function createBibleRepository(transport: BibleTransport, legacy?: BibleR
         const { text } = bibleSearchSchema.parse({ text: query, page });
         const words = searchWords(text);
         if (!words.length) return { verses: [], total: 0, page };
-        const loading = searchIndex ??= transport.load(`${alm1911Base}/search.json`).then(raw => bibleSearchIndexSchema.parse(raw));
+        const loading = searchIndex ??= transport.load(`${base}/search.json`).then(raw => bibleSearchIndexSchema.parse(raw));
         const index = await loading;
         const matches = index.filter(row => {
           const tokens = row[3].split(" ");
@@ -92,11 +95,17 @@ export function createBibleRepository(transport: BibleTransport, legacy?: BibleR
       }, () => { searches--; if (!searches) searchIndex = undefined; })(next, error);
     },
   };
+}
+export function createBibleRepository(transport: BibleTransport, legacy?: BibleReaderRepository, licensed: { version: BibleVersion; base: string }[] = []): BibleRepository {
+  const staticReader = staticEdition(transport, "alm1911", alm1911Base, true);
+  const extras = new Map(licensed.map(item => [item.version, staticEdition(transport, item.version, item.base, false)]));
   return {
-    versions: legacy ? ["aa", "alm1911"] : ["alm1911"],
+    versions: [...(legacy ? ["aa" as const] : []), "alm1911" as const, ...licensed.map(item => item.version)],
     forVersion(version: BibleVersion) {
       if (version === "alm1911") return staticReader;
-      if (legacy) return legacy;
+      const extra = extras.get(version);
+      if (extra) return extra;
+      if (legacy && version === "aa") return legacy;
       throw new Error("Esta versão da Bíblia não está disponível.");
     },
   };

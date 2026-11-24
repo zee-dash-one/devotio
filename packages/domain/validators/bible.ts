@@ -1,11 +1,21 @@
 import { z } from "zod";
 
-export const bibleVersionSchema = z.enum(["aa", "alm1911"]);
+export const bibleVersionSchema = z.enum(["aa", "alm1911", "ara", "arc", "nvi"]);
 export type BibleVersion = z.infer<typeof bibleVersionSchema>;
+export const licensedBibleVersions = ["ara", "arc", "nvi"] as const;
 export const bibleVersionNames: Record<BibleVersion, string> = {
   aa: "Almeida Atualizada (AA)",
   alm1911: "Almeida Revista e Corrigida 1911 (ARC1911)",
+  ara: "Almeida Revista e Atualizada (ARA)",
+  arc: "Almeida Revista e Corrigida (ARC)",
+  nvi: "Nova Versão Internacional (NVI)",
 };
+export const bibleEditionPointerSchema = z.object({
+  version: bibleVersionSchema,
+  revision: z.string().regex(/^[a-f0-9]{64}$/),
+  verses: z.number().int().positive(),
+  books: z.literal(66),
+});
 export const alm1911Revision = "a47705dc5637daaa2e65160c9fe9aadb70edbdda855179045dbaf288f6aff795";
 export const alm1911Base = `/bibles/alm1911/${alm1911Revision}`;
 const canonicalBooks = "gn ex lv nm dt js jz rt 1sm 2sm 1rs 2rs 1cr 2cr ed ne et job sl pv ec ct is jr lm ez dn os jl am ob jn mq na hc sf ag zc ml mt mc lc jo at rm 1co 2co gl ef fp cl 1ts 2ts 1tm 2tm tt fm hb tg 1pe 2pe 1jo 2jo 3jo jd ap".split(" ");
@@ -48,7 +58,7 @@ export const bibleSearchSchema = z.object({
 export const bibleSearchIndexSchema = z.array(z.tuple([
   z.string().regex(/^[a-z0-9]{1,6}$/), z.number().int().min(1).max(150),
   z.number().int().min(1).max(176), z.string(),
-])).max(31101);
+])).max(32000);
 export function resolveBibleVersion(preferred: BibleVersion | undefined, available: readonly BibleVersion[]): BibleVersion {
   if (preferred && available.includes(preferred)) return preferred;
   if (available.includes("aa")) return "aa";

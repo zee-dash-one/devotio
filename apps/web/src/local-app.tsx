@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { createLocalRepository, localSession, localLogin, localLogout } from "domain/local";
 import type { LocalProfile, Repository } from "domain/core";
 import { App } from "./router";
-import { createWebBible } from "./bible-repository";
+import { createWebBible, licensedEditions } from "./bible-repository";
+import type { BibleVersion } from "domain/core";
 
 const sessionEvent = "devotio:session-change";
 function clearCache() {
@@ -18,6 +19,8 @@ export function LocalApp() {
   const profile = session?.profile;
   const [profiles, setProfiles] = useState<LocalProfile[]>([]);
   const [repository, setRepository] = useState<Repository | null>(null);
+  const [licensed, setLicensed] = useState<{ version: BibleVersion; base: string }[]>([]);
+  useEffect(() => { void licensedEditions().then(setLicensed); }, []);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [storageWarning, setStorageWarning] = useState("");
@@ -52,7 +55,7 @@ export function LocalApp() {
       write(cache) { localStorage.setItem(key, JSON.stringify(cache)); },
       clear: clearCache,
     }, () => { setSession(null); setRepository(null); notifySession(); }, session.profile.id, { sessionExpiresAt: session.expiresAt, onStorageWarning: setStorageWarning });
-    setRepository({ ...connection.repository, bible: createWebBible(session.profile.id, connection.repository.reading) });
+    setRepository({ ...connection.repository, bible: createWebBible(session.profile.id, connection.repository.reading, licensed) });
     const events = typeof EventSource === "undefined" ? null : new EventSource("/__local/events?profile=" + encodeURIComponent(session.profile.id));
     events?.addEventListener("notifications", event => {
       try { void connection.acceptNotificationEvent(JSON.parse((event as MessageEvent<string>).data)); } catch { /* Ignore malformed transport data; explicit refresh remains available. */ }
@@ -64,7 +67,7 @@ export function LocalApp() {
     document.addEventListener("visibilitychange", foreground);
     checkClock();
     return () => { events?.close(); clearInterval(timer); document.removeEventListener("visibilitychange", foreground); connection.dispose(); };
-  }, [session]);
+  }, [session, licensed]);
   return <>
     {storageWarning && <p className="notice" role="status">{storageWarning}</p>}
     <App repository={repository} localProfiles={profiles} localProfile={profile}
