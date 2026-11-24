@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Feather } from "lucide-react";
-import { peregrinoModel, peregrinoSelection, validationMessage, type BibleSelection, type PeregrinoTarget } from "domain/core";
+import { peregrinoSelection, peregrinoStages, peregrinoThinking, validationMessage, type BibleSelection, type PeregrinoField, type PeregrinoTarget } from "domain/core";
 import { useApp } from "../context";
 import { ErrorMessage } from "../components";
 import { Button, IconButton } from "../ui/button";
@@ -30,6 +30,7 @@ export function PeregrinoPanel({ selection, date, reflection, prayerSuggestion, 
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [draft, setDraft] = useState<{ reflection?: string; prayerSuggestion?: string } | null>(null);
+  const [trace, setTrace] = useState<{ thinking: string; state: "run" | "done" | "error" }[]>([]);
   const ready = Boolean(selection || date);
   useEffect(() => {
     if (!system) return;
@@ -53,14 +54,33 @@ export function PeregrinoPanel({ selection, date, reflection, prayerSuggestion, 
   }, [open]);
   if (!system) return null;
   async function suggest(target: PeregrinoTarget) {
-    setBusy(true); setError(""); setDraft(null);
+    const fields: PeregrinoField[] = target === "both" ? ["reflection", "prayer"] : [target];
+    const patch: { reflection?: string; prayerSuggestion?: string } = {};
+    setBusy(true); setError(""); setDraft(null); setTrace([]);
     try {
-      setDraft(await system!.peregrinoSuggest({
-        selection: selection ? peregrinoSelection(selection) : undefined, date, reflection, prayerSuggestion, target,
-        ...(focus.trim() ? { focus: focus.trim() } : {}),
-      }));
-    } catch (cause) { setError(validationMessage(cause)); }
-    finally { setBusy(false); }
+      for (const field of fields) {
+        let text = "";
+        let notes = "";
+        for (const stage of peregrinoStages) {
+          const thinking = peregrinoThinking(stage, field);
+          setTrace(current => [...current, { thinking, state: "run" }]);
+          const step = await system!.peregrinoStep({
+            selection: selection ? peregrinoSelection(selection) : undefined,
+            date, field, stage, text: text || undefined, notes: notes || undefined,
+            ...(focus.trim() ? { focus: focus.trim() } : {}),
+          });
+          text = step.text;
+          notes = step.notes;
+          setTrace(current => current.map((item, index) => index === current.length - 1 ? { thinking: step.thinking, state: "done" } : item));
+        }
+        if (field === "reflection") patch.reflection = text;
+        else patch.prayerSuggestion = text;
+      }
+      setDraft(patch);
+    } catch (cause) {
+      setTrace(current => current.map((item, index) => index === current.length - 1 ? { ...item, state: "error" } : item));
+      setError(validationMessage(cause));
+    } finally { setBusy(false); }
   }
   return (
     <div className="peregrino-dock" ref={dockRef}>
@@ -87,7 +107,12 @@ export function PeregrinoPanel({ selection, date, reflection, prayerSuggestion, 
               </label>
             </>
           )}
-          {busy && <p role="status">Estou lendo o trecho e preparando o rascunho.</p>}
+          {busy && <p role="status">Estou no meio do caminho. Cada linha abaixo é uma etapa.</p>}
+          {!!trace.length && (
+            <ol className="peregrino-trace" aria-live="polite">
+              {trace.map((item, index) => <li key={index} data-state={item.state}>{item.thinking}</li>)}
+            </ol>
+          )}
           {error && <ErrorMessage message={error} />}
           {draft && (
             <>

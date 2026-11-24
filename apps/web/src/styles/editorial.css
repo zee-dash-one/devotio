@@ -130,9 +130,19 @@ body:has(.devotional-editor) {
   margin: 0 0 12px;
 }
 
-.peregrino-questions {
+.peregrino-trace {
+  margin: 0 0 12px;
+  padding-left: 1.1rem;
   display: grid;
   gap: 8px;
+}
+
+.peregrino-trace li[data-state="run"] {
+  font-style: italic;
+}
+
+.peregrino-trace li[data-state="error"] {
+  color: var(--error);
 }
 
 .peregrino-balloon .field {

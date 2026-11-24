@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { peregrinoErrorMessage, peregrinoModel, peregrinoSelection, peregrinoStageMessages, peregrinoStages, runPeregrinoPipeline } from "./peregrino";
+import { peregrinoErrorMessage, peregrinoModel, peregrinoSelection, peregrinoStageFailure, peregrinoStageMessages, peregrinoStages, peregrinoThinking, runPeregrinoPipeline } from "./peregrino";
 
 const context = { reference: "João 1:1", scripture: "1 - No princípio", focus: "cansaço" };
 
@@ -13,6 +13,8 @@ describe("Peregrino", () => {
     expect(human[1].content).toContain("humanizar-posts-ptbr");
     const critique = peregrinoStageMessages({ stage: "critique", field: "prayer", ...context, text: "Senhor, acolhe. Amém." });
     expect(critique[1].content).toContain("teologia reformada");
+    expect(peregrinoThinking("critique", "reflection")).toContain("cristão reformado");
+    expect(peregrinoStageFailure("draft", "reflection", "call", "tempo esgotado")).toContain("chamada ao modelo falhou na escrita");
     const selection = peregrinoSelection({ book: "ap", chapter: 22, first: 1, last: 5, version: "alm1911", reference: "rótulo", text: "trecho", versionName: "nome" } as never);
     expect(selection).toEqual({ book: "ap", chapter: 22, first: 1, last: 5, version: "alm1911" });
   });
@@ -38,6 +40,9 @@ describe("Peregrino", () => {
     }, { reference: "João 1:1", scripture: "1 - No princípio", target: "reflection" });
     expect(calls).toBe(6);
     expect(result.reflection).toBe("Eu permaneço neste trecho com você.");
+  });
+  it("names the stage when the model call fails", async () => {
+    await expect(runPeregrinoPipeline(async () => { throw new Error("tempo esgotado"); }, { reference: "João 1:1", scripture: "1 - No princípio", target: "reflection" })).rejects.toThrow(/chamada ao modelo falhou na escrita/);
   });
   it("maps provider statuses to Portuguese", () => {
     expect(peregrinoErrorMessage(401)).toMatch(/chave/);

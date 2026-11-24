@@ -330,6 +330,16 @@ export function createLocalRepository(storage: LocalCacheStorage, onExpired: () 
         if (!response.ok) throw new Error(value.error ?? "O Peregrino não respondeu a tempo. Tente novamente em instantes.");
         return value as { reflection?: string; prayerSuggestion?: string; model: string };
       },
+      peregrinoStep: async (input) => {
+        const response = await fetch("/__local/peregrino-step", {
+          method: "POST", credentials: "same-origin", cache: "no-store",
+          headers: { "Content-Type": "application/json", "X-Devotio-Profile": profileId },
+          body: JSON.stringify(input), signal: AbortSignal.timeout(35000),
+        });
+        const value = await response.json() as { error?: string; text?: string; notes?: string; thinking?: string };
+        if (!response.ok || !value.text || !value.thinking) throw new Error(value.error ?? "O Peregrino não respondeu a tempo. Tente novamente em instantes.");
+        return { text: value.text, notes: value.notes ?? "", thinking: value.thinking };
+      },
     },
     watchHome: date => watch("home:" + date, () => home(date)),
     watchCommunities: () => watch("communities", () => query<Community[]>({ query: "communities" })),
