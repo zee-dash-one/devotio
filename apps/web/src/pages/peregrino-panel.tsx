@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Feather } from "lucide-react";
-import { peregrinoSelection, peregrinoStages, peregrinoThinking, validationMessage, type BibleSelection, type PeregrinoField, type PeregrinoTarget } from "domain/core";
+import { peregrinoSelection, peregrinoStageName, peregrinoStages, peregrinoThinking, validationMessage, type BibleSelection, type PeregrinoField, type PeregrinoTarget } from "domain/core";
 import { useApp } from "../context";
 import { ErrorMessage } from "../components";
 import { Button, IconButton } from "../ui/button";
@@ -95,7 +95,12 @@ export function PeregrinoPanel({ selection, date, reflection, prayerSuggestion, 
           )}
           {configured && ready && !draft && !busy && (
             <>
-              <p>O que você quer que eu prepare? A meditação fica em até 500 caracteres e a oração em até 250. O texto passa por escrita, conferência, humanização e revisão antes de chegar aqui.</p>
+              <p>O que você quer que eu prepare? A meditação fica em até 500 caracteres e a oração em até 250.</p>
+              {!trace.length && (
+                <ol className="peregrino-trace" aria-label="Caminho do Peregrino">
+                  {peregrinoStages.map((stage) => <li key={stage}>{peregrinoStageName(stage)}</li>)}
+                </ol>
+              )}
               <div className="peregrino-questions">
                 {questions.map(question => (
                   <Button key={question.target} type="button" variant="secondary" onClick={() => void suggest(question.target)}>{question.label}</Button>
@@ -109,8 +114,12 @@ export function PeregrinoPanel({ selection, date, reflection, prayerSuggestion, 
           )}
           {busy && <p role="status">Estou no meio do caminho. Cada linha abaixo é uma etapa.</p>}
           {!!trace.length && (
-            <ol className="peregrino-trace" aria-live="polite">
-              {trace.map((item, index) => <li key={index} data-state={item.state}>{item.thinking}</li>)}
+            <ol className="peregrino-trace" aria-live="polite" aria-label="Caminho do Peregrino">
+              {trace.map((item, index) => (
+                <li key={index} data-state={item.state}>
+                  <strong>{item.state === "run" ? "Agora" : item.state === "error" ? "Parou" : "Feito"}.</strong> {item.thinking}
+                </li>
+              ))}
             </ol>
           )}
           {error && <ErrorMessage message={error} />}

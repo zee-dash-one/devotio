@@ -137,8 +137,12 @@ body:has(.devotional-editor) {
   gap: 8px;
 }
 
+.peregrino-trace li {
+  line-height: 1.45;
+}
+
 .peregrino-trace li[data-state="run"] {
-  font-style: italic;
+  font-weight: 600;
 }
 
 .peregrino-trace li[data-state="error"] {
