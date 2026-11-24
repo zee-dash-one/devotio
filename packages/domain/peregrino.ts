@@ -26,6 +26,16 @@ const systemPrompt = [
   "(6) Responda somente com JSON válido: {\"reflection\":\"...\",\"prayerSuggestion\":\"...\"}. Se o alvo for só um dos campos, omita o outro.",
 ].join(" ");
 
+export function peregrinoSelection(selection: z.infer<typeof bibleSelectionSchema>) {
+  return {
+    book: selection.book,
+    chapter: selection.chapter,
+    first: selection.first,
+    last: selection.last,
+    ...(selection.verses ? { verses: selection.verses } : {}),
+    version: selection.version,
+  };
+}
 export function buildPeregrinoMessages(input: { reference: string; scripture: string; reflection?: string; prayerSuggestion?: string; focus?: string; target: PeregrinoTarget }) {
   return [
     { role: "system" as const, content: systemPrompt },
@@ -43,11 +53,11 @@ export function parsePeregrinoOutput(text: string, target: PeregrinoTarget) {
   const end = text.lastIndexOf("}");
   if (start < 0 || end <= start) throw new Error("O Peregrino devolveu uma resposta inesperada. Tente novamente.");
   const parsed = outputSchema.parse(JSON.parse(text.slice(start, end + 1)));
-  return {
-    reflection: target === "prayer" ? undefined : parsed.reflection,
-    prayerSuggestion: target === "reflection" ? undefined : parsed.prayerSuggestion,
-    model: peregrinoModel,
-  };
+  const result: { reflection?: string; prayerSuggestion?: string; model: string } = { model: peregrinoModel };
+  if (target !== "prayer" && parsed.reflection) result.reflection = parsed.reflection;
+  if (target !== "reflection" && parsed.prayerSuggestion) result.prayerSuggestion = parsed.prayerSuggestion;
+  if (!result.reflection && !result.prayerSuggestion) throw new Error("O Peregrino devolveu uma resposta inesperada. Tente novamente.");
+  return result;
 }
 
 export function peregrinoErrorMessage(status: number) {

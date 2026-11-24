@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Feather } from "lucide-react";
-import { validationMessage, type BibleSelection, type PeregrinoTarget } from "domain/core";
+import { peregrinoModel, peregrinoSelection, validationMessage, type BibleSelection, type PeregrinoTarget } from "domain/core";
 import { useApp } from "../context";
 import { ErrorMessage } from "../components";
 import { Button, IconButton } from "../ui/button";
@@ -56,7 +56,7 @@ export function PeregrinoPanel({ selection, date, reflection, prayerSuggestion, 
     setBusy(true); setError(""); setDraft(null);
     try {
       setDraft(await system!.peregrinoSuggest({
-        selection, date, reflection, prayerSuggestion, target,
+        selection: selection ? peregrinoSelection(selection) : undefined, date, reflection, prayerSuggestion, target,
         ...(focus.trim() ? { focus: focus.trim() } : {}),
       }));
     } catch (cause) { setError(validationMessage(cause)); }
