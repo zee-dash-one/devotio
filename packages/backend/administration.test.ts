@@ -107,6 +107,7 @@ beforeEach(() => {
   vi.stubEnv("ADMIN_PASSWORD_HASH", "test-hash");
   vi.stubEnv("ADMIN_TOTP_SECRET", "12345678901234567890");
   vi.stubEnv("PILOT_EXISTING_USERS_BEFORE", "2020-01-01T00:00:00Z");
+  vi.stubEnv("DEVOTIONAL_IMAGES_ENABLED", "false"); // approval flows do not exercise image generation
 });
 afterEach(async () => {
   try { for (const t of stores.splice(0)) await t.finishAllScheduledFunctions(vi.runAllTimers); }
