@@ -322,8 +322,6 @@ function EditorForm({
       <PeregrinoPanel
         selection={draft.selection}
         date={existing?.date}
-        reflection={draft.reflection}
-        prayerSuggestion={draft.prayerSuggestion}
         onApply={patch => change(patch)}
       />
       <BiblePickerButton

@@ -130,6 +130,11 @@ describe("entrada local integrada", () => {
         for (const home of Object.values(homes) as { devotional: { reference: string; selection: BibleSelection } }[]) { home.devotional.reference = "Colossenses 1:3–23"; home.devotional.selection = { book: "cl", chapter: 1, first: 3, last: 23, version: "aa" }; }
         return new Response(JSON.stringify(homes));
       }
+      if (isQuery(path,"reading")) {
+        const reading = await response.json() as { recent: { reference: string; selection: BibleSelection }[] };
+        for (const item of reading.recent) { item.reference = "Colossenses 1:3–23"; item.selection = { book: "cl", chapter: 1, first: 3, last: 23, version: "aa" }; }
+        return new Response(JSON.stringify(reading));
+      }
       if (isQuery(path,"bible")) { const data = await response.json(); return new Response(JSON.stringify({ ...data, books: [book] })); }
       if (isQuery(path,"chapter")) return new Response(JSON.stringify({ book, chapter: 1, verses: Array.from({ length: 29 }, (_, i) => ({ abbrev: "cl", bookName: "Colossenses", chapter: 1, number: i+1, text: "Versículo " + (i+1) })) }));
       return response;
@@ -413,6 +418,7 @@ describe("entrada local integrada", () => {
     const label = older.getAttribute("aria-label")!.replace("Ler devocional de ", "");
     fireEvent.click(older);
     fireEvent.click(screen.getByRole("button", { name: "Compartilhar devocional" }));
+    fireEvent.click(screen.getByRole("button", { name: "Texto" }));
     await waitFor(() => expect(share).toHaveBeenCalledWith({ text: expect.stringContaining(`Devocional de ${label}`) }));
     fireEvent.click(screen.getByRole("button", { name: "Adicionar aos favoritos" }));
     await screen.findByRole("button", { name: "Remover dos favoritos" });
@@ -421,6 +427,7 @@ describe("entrada local integrada", () => {
     fireEvent.click(screen.getByRole("link", { name: "Favoritos" }));
     await screen.findByRole("heading", { name: "Devocionais Favoritos" });
     fireEvent.click(screen.getByRole("button", { name: "Compartilhar devocional" }));
+    fireEvent.click(screen.getByRole("button", { name: "Texto" }));
     await waitFor(() => expect(share).toHaveBeenCalledTimes(2));
     expect(share.mock.calls[1][0].text).toContain(`Devocional de ${label}`);
     Object.defineProperty(navigator, "share", { configurable: true, value: undefined });

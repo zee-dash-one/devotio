@@ -28,6 +28,35 @@ export const peregrinoStepSchema = z.object({
 });
 export const peregrinoReflectionLimit = 500;
 export const peregrinoPrayerLimit = 250;
+export const peregrinoNotesLimit = 1000;
+
+export class PeregrinoCallError extends Error {
+  constructor(message: string, readonly retryable: boolean) {
+    super(message);
+    this.name = "PeregrinoCallError";
+  }
+}
+export function peregrinoRetryableStatus(status: number) {
+  return status === 408 || status === 429 || status >= 500;
+}
+export async function retryPeregrinoCall<T>(run: () => Promise<T>, attempts = 3, pause = 1200): Promise<T> {
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      return await run();
+    } catch (error) {
+      if (attempt >= attempts || !(error instanceof PeregrinoCallError) || !error.retryable) throw error;
+      await new Promise(resolve => setTimeout(resolve, pause * attempt));
+    }
+  }
+}
+// A polishing stage that cannot be parsed must not discard the text already written.
+export function peregrinoFallback(stage: PeregrinoStage, field: PeregrinoField, text?: string) {
+  if (stage === "draft" || !text?.trim()) return undefined;
+  const kept = text.trim();
+  if (kept.length > peregrinoLimit(field)) return undefined;
+  if (field === "prayer" && !/amém\.?$/i.test(kept)) return undefined;
+  return { text: kept, notes: "Etapa mantida sem alterações: a resposta do modelo veio fora do formato." };
+}
 
 const voice = "Escreva em primeira pessoa e fale diretamente ao leitor. A visão é pastoral e reformada: a Escritura conduz, Cristo está no centro e a graça não é mérito. Ajude a meditar na mensagem do trecho. Não invente versículo, número, citação ou fato. Uma frase breve de um Pai da Igreja ou de um pregador só entra se a autoria for certa; se houver dúvida, omita. Não copie trecho de livro.";
 
@@ -50,7 +79,7 @@ export function peregrinoStageName(stage: PeregrinoStage) {
 export function peregrinoStageFailure(stage: PeregrinoStage, field: PeregrinoField, kind: "call" | "answer", detail?: string) {
   const where = `${peregrinoStageName(stage)} da ${field === "reflection" ? "meditação" : "oração"}`;
   const what = kind === "call" ? "chamada ao modelo" : "resposta fora do formato";
-  const extra = detail && /500|250|Amém/.test(detail) ? detail : "";
+  const extra = detail && (kind === "call" || /500|250|Amém/.test(detail)) ? detail : "";
   return `Parou na ${where}: ${what}.${extra ? ` ${extra}` : ""}`;
 }
 export function peregrinoLimit(field: PeregrinoField) {
@@ -92,7 +121,7 @@ export function parsePeregrinoStage(raw: string, field: PeregrinoField, stage: P
       const value = JSON.parse(cleaned.slice(start, end + 1)) as { text?: unknown; notes?: unknown; reflection?: unknown; prayerSuggestion?: unknown };
       const picked = typeof value.text === "string" ? value.text : field === "prayer" && typeof value.prayerSuggestion === "string" ? value.prayerSuggestion : typeof value.reflection === "string" ? value.reflection : "";
       text = picked.trim();
-      notes = typeof value.notes === "string" ? value.notes.trim() : undefined;
+      notes = typeof value.notes === "string" ? value.notes.trim().slice(0, peregrinoNotesLimit) : undefined;
     } catch { text = ""; }
   }
   if (!text) text = cleaned.trim();
@@ -131,7 +160,11 @@ export async function runPeregrinoField(
       } catch (error) {
         const detail = error instanceof Error ? error.message : "Corrija o JSON e o tamanho.";
         correction = detail;
-        if (attempt === 1) throw new Error(peregrinoStageFailure(stage, field, "answer", detail));
+        if (attempt === 1) {
+          const kept = peregrinoFallback(stage, field, text);
+          if (!kept) throw new Error(peregrinoStageFailure(stage, field, "answer", detail));
+          notes = kept.notes;
+        }
       }
     }
   }

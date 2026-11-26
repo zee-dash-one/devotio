@@ -12,11 +12,9 @@ const questions: { target: PeregrinoTarget; label: string }[] = [
   { target: "both", label: "Prepara os dois" },
 ];
 
-export function PeregrinoPanel({ selection, date, reflection, prayerSuggestion, onApply }: {
+export function PeregrinoPanel({ selection, date, onApply }: {
   selection?: BibleSelection;
   date?: string;
-  reflection: string;
-  prayerSuggestion: string;
   onApply(patch: { reflection?: string; prayerSuggestion?: string }): void;
 }) {
   const app = useApp();

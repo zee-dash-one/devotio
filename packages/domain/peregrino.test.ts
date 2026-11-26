@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parsePeregrinoStage, peregrinoErrorMessage, peregrinoModel, peregrinoSelection, peregrinoStageFailure, peregrinoStageMessages, peregrinoStages, peregrinoThinking, runPeregrinoPipeline } from "./peregrino";
+import { PeregrinoCallError, peregrinoFallback, retryPeregrinoCall, parsePeregrinoStage, peregrinoErrorMessage, peregrinoModel, peregrinoSelection, peregrinoStageFailure, peregrinoStageMessages, peregrinoStages, peregrinoThinking, runPeregrinoPipeline } from "./peregrino";
 
 const context = { reference: "João 1:1", scripture: "1 - No princípio", focus: "cansaço" };
 
@@ -51,5 +51,38 @@ describe("Peregrino", () => {
     expect(peregrinoErrorMessage(401)).toMatch(/chave/);
     expect(peregrinoErrorMessage(429)).toMatch(/muitas/);
     expect(peregrinoErrorMessage(503)).toMatch(/não respondeu/);
+  });
+  it("caps the notes so the next stage request stays valid", () => {
+    const parsed = parsePeregrinoStage(JSON.stringify({ text: "Eu leio com você.", notes: "n".repeat(3000) }), "reflection", "critique");
+    expect(parsed.notes?.length).toBe(1000);
+  });
+  it("keeps the previous text when a polishing stage answers out of format", async () => {
+    let calls = 0;
+    const result = await runPeregrinoPipeline(async (messages) => {
+      const body = JSON.parse(messages[1].content) as { stage: string };
+      calls += 1;
+      if (body.stage === "humanize") return "x".repeat(900);
+      return JSON.stringify({ text: "Eu leio este trecho com você." });
+    }, { ...context, target: "reflection" });
+    expect(result.reflection).toBe("Eu leio este trecho com você.");
+    expect(calls).toBe(6);
+    expect(peregrinoFallback("draft", "reflection", "texto")).toBeUndefined();
+    expect(peregrinoFallback("revise", "prayer", "Senhor, ouve.")).toBeUndefined();
+    expect(peregrinoFallback("critique", "prayer", "Senhor, ouve. Amém.")?.text).toBe("Senhor, ouve. Amém.");
+  });
+  it("retries transient model failures but not refused keys", async () => {
+    let calls = 0;
+    const value = await retryPeregrinoCall(async () => {
+      calls += 1;
+      if (calls < 3) throw new PeregrinoCallError("muitas solicitações", true);
+      return "ok";
+    }, 3, 0);
+    expect(value).toBe("ok");
+    let refused = 0;
+    await expect(retryPeregrinoCall(async () => { refused += 1; throw new PeregrinoCallError("chave recusada", false); }, 3, 0)).rejects.toThrow("chave recusada");
+    expect(refused).toBe(1);
+  });
+  it("reports why the model call failed", () => {
+    expect(peregrinoStageFailure("critique", "prayer", "call", peregrinoErrorMessage(402))).toContain("saldo ou limite");
   });
 });
