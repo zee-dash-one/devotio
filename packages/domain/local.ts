@@ -187,7 +187,7 @@ export function createLocalRepository(storage: LocalCacheStorage, onExpired: () 
         await invalidate(key => key === "drafts:" + input.id || (input.action === "publishQuoteDraft" && key.startsWith("community:" + input.id + ":"))); break;
       case "sendQuote": case "sendMessage": case "createChecklist": case "updateScripture": case "removeMember":
         await invalidate(key => key.startsWith("community:" + input.id + ":") || (input.action === "removeMember" && (key === "communities" || key.startsWith("governance:")))); break;
-      case "setUserStatus": case "deleteUser": break;
+      case "setUserStatus": case "setUserRole": case "deleteUser": break;
       case "setOpenRouterKey": case "clearOpenRouterKey": break;
       case "setThemes":
         revision++;
@@ -313,6 +313,7 @@ export function createLocalRepository(storage: LocalCacheStorage, onExpired: () 
     system: {
       listUsers: () => query({ query: "systemUsers" }),
       setUserStatus: async (id, status) => { await command({ action: "setUserStatus", id, status }); },
+      setUserRole: async (id, role, grant) => { await command({ action: "setUserRole", id, role, grant }); },
       deleteUser: async (id, confirmEmail) => { await command({ action: "deleteUser", id, confirmEmail }); },
       getThemes: () => query({ query: "themes" }),
       setThemes: async (input) => { await command({ action: "setThemes", input }); },

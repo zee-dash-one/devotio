@@ -207,6 +207,14 @@ describe("SQLite local: autorização, snapshots e persistência", () => {
     expect(listed.find(user => user.id === "novo")?.status).toBe("pending");
     db.command(editor, { action: "setUserStatus", id: "novo", status: "approved" });
     expect((db.query(editor, { query: "systemUsers" }) as { id: string; status: string }[]).find(user => user.id === "novo")?.status).toBe("approved");
+    expect(() => db.command(member, { action: "setUserRole", id: "novo", role: "editorial", grant: true })).toThrow("superusu");
+    db.command(editor, { action: "setUserRole", id: "novo", role: "superuser", grant: true });
+    expect((db.query(editor, { query: "systemUsers" }) as { id: string; editorial: boolean; superuser: boolean }[]).find(user => user.id === "novo")).toMatchObject({ editorial: true, superuser: true });
+    expect(() => db.command(editor, { action: "setUserRole", id: "novo", role: "editorial", grant: false })).toThrow("Rebaixe");
+    db.command(editor, { action: "setUserRole", id: "novo", role: "superuser", grant: false });
+    db.command(editor, { action: "setUserRole", id: "novo", role: "editorial", grant: false });
+    expect((db.query(editor, { query: "systemUsers" }) as { id: string; editorial: boolean; superuser: boolean }[]).find(user => user.id === "novo")).toMatchObject({ editorial: false, superuser: false });
+    expect(() => db.command(editor, { action: "setUserRole", id: editor.id, role: "superuser", grant: false })).toThrow("próprios");
     expect(() => db.command(editor, { action: "deleteUser", id: "marina", confirmEmail: "marina@local.devotio" })).toThrow("demonstração");
     db.command(editor, { action: "deleteUser", id: "novo", confirmEmail: "nova@exemplo.com" });
     expect((db.query(editor, { query: "systemUsers" }) as { id: string }[]).some(user => user.id === "novo")).toBe(false);

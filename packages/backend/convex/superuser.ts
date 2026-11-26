@@ -1,5 +1,5 @@
 import { ConvexError, v } from "convex/values";
-import { defaultThemes, effectiveAccess, themesInputSchema, userDeletionBlockers } from "domain/core";
+import { applyRoleChange, defaultThemes, effectiveAccess, isNamedOwner, roleChangeBlocker, themesInputSchema, userDeletionBlockers } from "domain/core";
 import { query, mutation } from "./_generated/server";
 import type { MutationCtx, QueryCtx } from "./server";
 import type { Doc, Id } from "./_generated/dataModel";
@@ -71,6 +71,29 @@ export const setStatus = mutation({
       actor: `superuser:${actor._id}`,
       target: args.id,
       action: `status:${effectiveAccess(current.status)}->${args.status}`,
+      at: Date.now(),
+    });
+    return null;
+  },
+});
+
+export const setRole = mutation({
+  args: { id: v.id("users"), role: v.union(v.literal("editorial"), v.literal("superuser")), grant: v.boolean() },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const actor = await requireSystem(ctx);
+    const current = await ctx.db.get(args.id);
+    if (!current) throw new ConvexError("Cadastro não encontrado.");
+    const before = { editorial: current.editorial === true, superuser: current.superuser === true };
+    const blocker = roleChangeBlocker({ self: current._id === actor._id, namedOwner: isNamedOwner(current.name), status: effectiveAccess(current.status), ...before }, args.role, args.grant);
+    if (blocker) throw new ConvexError(blocker);
+    const after = applyRoleChange(before, args.role, args.grant);
+    if (after.editorial === before.editorial && after.superuser === before.superuser) return null;
+    await ctx.db.patch(args.id, after);
+    await ctx.db.insert("userAdminEvents", {
+      actor: `superuser:${actor._id}`,
+      target: args.id,
+      action: `roles:editorial:${before.editorial}->${after.editorial};superuser:${before.superuser}->${after.superuser}`,
       at: Date.now(),
     });
     return null;

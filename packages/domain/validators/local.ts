@@ -61,6 +61,7 @@ export const localCommandSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("schedule"), input: scheduleSchema }),
   z.object({ action: z.literal("withdraw"), date: dateSchema, reason: z.string().trim().min(1).max(1000) }),
   z.object({ action: z.literal("setUserStatus"), id, status: z.enum(["approved", "disabled"]) }),
+  z.object({ action: z.literal("setUserRole"), id, role: z.enum(["editorial", "superuser"]), grant: z.boolean() }),
   z.object({ action: z.literal("deleteUser"), id, confirmEmail: z.string().trim().email("Informe o e-mail do cadastro.").max(160) }),
   z.object({ action: z.literal("setThemes"), input: themesInputSchema }),
   z.object({ action: z.literal("setOpenRouterKey"), key: openRouterKeySchema }),
