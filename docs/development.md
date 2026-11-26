@@ -31,10 +31,14 @@ npm run dev
 
 Para testar interações simultâneas entre duas contas locais (como convites de amizade, pedidos comunitários ou SSE de notificações), utilize janelas anônimas ou perfis distintos do navegador, pois abas comuns compartilham o mesmo cookie `HttpOnly`.
 
+## 2.1 Entrada por e-mail no ambiente local
+
+Na tela `/entrar` do servidor local, abaixo dos perfis, informe qualquer e-mail e peça o código. Nenhum e-mail é enviado: o código aparece na própria tela ("Ambiente local: o código é …") e no terminal do servidor. O e-mail de um perfil existente entra nele; um e-mail novo cria um cadastro pendente, que um superusuário aprova em Gerenciar usuários.
+
 ## 3. Ambiente conectado (Convex + Google OAuth)
 
 1. Selecionar o deployment Convex de desenvolvimento (`convex.json` aponta para `packages/backend/convex/`).
-2. No deployment Convex, garantir as variáveis privadas: `SITE_URL` (origem exata da web), `BETTER_AUTH_SECRET`, `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET` (com callback `https://<deployment>.convex.site/api/auth/callback/google` autorizado no Google Cloud), além das variáveis administrativas descritas em [`operations.md`](operations.md) quando usar `/gestao-acesso`.
+2. No deployment Convex, garantir as variáveis privadas: `SITE_URL` (origem exata da web), `BETTER_AUTH_SECRET`, `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET` (com callback `https://<deployment>.convex.site/api/auth/callback/google` autorizado no Google Cloud), além das variáveis administrativas descritas em [`operations.md`](operations.md) quando usar `/gestao-acesso`. Para a entrada por e-mail, defina também `GMAIL_USER` e `GMAIL_APP_PASSWORD` (veja [`operations.md`](operations.md)); sem elas o botão de enviar código responde que a entrada por e-mail não foi configurada.
 3. Copiar `apps/web/.env.example` para `apps/web/.env.local` preenchendo ambos os endpoints públicos HTTPS do mesmo deployment:
    ```dotenv
    VITE_CONVEX_URL=https://<deployment>.convex.cloud

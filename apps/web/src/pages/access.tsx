@@ -12,6 +12,7 @@ import {
 import { useApp } from "../context";
 import { Brand, Ornament, ErrorMessage } from "../components";
 import { RouteRedirect } from "../redirect";
+import { EmailLoginForm } from "./email-login";
 export function SignInPage() {
   const app = useApp();
   const search = useSearch({ from: "/entrar" });
@@ -83,8 +84,10 @@ export function SignInPage() {
               máquina.
             </p>
             {app.localError && <ErrorMessage message={app.localError} />}
+            {app.emailLogin && <EmailLoginForm login={app.emailLogin} />}
           </div>
         ) : app.configured || app.preview ? (
+          <>
           <Button
             className="login-button"
             disabled={pending}
@@ -107,6 +110,8 @@ export function SignInPage() {
                 : "Continuar com Google"}
             <ArrowRight size={17} />
           </Button>
+          {app.emailLogin && !app.preview && <EmailLoginForm login={app.emailLogin} />}
+          </>
         ) : (
           <div className="setup-notice">
             <BookOpen size={23} />

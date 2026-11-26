@@ -16,6 +16,7 @@ export interface AppContextValue {
   loading: boolean;
   userKey: string;
   onLogin: (destination: string, profileId?: string) => Promise<void>;
+  emailLogin?: import("domain/core").EmailLogin;
   onLogout: () => Promise<void>;
 }
 export const AppContext = createContext<AppContextValue | null>(null);

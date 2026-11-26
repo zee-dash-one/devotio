@@ -1,6 +1,7 @@
 import { ConvexReactClient, useConvexAuth } from "convex/react";
 import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
 import { createAuthClient } from "better-auth/react";
+import { emailOTPClient } from "better-auth/client/plugins";
 import {
   convexClient,
   crossDomainClient,
@@ -17,6 +18,16 @@ import { useEffect, useMemo, useState } from "react";
 import { createWebBible, licensedEditions } from "./bible-repository";
 import type { BibleVersion } from "domain/core";
 
+const emailLoginMessages: Record<string, string> = {
+  INVALID_OTP: "Código inválido ou expirado. Peça um novo.",
+  OTP_EXPIRED: "Código inválido ou expirado. Peça um novo.",
+  TOO_MANY_ATTEMPTS: "Muitas tentativas. Peça um novo código.",
+};
+function emailLoginError(error: { code?: string; status?: number }) {
+  if (error.code && emailLoginMessages[error.code]) return emailLoginMessages[error.code];
+  if (error.status === 429) return "Muitos pedidos de código. Aguarde alguns minutos e tente de novo.";
+  return "Não foi possível usar o e-mail agora. Tente novamente em instantes.";
+}
 /** Load the connected adapter only when both public service URLs are configured. */
 export function createLiveApp(url: string, site: string) {
   const client = new ConvexReactClient(url);
@@ -25,7 +36,7 @@ export function createLiveApp(url: string, site: string) {
   const connectedEditorial = createConnectedEditorial(client);
   const auth = createAuthClient({
     baseURL: site,
-    plugins: [convexClient(), crossDomainClient()],
+    plugins: [convexClient(), crossDomainClient(), emailOTPClient()],
   });
 
   function AuthenticatedApp() {
@@ -71,6 +82,17 @@ export function createLiveApp(url: string, site: string) {
           });
           if (result.error)
             throw new Error("Não foi possível entrar. Tente novamente.");
+        }}
+        emailLogin={{
+          request: async (email) => {
+            const result = await auth.emailOtp.sendVerificationOtp({ email, type: "sign-in" });
+            if (result.error) throw new Error(emailLoginError(result.error));
+            return {};
+          },
+          verify: async (email, code) => {
+            const result = await auth.signIn.emailOtp({ email, otp: code });
+            if (result.error) throw new Error(emailLoginError(result.error));
+          },
         }}
         onLogout={async () => {
           const result = await auth.signOut();

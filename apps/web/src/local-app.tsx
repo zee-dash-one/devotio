@@ -1,6 +1,6 @@
 // Loaded only behind import.meta.env.DEV. Never included in the public bundle.
 import { useEffect, useState } from "react";
-import { createLocalRepository, localSession, localLogin, localLogout } from "domain/local";
+import { createLocalRepository, localSession, localLogin, localLogout, localRequestEmailCode, localVerifyEmailCode } from "domain/local";
 import type { LocalProfile, Repository } from "domain/core";
 import { App } from "./router";
 import { createWebBible, licensedEditions } from "./bible-repository";
@@ -76,6 +76,13 @@ export function LocalApp() {
         if (!profileId) throw new Error("Escolha um perfil para entrar.");
         const value = await localLogin(profileId);
         clearCache(); setStorageWarning(""); setRepository(null); setSession(value); notifySession();
+      }}
+      emailLogin={{
+        request: email => localRequestEmailCode(email),
+        verify: async (email, code) => {
+          const value = await localVerifyEmailCode(email, code);
+          clearCache(); setStorageWarning(""); setRepository(null); setSession(value); notifySession();
+        },
       }}
       onLogout={async () => { await localLogout(); clearCache(); setRepository(null); setSession(null); notifySession(); }} />
   </>;
