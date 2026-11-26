@@ -204,3 +204,5 @@ O renderer final usa fontkit + resvg nativo, com fonte incorporada e licença OF
 - PR: https://github.com/zee-dash-one/devotio/pull/14.
 - git push -u origin feat/devotional-share-images e gh pr create --base main: sucesso em 26/10/2026.
 - Conferência dos links locais: sucesso. Deploy e merge não executados; passos de release no PR e no manual operacional.
+
+**Consolidação em 26/10/2026:** a implementação do PR #14 foi incorporada ao PR #15 para revisão e release conjuntos. O #14 ficou substituído; nenhum merge na `main` nem deploy foi feito nesta integração.
