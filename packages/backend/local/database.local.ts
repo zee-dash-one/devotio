@@ -191,6 +191,14 @@ export class LocalDatabase {
     this.run("INSERT INTO sessions VALUES (?,?,?)", token, id, expiresAt);
     return { token, profile, expiresAt };
   }
+  /** Finds the account for an e-mail, creating a pending request like the connected sign-up does. */
+  emailAccount(email: string) {
+    const found = this.all<{ id: string; data: string }>("SELECT id,data FROM users").find(row => ((JSON.parse(row.data) as { email?: string }).email ?? `${row.id}@local.devotio`).toLowerCase() === email);
+    if (found) return found.id;
+    const id = "mail-" + createHash("sha256").update(email).digest("hex").slice(0, 12);
+    this.run("INSERT INTO users VALUES (?,?)", id, JSON.stringify({ id, name: email.split("@")[0], label: "Pedido", description: "Pedido por e-mail", editorial: false, email, status: "pending" }));
+    return id;
+  }
   sessionExpiresAt(token?: string): number | null {
     return token ? this.get<{ expiresAt: number }>("SELECT expiresAt FROM sessions WHERE token=? AND expiresAt>?", token, this.now())?.expiresAt ?? null : null;
   }
@@ -269,7 +277,7 @@ export class LocalDatabase {
           try { return this.social.command(user.id, input.input); }
           catch (error) { throw new LocalError(error instanceof Error ? error.message : "Não foi possível concluir."); }
         }
-        case "login": case "logout": throw new LocalError("Operação de sessão inválida.");
+        case "login": case "logout": case "requestEmailCode": case "verifyEmailCode": throw new LocalError("Operação de sessão inválida.");
         case "createCommunity": {
           const permission = this.governance.creation(user.id);
           if (!permission.allowed) throw new LocalError("Você não tem permissão para criar comunidades. Fale com a administração.", 403);

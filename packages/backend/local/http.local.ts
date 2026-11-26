@@ -7,6 +7,7 @@ import { LOCAL_SESSION_SECONDS } from "../../domain/local-cache";
 import { LocalImages } from "./images.local";
 import { imageRequestSchema, canManageEditorial, peregrinoRequestSchema, peregrinoStepSchema } from "../../domain/index";
 import { suggestLocal, stepLocal } from "./peregrino.local";
+import { LocalEmailLogin } from "./email-login.local";
 const cookieName = "devotio_local_session";
 function token(req: IncomingMessage) {
   return req.headers.cookie?.split(";").map(v => v.trim()).find(v => v.startsWith(cookieName + "="))?.slice(cookieName.length + 1);
@@ -22,7 +23,7 @@ async function body(req: IncomingMessage): Promise<unknown> {
   }
   try { return JSON.parse(content); } catch { throw new LocalError("Requisição inválida."); }
 }
-export function createLocalHandler(database: LocalDatabase, images?: LocalImages) {
+export function createLocalHandler(database: LocalDatabase, images?: LocalImages, emailLogin = new LocalEmailLogin()) {
   return async (req: IncomingMessage, res: ServerResponse) => {
     const send = (status: number, data: unknown) => {
       res.statusCode = status;
@@ -106,6 +107,14 @@ export function createLocalHandler(database: LocalDatabase, images?: LocalImages
       if (input.action === "login") {
         if (sessionToken) database.logout(sessionToken);
         const result = database.login(input.profileId);
+        cookie(res, result.token, LOCAL_SESSION_SECONDS);
+        return send(200, { profile: result.profile, expiresAt: result.expiresAt });
+      }
+      if (input.action === "requestEmailCode") return send(200, emailLogin.request(input.email));
+      if (input.action === "verifyEmailCode") {
+        emailLogin.verify(input.email, input.code);
+        if (sessionToken) database.logout(sessionToken);
+        const result = database.login(database.emailAccount(input.email));
         cookie(res, result.token, LOCAL_SESSION_SECONDS);
         return send(200, { profile: result.profile, expiresAt: result.expiresAt });
       }

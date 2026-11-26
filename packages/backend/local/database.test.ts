@@ -227,4 +227,13 @@ describe("SQLite local: autorização, snapshots e persistência", () => {
     expect(db.session(token)?.id).toBe("marina"); advance(29);
     expect(db.session(token)).toBeNull(); expect(() => db.login("admin-global")).toThrow();
   });
+  it("creates a pending account for a new email and signs in an approved one", () => {
+    const { db } = setup();
+    const id = db.emailAccount("nova@example.com");
+    expect(id).toMatch(/^mail-[0-9a-f]{12}$/);
+    expect(db.emailAccount("nova@example.com")).toBe(id);
+    expect(() => db.login(id)).toThrow("não foi aprovado");
+    db.run("UPDATE users SET data=? WHERE id=?", JSON.stringify({ id, name: "nova", label: "Pedido", description: "", editorial: false, email: "nova@example.com", status: "approved" }), id);
+    expect(db.login(id).profile.id).toBe(id);
+  });
 });
