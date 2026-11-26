@@ -24,6 +24,8 @@ export function localSession() {
   return sessionRequest ??= localRequest<LocalSession>("session").finally(() => { sessionRequest = undefined; });
 }
 export function localLogin(profileId: string) { return localRequest<{ profile: LocalProfile; expiresAt: number }>("command", localCommandSchema.parse({ action: "login", profileId })); }
+export function localRequestEmailCode(email: string) { return localRequest<{ devCode: string }>("command", localCommandSchema.parse({ action: "requestEmailCode", email })); }
+export function localVerifyEmailCode(email: string, code: string) { return localRequest<{ profile: LocalProfile; expiresAt: number }>("command", localCommandSchema.parse({ action: "verifyEmailCode", email, code })); }
 export function localLogout() { return localRequest<null>("command", { action: "logout" }); }
 interface Observer { next(value: unknown): void; error(error: Error): void }
 interface Entry { observers: Set<Observer>; value?: unknown; ready: boolean; revision: number; pending?: Promise<void>; emit(): Promise<void> }
@@ -188,6 +190,7 @@ export function createLocalRepository(storage: LocalCacheStorage, onExpired: () 
       case "sendQuote": case "sendMessage": case "createChecklist": case "updateScripture": case "removeMember":
         await invalidate(key => key.startsWith("community:" + input.id + ":") || (input.action === "removeMember" && (key === "communities" || key.startsWith("governance:")))); break;
       case "setUserStatus": case "setUserRole": case "deleteUser": break;
+      case "login": case "logout": case "requestEmailCode": case "verifyEmailCode": break;
       case "setOpenRouterKey": case "clearOpenRouterKey": break;
       case "setThemes":
         revision++;

@@ -6,6 +6,7 @@ import { bibleSelectionSchema } from "../sharing";
 import { editorialMonthSchema } from "../editorial";
 import { themesInputSchema } from "../system";
 import { openRouterKeySchema } from "../peregrino";
+import { emailCodeSchema, emailLoginSchema } from "../email-login";
 import { dateSchema, communitySchema, inviteSchema, messageSchema, scriptureSchema, checklistSchema, publicationSchema, scheduleSchema } from "./index";
 
 export const timeZoneSchema = z.string().max(100).refine(value => {
@@ -43,6 +44,8 @@ export const localCommandSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("social"), input: socialCommandSchema }),
   z.object({ action: z.literal("login"), profileId: id }),
   z.object({ action: z.literal("logout") }),
+  z.object({ action: z.literal("requestEmailCode"), email: emailLoginSchema.shape.email }),
+  z.object({ action: z.literal("verifyEmailCode"), email: emailLoginSchema.shape.email, code: emailCodeSchema }),
   z.object({ action: z.literal("createCommunity"), input: communitySchema }),
   z.object({ action: z.literal("joinCommunity"), code: inviteSchema }),
   z.object({ action: z.literal("sendMessage"), id, content: messageSchema }),
