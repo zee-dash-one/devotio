@@ -1,6 +1,7 @@
 import { ConvexReactClient, useConvexAuth } from "convex/react";
 import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
 import { createAuthClient } from "better-auth/react";
+import { makeFunctionReference } from "convex/server";
 import { emailOTPClient } from "better-auth/client/plugins";
 import {
   convexClient,
@@ -84,6 +85,7 @@ export function createLiveApp(url: string, site: string) {
             throw new Error("Não foi possível entrar. Tente novamente.");
         }}
         emailLogin={{
+          available: () => client.query(makeFunctionReference<"query", Record<string, never>, boolean>("mail:available"), {}).catch(() => false),
           request: async (email) => {
             const result = await auth.emailOtp.sendVerificationOtp({ email, type: "sign-in" });
             if (result.error) throw new Error(emailLoginError(result.error));

@@ -170,7 +170,7 @@ describe("aprovação no backend conectado", () => {
     await expect(
       user.query(q("editorialAccess:list"), { cursor: null }),
     ).rejects.toThrow("aprovado");
-  }, 15000); // First test loads the real Better Auth component and its adapter modules.
+  }, 60000); // First test loads the real Better Auth component and its adapter modules.
   it("preserva legado no produto e contas antigas somente no Better Auth", async () => {
     const t = setup();
     const id = await t.run((ctx) =>

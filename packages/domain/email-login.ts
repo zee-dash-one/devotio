@@ -9,7 +9,7 @@ export const emailLoginSchema = z.object({
   email: z.string().trim().toLowerCase().email("Informe um e-mail válido.").max(160, "Use até 160 caracteres."),
 });
 export const emailCodeSchema = z.string().trim().regex(/^\d{6}$/, "Digite os 6 números do código.");
-export const emailLoginDestinationMessage = "Enviamos um código de 6 números para o seu e-mail. Ele vale por 5 minutos.";
+export const emailLoginDestinationMessage = "Se este e-mail puder entrar, enviamos um código de 6 números. Ele vale por 5 minutos. Confira também o spam.";
 
 /** Generic text: the answer is identical whether or not the account exists. */
 export function emailCodeMessage(code: string) {
@@ -22,6 +22,8 @@ export function emailCodeMessage(code: string) {
 }
 
 export interface EmailLogin {
+  /** False when the server cannot send mail yet, so the page does not promise a code. */
+  available(): Promise<boolean>;
   /** Sends a code. Local development returns it so the page can show it. */
   request(email: string): Promise<{ devCode?: string }>;
   verify(email: string, code: string): Promise<void>;

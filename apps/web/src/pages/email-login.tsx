@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { emailCodeSchema, emailLoginDestinationMessage, emailLoginSchema, validationMessage, type EmailLogin } from "domain/core";
 import { ErrorMessage } from "../components";
 import { Button } from "../ui/button";
@@ -11,6 +11,12 @@ export function EmailLoginForm({ login }: { login: EmailLogin }) {
   const [devCode, setDevCode] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [available, setAvailable] = useState<boolean | null>(null);
+  useEffect(() => {
+    let active = true;
+    login.available().then(value => { if (active) setAvailable(value); }).catch(() => { if (active) setAvailable(false); });
+    return () => { active = false; };
+  }, [login]);
 
   async function run(task: () => Promise<void>) {
     setBusy(true);
@@ -31,6 +37,7 @@ export function EmailLoginForm({ login }: { login: EmailLogin }) {
     await login.verify(emailLoginSchema.parse({ email }).email, emailCodeSchema.parse(code));
   });
 
+  if (!available) return null;
   return (
     <form className="email-login" noValidate onSubmit={event => { event.preventDefault(); void (sent ? verify() : request()); }}>
       <p className="eyebrow">OU ENTRE COM SEU E-MAIL</p>

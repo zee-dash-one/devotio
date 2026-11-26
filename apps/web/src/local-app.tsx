@@ -78,6 +78,7 @@ export function LocalApp() {
         clearCache(); setStorageWarning(""); setRepository(null); setSession(value); notifySession();
       }}
       emailLogin={{
+        available: async () => true,
         request: email => localRequestEmailCode(email),
         verify: async (email, code) => {
           const value = await localVerifyEmailCode(email, code);

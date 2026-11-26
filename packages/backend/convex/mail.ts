@@ -3,7 +3,7 @@ import { MINUTE, RateLimiter } from "@convex-dev/rate-limiter";
 import type { ComponentApi } from "@convex-dev/rate-limiter/_generated/component.js";
 import { componentsGeneric } from "convex/server";
 import { emailLoginLimit } from "domain/core";
-import { internalMutation } from "./_generated/server";
+import { internalMutation, query } from "./_generated/server";
 
 const components = componentsGeneric() as unknown as { rateLimiter: ComponentApi };
 const limiter = new RateLimiter(components.rateLimiter, {
@@ -21,4 +21,11 @@ export const consume = internalMutation({
     if (!global.ok || !own.ok) throw new ConvexError("Muitos pedidos de código. Aguarde alguns minutos e tente de novo.");
     return null;
   },
+});
+
+/** Public on purpose: it only says whether mail can be sent, never why or from where. */
+export const available = query({
+  args: {},
+  returns: v.boolean(),
+  handler: async () => !!process.env.GMAIL_USER && !!process.env.GMAIL_APP_PASSWORD,
 });
