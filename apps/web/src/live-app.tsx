@@ -3,6 +3,7 @@ import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
 import { createAuthClient } from "better-auth/react";
 import { makeFunctionReference } from "convex/server";
 import { emailOTPClient } from "better-auth/client/plugins";
+import { emailLoginError } from "./email-login-error";
 import {
   convexClient,
   crossDomainClient,
@@ -19,16 +20,6 @@ import { useEffect, useMemo, useState } from "react";
 import { createWebBible, licensedEditions } from "./bible-repository";
 import type { BibleVersion } from "domain/core";
 
-const emailLoginMessages: Record<string, string> = {
-  INVALID_OTP: "Código inválido ou expirado. Peça um novo.",
-  OTP_EXPIRED: "Código inválido ou expirado. Peça um novo.",
-  TOO_MANY_ATTEMPTS: "Muitas tentativas. Peça um novo código.",
-};
-function emailLoginError(error: { code?: string; status?: number }) {
-  if (error.code && emailLoginMessages[error.code]) return emailLoginMessages[error.code];
-  if (error.status === 429) return "Muitos pedidos de código. Aguarde alguns minutos e tente de novo.";
-  return "Não foi possível usar o e-mail agora. Tente novamente em instantes.";
-}
 /** Load the connected adapter only when both public service URLs are configured. */
 export function createLiveApp(url: string, site: string) {
   const client = new ConvexReactClient(url);
