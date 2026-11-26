@@ -36,7 +36,7 @@ describe("seleção e compartilhamento", () => {
     expect(() => bibleQuote({ ...chapter, verses: chapter.verses.filter(verse => verse.number !== 2) }, selection)).toThrow("Versículos");
     expect(() => bibleQuote(chapter, { ...selection, chapter: 2 })).toThrow("outro capítulo");
     expect(bibleSelectionSchema.safeParse({ ...selection, first: 3, last: 1 }).success).toBe(false);
-    expect(bibleSelectionSchema.safeParse({ ...selection, version: "nvi" }).success).toBe(false);
+    expect(bibleSelectionSchema.safeParse({ ...selection, version: "xyz" }).success).toBe(false);
   });
   it("comentário é opcional, separado do trecho; busca começa após três caracteres", () => {
     const command = { action: "sendQuote", id: "esperanca", selection, comment: "", requestId: "3537e982-5116-45df-95d9-c2c9f7f1cbbf" };

@@ -1,7 +1,27 @@
-import { bibleQuote, canManageEditorial, canManageSystem, parsePeregrinoStage, peregrinoErrorMessage, peregrinoMissingKey, peregrinoModel, peregrinoRateLimit, peregrinoStageFailure, peregrinoStageMessages, peregrinoTargetSchema, peregrinoThinking, runPeregrinoPipeline, type BibleSelection, type PeregrinoField, type PeregrinoStage, type PeregrinoTarget } from "../../domain/index";
+import { bibleQuote, canManageEditorial, canManageSystem, parsePeregrinoStage, peregrinoErrorMessage, PeregrinoCallError, peregrinoFallback, peregrinoRetryableStatus, retryPeregrinoCall, peregrinoMissingKey, peregrinoModel, peregrinoRateLimit, peregrinoStageFailure, peregrinoStageMessages, peregrinoTargetSchema, peregrinoThinking, runPeregrinoPipeline, type BibleSelection, type PeregrinoField, type PeregrinoStage, type PeregrinoTarget } from "../../domain/index";
 import { LocalDatabase, LocalError } from "./database.local";
 
 const attempts = new Map<string, number[]>();
+
+async function callModel(key: string, messages: { role: "system" | "user"; content: string }[]) {
+  let response: Response;
+  try {
+    response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json", "X-Title": "Devotio" },
+      body: JSON.stringify({ model: peregrinoModel, max_tokens: 1500, temperature: 0.4, messages }),
+      signal: AbortSignal.timeout(45000),
+    });
+  } catch {
+    throw new PeregrinoCallError("O Peregrino não respondeu a tempo. Tente novamente em instantes.", true);
+  }
+  if (!response.ok) throw new PeregrinoCallError(peregrinoErrorMessage(response.status), peregrinoRetryableStatus(response.status));
+  const body = await response.json().catch(() => ({})) as { choices?: { message?: { content?: unknown } }[]; error?: { code?: number } };
+  if (body.error) throw new PeregrinoCallError(peregrinoErrorMessage(typeof body.error.code === "number" ? body.error.code : 503), typeof body.error.code !== "number" || peregrinoRetryableStatus(body.error.code));
+  const content = body.choices?.[0]?.message?.content;
+  if (typeof content !== "string" || !content.trim()) throw new PeregrinoCallError("O Peregrino devolveu uma resposta inesperada. Tente novamente.", true);
+  return content;
+}
 
 export async function suggestLocal(database: LocalDatabase, userId: string, input: { selection?: BibleSelection; date?: string; reflection?: string; prayerSuggestion?: string; focus?: string; target: PeregrinoTarget }) {
   const user = database.profile(userId);
@@ -29,24 +49,7 @@ export async function suggestLocal(database: LocalDatabase, userId: string, inpu
     reference = day.reference;
     scripture = day.scripture;
   } else throw new LocalError("Escolha o trecho bíblico antes de pedir auxílio.");
-  const complete = async (messages: { role: "system" | "user"; content: string }[]) => {
-    let response: Response;
-    try {
-      response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json", "X-Title": "Devotio" },
-        body: JSON.stringify({ model: peregrinoModel, max_tokens: 700, temperature: 0.4, messages }),
-        signal: AbortSignal.timeout(30000),
-      });
-    } catch {
-      throw new LocalError("O Peregrino não respondeu a tempo. Tente novamente em instantes.");
-    }
-    if (!response.ok) throw new LocalError(peregrinoErrorMessage(response.status), response.status);
-    const body = await response.json() as { choices?: { message?: { content?: string } }[] };
-    const content = body.choices?.[0]?.message?.content;
-    if (!content) throw new LocalError("O Peregrino devolveu uma resposta inesperada. Tente novamente.");
-    return content;
-  };
+  const complete = (messages: { role: "system" | "user"; content: string }[]) => retryPeregrinoCall(() => callModel(key, messages));
   return runPeregrinoPipeline(complete, { reference, scripture, focus: input.focus, target });
 }
 
@@ -80,24 +83,18 @@ export async function stepLocal(database: LocalDatabase, userId: string, input: 
   const thinking = peregrinoThinking(input.stage, input.field);
   let raw = "";
   try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json", "X-Title": "Devotio" },
-      body: JSON.stringify({ model: peregrinoModel, max_tokens: 700, temperature: 0.4, messages: peregrinoStageMessages({ stage: input.stage, field: input.field, reference, scripture, focus: input.focus, text: input.text, notes: input.notes }) }),
-      signal: AbortSignal.timeout(30000),
-    });
-    if (!response.ok) throw new LocalError(peregrinoErrorMessage(response.status), response.status);
-    const body = await response.json() as { choices?: { message?: { content?: string } }[] };
-    raw = body.choices?.[0]?.message?.content ?? "";
-    if (!raw) throw new LocalError("O Peregrino devolveu uma resposta inesperada. Tente novamente.");
+    const messages = peregrinoStageMessages({ stage: input.stage, field: input.field, reference, scripture, focus: input.focus, text: input.text, notes: input.notes });
+    raw = await retryPeregrinoCall(() => callModel(key, messages));
   } catch (error) {
-    const detail = error instanceof LocalError ? error.message : "O Peregrino não respondeu a tempo. Tente novamente em instantes.";
-    throw new LocalError(peregrinoStageFailure(input.stage, input.field, "call", detail), error instanceof LocalError ? error.status : 504);
+    const detail = error instanceof PeregrinoCallError ? error.message : "O Peregrino não respondeu a tempo. Tente novamente em instantes.";
+    throw new LocalError(peregrinoStageFailure(input.stage, input.field, "call", detail), 502);
   }
   try {
     const parsed = parsePeregrinoStage(raw, input.field, input.stage);
     return { text: parsed.text, notes: parsed.notes ?? "", thinking };
   } catch (error) {
+    const kept = peregrinoFallback(input.stage, input.field, input.text);
+    if (kept) return { ...kept, thinking };
     const detail = error instanceof Error ? error.message : undefined;
     throw new LocalError(peregrinoStageFailure(input.stage, input.field, "answer", detail));
   }

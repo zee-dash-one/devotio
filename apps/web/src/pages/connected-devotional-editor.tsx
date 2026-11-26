@@ -100,7 +100,7 @@ function ConnectedEditorForm({ editorial, existing }: { editorial: ConnectedEdit
         <Button type="button" variant="secondary" disabled={busy} onClick={() => { writing.setEditor(key, null); writing.setPicker(null); void navigate({ to: "/editorial" }); }}>Cancelar</Button>
       </div>
     </form>
-    <PeregrinoPanel selection={draft.selection} date={existing?.date} reflection={draft.reflection} prayerSuggestion={draft.prayerSuggestion} onApply={patch => change(patch)} />
+    <PeregrinoPanel selection={draft.selection} date={existing?.date} onApply={patch => change(patch)} />
     <BiblePickerButton type="button" aria-label="Alternar para leitura bíblica" disabled={!versions.length} onClick={() => void chooseScripture()}><BookOpen size={22} /></BiblePickerButton>
   </main>;
 }

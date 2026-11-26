@@ -3,7 +3,7 @@ import { RateLimiter, MINUTE } from "@convex-dev/rate-limiter";
 import type { ComponentApi } from "@convex-dev/rate-limiter/_generated/component.js";
 import { componentsGeneric, makeFunctionReference } from "convex/server";
 import {
-  openRouterKeySchema, parsePeregrinoStage, peregrinoErrorMessage, peregrinoMissingKey, peregrinoModel, peregrinoRateLimit, peregrinoStageFailure, peregrinoStageMessages, peregrinoTargetSchema, peregrinoThinking, runPeregrinoPipeline,
+  openRouterKeySchema, parsePeregrinoStage, peregrinoErrorMessage, PeregrinoCallError, peregrinoFallback, peregrinoRetryableStatus, retryPeregrinoCall, peregrinoMissingKey, peregrinoModel, peregrinoRateLimit, peregrinoStageFailure, peregrinoStageMessages, peregrinoTargetSchema, peregrinoThinking, runPeregrinoPipeline,
 } from "domain/core";
 import { action, internalMutation, internalQuery, mutation, query, env } from "./_generated/server";
 import type { MutationCtx, QueryCtx } from "./server";
@@ -141,16 +141,17 @@ async function complete(key: string, messages: { role: "system" | "user"; conten
     response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json", "X-Title": "Devotio" },
-      body: JSON.stringify({ model: peregrinoModel, max_tokens: 700, temperature: 0.6, messages }),
-      signal: AbortSignal.timeout(30000),
+      body: JSON.stringify({ model: peregrinoModel, max_tokens: 1500, temperature: 0.6, messages }),
+      signal: AbortSignal.timeout(45000),
     });
   } catch {
-    throw new ConvexError("O Peregrino não respondeu a tempo. Tente novamente em instantes.");
+    throw new PeregrinoCallError("O Peregrino não respondeu a tempo. Tente novamente em instantes.", true);
   }
-  if (!response.ok) throw new ConvexError(peregrinoErrorMessage(response.status));
-  const body = await response.json() as { choices?: { message?: { content?: string } }[] };
+  if (!response.ok) throw new PeregrinoCallError(peregrinoErrorMessage(response.status), peregrinoRetryableStatus(response.status));
+  const body = await response.json().catch(() => ({})) as { choices?: { message?: { content?: unknown } }[]; error?: { code?: number } };
+  if (body.error) throw new PeregrinoCallError(peregrinoErrorMessage(typeof body.error.code === "number" ? body.error.code : 503), typeof body.error.code !== "number" || peregrinoRetryableStatus(body.error.code));
   const content = body.choices?.[0]?.message?.content;
-  if (!content) throw new ConvexError("O Peregrino devolveu uma resposta inesperada. Tente novamente.");
+  if (typeof content !== "string" || !content.trim()) throw new PeregrinoCallError("O Peregrino devolveu uma resposta inesperada. Tente novamente.", true);
   return content;
 }
 
@@ -171,7 +172,7 @@ export const suggest = action({
     }>("peregrino:prepare"), args);
     const target = peregrinoTargetSchema.parse(prepared.target);
     const key = await open(prepared.ciphertext, prepared.iv);
-    return await runPeregrinoPipeline((messages) => complete(key, messages), { reference: prepared.reference, scripture: prepared.scripture, focus: prepared.focus, target });
+    return await runPeregrinoPipeline((messages) => retryPeregrinoCall(() => complete(key, messages)), { reference: prepared.reference, scripture: prepared.scripture, focus: prepared.focus, target });
   },
 });
 
@@ -195,15 +196,18 @@ export const step = action({
     const thinking = peregrinoThinking(args.stage, args.field);
     let raw = "";
     try {
-      raw = await complete(key, peregrinoStageMessages({ stage: args.stage, field: args.field, reference: prepared.reference, scripture: prepared.scripture, focus: args.focus, text: args.text, notes: args.notes }));
+      const messages = peregrinoStageMessages({ stage: args.stage, field: args.field, reference: prepared.reference, scripture: prepared.scripture, focus: args.focus, text: args.text, notes: args.notes });
+      raw = await retryPeregrinoCall(() => complete(key, messages));
     } catch (error) {
-      const detail = error instanceof ConvexError && typeof error.data === "string" ? error.data : undefined;
+      const detail = error instanceof PeregrinoCallError ? error.message : undefined;
       throw new ConvexError(peregrinoStageFailure(args.stage, args.field, "call", detail));
     }
     try {
       const parsed = parsePeregrinoStage(raw, args.field, args.stage);
       return { text: parsed.text, notes: parsed.notes ?? "", thinking };
     } catch (error) {
+      const kept = peregrinoFallback(args.stage, args.field, args.text);
+      if (kept) return { ...kept, thinking };
       const detail = error instanceof Error ? error.message : undefined;
       throw new ConvexError(peregrinoStageFailure(args.stage, args.field, "answer", detail));
     }
