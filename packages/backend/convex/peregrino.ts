@@ -141,7 +141,7 @@ async function complete(key: string, messages: { role: "system" | "user"; conten
     response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json", "X-Title": "Devotio" },
-      body: JSON.stringify({ model: peregrinoModel, max_tokens: 1500, temperature: 0.6, messages }),
+      body: JSON.stringify({ model: peregrinoModel, max_tokens: 1500, reasoning: { effort: "low", exclude: true }, temperature: 0.6, messages }),
       signal: AbortSignal.timeout(45000),
     });
   } catch {
