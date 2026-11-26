@@ -40,4 +40,11 @@ describe("local email code login", () => {
     advance(10 * 60_000 + 1);
     expect(login.request("ana@example.com").devCode).toMatch(/^\d{6}$/);
   });
+  it("caps one address at ten codes a day", () => {
+    const { login, advance } = setup();
+    for (let i = 0; i < 10; i += 1) { login.request("ana@example.com"); advance(11 * 60_000); }
+    expect(() => login.request("ana@example.com")).toThrow("Muitos pedidos");
+    advance(24 * 60 * 60_000);
+    expect(login.request("ana@example.com").devCode).toMatch(/^\d{6}$/);
+  });
 });

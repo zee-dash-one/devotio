@@ -3,7 +3,7 @@ import { z } from "zod";
 export const emailCodeLength = 6;
 export const emailCodeLifetimeSeconds = 300;
 export const emailCodeAttempts = 3;
-export const emailLoginLimit = { requests: 5, perMinutes: 10 } as const;
+export const emailLoginLimit = { requests: 5, perMinutes: 10, perDay: 10 } as const;
 
 export const emailLoginSchema = z.object({
   email: z.string().trim().toLowerCase().email("Informe um e-mail válido.").max(160, "Use até 160 caracteres."),

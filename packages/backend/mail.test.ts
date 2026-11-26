@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { convexTest } from "convex-test";
 import { makeFunctionReference } from "convex/server";
 import rateLimiter from "@convex-dev/rate-limiter/test";
@@ -10,6 +10,7 @@ const modules = {
 };
 const consume = makeFunctionReference<"mutation">("mail:consume");
 
+afterEach(() => { vi.useRealTimers(); });
 function setup() {
   const t = convexTest(schema, modules);
   rateLimiter.register(t);
@@ -32,5 +33,28 @@ describe("email code request limit", () => {
     vi.stubEnv("GMAIL_APP_PASSWORD", "abcdabcdabcdabcd");
     expect(await t.query(available, {})).toBe(true);
     vi.unstubAllEnvs();
+  });
+  it("caps one address at ten codes a day even when it waits out the short window", async () => {
+    vi.useFakeTimers();
+    const t = setup();
+    for (let i = 0; i < 10; i += 1) {
+      await t.mutation(consume, { email: "ana@example.com" });
+      vi.advanceTimersByTime(11 * 60_000);
+    }
+    await expect(t.mutation(consume, { email: "ana@example.com" })).rejects.toThrow("Muitos pedidos de código");
+    vi.advanceTimersByTime(24 * 60 * 60_000);
+    await t.mutation(consume, { email: "ana@example.com" });
+  });
+  it("allows three guesses per code, then blocks until a new code is requested", async () => {
+    const t = setup();
+    const attempt = makeFunctionReference<"mutation">("mail:attempt");
+    const results = [];
+    for (let i = 0; i < 5; i += 1) results.push(await t.mutation(attempt, { email: "Ana@Example.com" }).then(() => "ok", (error: Error) => String(error.message ?? error)));
+    expect(results.slice(0, 3)).toEqual(["ok", "ok", "ok"]);
+    expect(results[3]).toContain("Muitas tentativas");
+    expect(results[4]).toContain("Muitas tentativas");
+    await t.mutation(attempt, { email: "rui@example.com" });
+    await t.mutation(consume, { email: "ana@example.com" });
+    await t.mutation(attempt, { email: "ana@example.com" });
   });
 });

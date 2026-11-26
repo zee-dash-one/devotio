@@ -17,8 +17,9 @@ export class LocalEmailLogin {
   request(email: string) {
     const at = this.now();
     const recent = (this.requests.get(email) ?? []).filter(time => at - time < emailLoginLimit.perMinutes * 60_000);
-    if (recent.length >= emailLoginLimit.requests) throw new LocalError("Muitos pedidos de código. Aguarde alguns minutos e tente de novo.", 429);
-    this.requests.set(email, [...recent, at]);
+    const today = (this.requests.get(email) ?? []).filter(time => at - time < 24 * 60 * 60_000);
+    if (recent.length >= emailLoginLimit.requests || today.length >= emailLoginLimit.perDay) throw new LocalError("Muitos pedidos de código. Aguarde alguns minutos e tente de novo.", 429);
+    this.requests.set(email, [...today, at]);
     const code = String(randomInt(0, 10 ** emailCodeLength)).padStart(emailCodeLength, "0");
     this.codes.set(email, { code, expiresAt: at + emailCodeLifetimeSeconds * 1000, attempts: 0 });
     this.log(`[email local] código de ${email}: ${code}`);
