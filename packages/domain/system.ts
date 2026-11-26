@@ -51,6 +51,33 @@ export function userDeletionBlockers(facts: DeletionFacts): string | null {
   return null;
 }
 
+export const systemRoles = ["editorial", "superuser"] as const;
+export type SystemRole = typeof systemRoles[number];
+export const systemRoleLabels: Record<SystemRole, string> = { editorial: "Editorial", superuser: "Superusuário" };
+
+export interface RoleChangeFacts {
+  self: boolean;
+  namedOwner: boolean;
+  status: AccessStatus;
+  editorial: boolean;
+  superuser: boolean;
+}
+
+/** Superusers grant or revoke roles of other accounts; the server enforces it. */
+export function roleChangeBlocker(facts: RoleChangeFacts, role: SystemRole, grant: boolean): string | null {
+  if (facts.self) return "Você não pode alterar os próprios papéis.";
+  if (grant && !hasApprovedAccess(facts.status)) return "Aprove o cadastro antes de conceder papéis.";
+  if (!grant && role === "superuser" && facts.namedOwner) return "O responsável pelo piloto não pode ser rebaixado.";
+  if (!grant && role === "editorial" && facts.superuser) return "Rebaixe de superusuário antes de remover a gestão editorial.";
+  return null;
+}
+
+/** A superuser always keeps editorial access; losing superuser keeps editorial. */
+export function applyRoleChange(current: { editorial: boolean; superuser: boolean }, role: SystemRole, grant: boolean) {
+  if (role === "superuser") return grant ? { editorial: true, superuser: true } : { editorial: current.editorial, superuser: false };
+  return { editorial: grant, superuser: current.superuser };
+}
+
 export interface SystemDirectoryUser {
   id: string;
   name: string;
@@ -64,6 +91,7 @@ export interface SystemDirectoryUser {
 export interface SystemRepository {
   listUsers(): Promise<SystemDirectoryUser[]>;
   setUserStatus(id: string, status: "approved" | "disabled"): Promise<void>;
+  setUserRole(id: string, role: SystemRole, grant: boolean): Promise<void>;
   deleteUser(id: string, confirmEmail: string): Promise<void>;
   getThemes(): Promise<ThemesInput>;
   setThemes(input: ThemesInput): Promise<void>;

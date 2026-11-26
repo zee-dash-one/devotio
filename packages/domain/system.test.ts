@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canManageSystem, isNamedOwner, themesInputSchema, userDeletionBlockers, type DeletionFacts } from "./system";
+import { applyRoleChange, canManageSystem, isNamedOwner, roleChangeBlocker, themesInputSchema, userDeletionBlockers, type DeletionFacts } from "./system";
 
 const open: DeletionFacts = {
   self: false, superuser: false, editorial: false, ownsCommunity: false, communityManager: false,
@@ -28,5 +28,17 @@ describe("system access", () => {
     expect(userDeletionBlockers({ ...open, emailMatches: false })).toBe("O e-mail digitado não confere.");
     expect(userDeletionBlockers({ ...open, hasCommunityMessages: true })).toMatch(/Desative a conta/);
     expect(userDeletionBlockers({ ...open, self: true })).toMatch(/própria conta/);
+  });
+  it("decides role changes and keeps editorial with superuser", () => {
+    const base = { self: false, namedOwner: false, status: "approved" as const, editorial: false, superuser: false };
+    expect(roleChangeBlocker(base, "editorial", true)).toBeNull();
+    expect(roleChangeBlocker({ ...base, self: true }, "editorial", true)).toMatch("próprios");
+    expect(roleChangeBlocker({ ...base, status: "pending" }, "superuser", true)).toMatch("Aprove");
+    expect(roleChangeBlocker({ ...base, status: "pending" }, "editorial", false)).toBeNull();
+    expect(roleChangeBlocker({ ...base, namedOwner: true, superuser: true }, "superuser", false)).toMatch("responsável");
+    expect(roleChangeBlocker({ ...base, editorial: true, superuser: true }, "editorial", false)).toMatch("Rebaixe");
+    expect(applyRoleChange({ editorial: false, superuser: false }, "superuser", true)).toEqual({ editorial: true, superuser: true });
+    expect(applyRoleChange({ editorial: true, superuser: true }, "superuser", false)).toEqual({ editorial: true, superuser: false });
+    expect(applyRoleChange({ editorial: true, superuser: false }, "editorial", false)).toEqual({ editorial: false, superuser: false });
   });
 });

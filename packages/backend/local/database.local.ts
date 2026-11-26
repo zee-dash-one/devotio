@@ -11,7 +11,7 @@ import { alm1911Chapter } from "./alm1911.local";
 import { bibleVersionNames, type BibleVersion } from "../../domain/validators/bible";
 import { scriptureLicenseForVersion, editorialMonthDates, availableEditorialDates } from "../../domain/editorial";
 import {
-  bibleDatasetSchema, bibleBooksSchema, canManage, canRemoveMember, canPublish,   hasApprovedAccess, canManageSystem, userDeletionBlockers, effectiveAccess, defaultThemes, themesInputSchema,
+  bibleDatasetSchema, bibleBooksSchema, canManage, canRemoveMember, canPublish,   hasApprovedAccess, canManageSystem, userDeletionBlockers, roleChangeBlocker, applyRoleChange, isNamedOwner, type SystemRole, effectiveAccess, defaultThemes, themesInputSchema,
   isPublished, dateInZone, recentDates, isRecent, searchWords, publicationMidnight, canScheduleDate, scheduleSchema, imageTextLimitMessage, MAX_FAVORITE_DEVOTIONALS, RECENT_DEVOTIONALS_LIMIT, favoriteLimitMessage,
   type LocalProfile, type Devotional, type HomeData, type Community, type CommunityDetail,
   type Member, type Favorite, type BibleBook, type BibleChapter, type BibleResults,
@@ -440,6 +440,7 @@ export class LocalDatabase {
           return null;
         }
         case "setUserStatus": return this.systemSetStatus(user, input.id, input.status);
+        case "setUserRole": return this.systemSetRole(user, input.id, input.role, input.grant);
         case "deleteUser": return this.systemDeleteUser(user, input.id, input.confirmEmail);
         case "setThemes": {
           this.requireSystem(user);
@@ -487,6 +488,15 @@ export class LocalDatabase {
     if (status !== "approved" && this.get("SELECT 1 FROM communities WHERE ownerId=?", id)) throw new LocalError("Transfira a posse das comunidades antes de desativar.");
     if (status !== "approved" && this.get("SELECT 1 FROM members WHERE userId=? AND role!='member'", id)) throw new LocalError("Remova a administração nas comunidades antes de desativar.");
     this.run("UPDATE users SET data=? WHERE id=?", JSON.stringify({ ...current, status }), id);
+    return null;
+  }
+  private systemSetRole(actor: LocalProfile, id: string, role: SystemRole, grant: boolean) {
+    this.requireSystem(actor);
+    const current = this.profile(id) as LocalProfile & { status?: "pending" | "approved" | "disabled" };
+    const before = { editorial: current.editorial === true, superuser: current.superuser === true };
+    const blocker = roleChangeBlocker({ self: id === actor.id, namedOwner: isNamedOwner(current.name), status: effectiveAccess(current.status), ...before }, role, grant);
+    if (blocker) throw new LocalError(blocker, 403);
+    this.run("UPDATE users SET data=? WHERE id=?", JSON.stringify({ ...current, ...applyRoleChange(before, role, grant) }), id);
     return null;
   }
   private systemDeleteUser(actor: LocalProfile, id: string, confirmEmail: string) {
