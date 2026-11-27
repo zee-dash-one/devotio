@@ -29,6 +29,16 @@ export function describeMailFailure(error: unknown) {
   return "erro desconhecido";
 }
 
+/**
+ * Google shows an app password as "abcd efgh ijkl mnop". Pasting it with the
+ * spaces, or with a stray newline, is the usual reason Gmail refuses a valid one.
+ */
+export function gmailCredentials(env: { GMAIL_USER?: string; GMAIL_APP_PASSWORD?: string }) {
+  const user = (env.GMAIL_USER ?? "").trim();
+  const pass = (env.GMAIL_APP_PASSWORD ?? "").replace(/\s+/g, "");
+  return user && pass ? { user, pass } : null;
+}
+
 export function gmailTransportOptions(user: string, pass: string) {
   return { host: "smtp.gmail.com", port: 465, secure: true, auth: { user, pass }, connectionTimeout: 10_000, greetingTimeout: 10_000, socketTimeout: 15_000 } as const;
 }

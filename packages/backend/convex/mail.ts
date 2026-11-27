@@ -4,6 +4,7 @@ import type { ComponentApi } from "@convex-dev/rate-limiter/_generated/component
 import { componentsGeneric } from "convex/server";
 import { emailCodeAttempts, emailLoginLimit } from "domain/core";
 import { internalMutation, query } from "./_generated/server";
+import { gmailCredentials } from "./mailDelivery";
 
 const components = componentsGeneric() as unknown as { rateLimiter: ComponentApi };
 const limiter = new RateLimiter(components.rateLimiter, {
@@ -47,5 +48,5 @@ export const attempt = internalMutation({
 export const available = query({
   args: {},
   returns: v.boolean(),
-  handler: async () => !!process.env.GMAIL_USER && !!process.env.GMAIL_APP_PASSWORD,
+  handler: async () => gmailCredentials(process.env) !== null,
 });

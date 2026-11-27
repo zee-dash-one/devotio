@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ConvexError } from "convex/values";
-import { deliverEmailCode, describeMailFailure, gmailTransportOptions, guardCodeAttempt, maskEmail, type MailMessage } from "./convex/mailDelivery";
+import { deliverEmailCode, describeMailFailure, gmailCredentials, gmailTransportOptions, guardCodeAttempt, maskEmail, type MailMessage } from "./convex/mailDelivery";
 
 function setup(options: { limit?: Error; send?: Error; attempt?: Error } = {}) {
   const sent: MailMessage[] = [];
@@ -82,5 +82,12 @@ describe("mail failure reasons", () => {
     expect(options).toMatchObject({ host: "smtp.gmail.com", port: 465, secure: true, auth: { user: "app@gmail.com", pass: "pw" } });
     expect(options.connectionTimeout).toBeLessThanOrEqual(15_000);
     expect(options.socketTimeout).toBeLessThanOrEqual(15_000);
+  });
+  it("cleans pasted credentials and refuses empty ones", () => {
+    expect(gmailCredentials({ GMAIL_USER: " app@gmail.com\n", GMAIL_APP_PASSWORD: "abcd efgh ijkl mnop\n" })).toEqual({ user: "app@gmail.com", pass: "abcdefghijklmnop" });
+    expect(gmailCredentials({ GMAIL_USER: "app@gmail.com" })).toBeNull();
+    expect(gmailCredentials({ GMAIL_APP_PASSWORD: "abcd" })).toBeNull();
+    expect(gmailCredentials({ GMAIL_USER: "app@gmail.com", GMAIL_APP_PASSWORD: "   " })).toBeNull();
+    expect(gmailCredentials({})).toBeNull();
   });
 });

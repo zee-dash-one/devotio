@@ -2,7 +2,7 @@
 import { ConvexError, v } from "convex/values";
 import nodemailer from "nodemailer";
 import { internalAction } from "./_generated/server";
-import { describeMailFailure, gmailTransportOptions } from "./mailDelivery";
+import { describeMailFailure, gmailCredentials, gmailTransportOptions } from "./mailDelivery";
 
 /**
  * Sends one message through Gmail SMTP. It needs a Google account with 2-step
@@ -10,10 +10,9 @@ import { describeMailFailure, gmailTransportOptions } from "./mailDelivery";
  * Resend) once the project owns a domain; callers only know `mailNode:send`.
  */
 function transport() {
-  const user = process.env.GMAIL_USER;
-  const pass = process.env.GMAIL_APP_PASSWORD;
-  if (!user || !pass) throw new ConvexError("A entrada por e-mail ainda não foi configurada. Procure o responsável.");
-  return { user, mailer: nodemailer.createTransport(gmailTransportOptions(user, pass)) };
+  const credentials = gmailCredentials(process.env);
+  if (!credentials) throw new ConvexError("A entrada por e-mail ainda não foi configurada. Procure o responsável.");
+  return { user: credentials.user, mailer: nodemailer.createTransport(gmailTransportOptions(credentials.user, credentials.pass)) };
 }
 
 export const send = internalAction({
