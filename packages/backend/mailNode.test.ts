@@ -50,4 +50,15 @@ describe("mail action", () => {
     vi.unstubAllEnvs();
     expect(await convexTest(schema, modules).action(check, {})).toEqual({ ok: false, reason: "e-mail não configurado" });
   });
+  it("explains a password that is not an app password and never sends it to Gmail", async () => {
+    vi.stubEnv("GMAIL_USER", "app@gmail.com");
+    vi.stubEnv("GMAIL_APP_PASSWORD", "Senha-Normal-123!");
+    const result = await convexTest(schema, modules).action(check, {}) as { ok: boolean; reason: string };
+    expect(result.ok).toBe(false);
+    expect(result.reason).toContain("não é uma senha de app");
+    expect(result.reason).not.toContain("Senha-Normal");
+    expect(verify).not.toHaveBeenCalled();
+    await expect(convexTest(schema, modules).action(send, message)).rejects.toThrow("ainda não foi configurada");
+    expect(sendMail).not.toHaveBeenCalled();
+  });
 });

@@ -36,7 +36,21 @@ export function describeMailFailure(error: unknown) {
 export function gmailCredentials(env: { GMAIL_USER?: string; GMAIL_APP_PASSWORD?: string }) {
   const user = (env.GMAIL_USER ?? "").trim();
   const pass = (env.GMAIL_APP_PASSWORD ?? "").replace(/\s+/g, "");
-  return user && pass ? { user, pass } : null;
+  if (!user || !pass || !gmailAppPasswordShape.test(pass)) return null;
+  return { user, pass };
+}
+
+/** A Google app password is always 16 lowercase letters; a normal account password is refused over SMTP. */
+export const gmailAppPasswordShape = /^[a-z]{16}$/;
+
+/** Says why credentials are unusable without ever echoing them. */
+export function gmailCredentialProblem(env: { GMAIL_USER?: string; GMAIL_APP_PASSWORD?: string }) {
+  const user = (env.GMAIL_USER ?? "").trim();
+  const pass = (env.GMAIL_APP_PASSWORD ?? "").replace(/\s+/g, "");
+  if (!user || !pass) return "e-mail não configurado";
+  if (!/^[^@\s]+@[^@\s]+$/.test(user)) return "GMAIL_USER não parece um e-mail";
+  if (!gmailAppPasswordShape.test(pass)) return "GMAIL_APP_PASSWORD não é uma senha de app (16 letras minúsculas); crie uma em myaccount.google.com/apppasswords";
+  return null;
 }
 
 export function gmailTransportOptions(user: string, pass: string) {

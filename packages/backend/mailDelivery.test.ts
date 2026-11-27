@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ConvexError } from "convex/values";
-import { deliverEmailCode, describeMailFailure, gmailCredentials, gmailTransportOptions, guardCodeAttempt, maskEmail, type MailMessage } from "./convex/mailDelivery";
+import { deliverEmailCode, describeMailFailure, gmailCredentialProblem, gmailCredentials, gmailTransportOptions, guardCodeAttempt, maskEmail, type MailMessage } from "./convex/mailDelivery";
 
 function setup(options: { limit?: Error; send?: Error; attempt?: Error } = {}) {
   const sent: MailMessage[] = [];
@@ -86,8 +86,18 @@ describe("mail failure reasons", () => {
   it("cleans pasted credentials and refuses empty ones", () => {
     expect(gmailCredentials({ GMAIL_USER: " app@gmail.com\n", GMAIL_APP_PASSWORD: "abcd efgh ijkl mnop\n" })).toEqual({ user: "app@gmail.com", pass: "abcdefghijklmnop" });
     expect(gmailCredentials({ GMAIL_USER: "app@gmail.com" })).toBeNull();
+    expect(gmailCredentials({ GMAIL_USER: "app@gmail.com", GMAIL_APP_PASSWORD: "Senha-Normal-123!" })).toBeNull();
     expect(gmailCredentials({ GMAIL_APP_PASSWORD: "abcd" })).toBeNull();
     expect(gmailCredentials({ GMAIL_USER: "app@gmail.com", GMAIL_APP_PASSWORD: "   " })).toBeNull();
     expect(gmailCredentials({})).toBeNull();
+  });
+  it("explains unusable credentials without echoing them", () => {
+    const good = { GMAIL_USER: "app@gmail.com", GMAIL_APP_PASSWORD: "abcdefghijklmnop" };
+    expect(gmailCredentialProblem(good)).toBeNull();
+    expect(gmailCredentialProblem({})).toBe("e-mail não configurado");
+    expect(gmailCredentialProblem({ ...good, GMAIL_USER: "sem-arroba" })).toContain("não parece um e-mail");
+    const normal = gmailCredentialProblem({ ...good, GMAIL_APP_PASSWORD: "Senha-Normal-123!" });
+    expect(normal).toContain("não é uma senha de app");
+    expect(normal).not.toContain("Senha-Normal");
   });
 });

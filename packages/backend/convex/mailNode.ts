@@ -2,7 +2,7 @@
 import { ConvexError, v } from "convex/values";
 import nodemailer from "nodemailer";
 import { internalAction } from "./_generated/server";
-import { describeMailFailure, gmailCredentials, gmailTransportOptions } from "./mailDelivery";
+import { describeMailFailure, gmailCredentialProblem, gmailCredentials, gmailTransportOptions } from "./mailDelivery";
 
 /**
  * Sends one message through Gmail SMTP. It needs a Google account with 2-step
@@ -35,6 +35,8 @@ export const check = internalAction({
   args: {},
   returns: v.object({ ok: v.boolean(), reason: v.string() }),
   handler: async () => {
+    const problem = gmailCredentialProblem(process.env);
+    if (problem) return { ok: false, reason: problem };
     try {
       await transport().mailer.verify();
       return { ok: true, reason: "Login no Gmail aceito." };
